@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 x:Class="SC4Cleanitol.MainPage">
+
+	<VerticalStackLayout Spacing="25"
+						 Padding="30,0"
+						 VerticalOptions="Fill">
+
+		<!-- Select Script Area -->
+		<HorizontalStackLayout x:Name="SelectScriptArea"
+							   HorizontalOptions="End"
+							   VerticalOptions="Center"
+							   Spacing="25"
+							   Padding="10">
+			<Label x:Name="SelectedScriptName"
+				   Text="Selected Script Name"
+				   FontSize="18" />
+
+			<Button x:Name="SelectScript"
+					Text="Select Script"
+					SemanticProperties.Hint="Select a Cleanitol script to run."
+					Clicked="OnCounterClicked" />
+		</HorizontalStackLayout>
+
+		<!-- Script Output Area -->
+		<Editor x:Name="ScriptOutput"
+				HeightRequest="500"
+				IsReadOnly="True"/>
+
+		<Label x:Name="StatusLabel"
+			   Text="Status: Select script to run"
+			   FontSize="14"
+			   HorizontalOptions="Start"
+			   
+			   Padding="0"/>
+
+		<!-- Button Area -->
+		<HorizontalStackLayout VerticalOptions="Center"
+							   HorizontalOptions="Center"
+							   Spacing="10"
+							   Padding="0">
+			<Button x:Name="RunScript"
+					Text="Run Script"
+					SemanticProperties.Hint="Run the selected Cleanitol script."
+					Clicked="RunScriptAsync" />
+			<Button x:Name="BackupFiles"
+					Text="Backup Files"
+					SemanticProperties.Hint="Backup and remove listed files."
+					Clicked="BackupFilesAsync" />
+			<Button x:Name="Quit"
+					Text="Quit"
+					SemanticProperties.Hint="Quit the program."
+					Clicked="QuitProgram" />
+		</HorizontalStackLayout>
+	</VerticalStackLayout>
+</ContentPage>
