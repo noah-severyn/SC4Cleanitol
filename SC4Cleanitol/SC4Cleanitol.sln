@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SC4Cleanitol", "SC4Cleanitol.csproj", "{A6214CE2-9A4A-4565-8923-8D55F4F5B420}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SC4CleanitolConsole", "..\SC4CleanitolConsole\SC4CleanitolConsole.csproj", "{BF3458E6-23FA-4A7A-8A87-63ED01D31179}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SC4CleanitolWPF", "..\SC4CleanitolWPF\SC4CleanitolWPF.csproj", "{C1594F1F-425B-4E5E-A908-83303026475D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +21,14 @@ Global
 		{A6214CE2-9A4A-4565-8923-8D55F4F5B420}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6214CE2-9A4A-4565-8923-8D55F4F5B420}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A6214CE2-9A4A-4565-8923-8D55F4F5B420}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{BF3458E6-23FA-4A7A-8A87-63ED01D31179}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF3458E6-23FA-4A7A-8A87-63ED01D31179}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF3458E6-23FA-4A7A-8A87-63ED01D31179}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF3458E6-23FA-4A7A-8A87-63ED01D31179}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1594F1F-425B-4E5E-A908-83303026475D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1594F1F-425B-4E5E-A908-83303026475D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1594F1F-425B-4E5E-A908-83303026475D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1594F1F-425B-4E5E-A908-83303026475D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
