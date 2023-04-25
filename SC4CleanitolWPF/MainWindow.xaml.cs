@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,9 @@ namespace SC4CleanitolWPF {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        private FileInfo _script;
-        private string[] _scriptContents;
-        private int _scriptVersion;
+        private string _scriptPath;
+        private string[] _scriptRules;
+        private int _countDepsScanned;
         private int _countDepsFound;
         private int _countDepsMissing;
         private List<string> _filesToRemove;
@@ -39,44 +40,56 @@ namespace SC4CleanitolWPF {
 
             InitializeComponent();
         }
+
+        /// <summary>
+        /// Opens a file dialog to choose the cleanitol script.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ChooseScript_Click(object sender, RoutedEventArgs e) {
             Reset();
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true) {
-                _script = new FileInfo(dialog.FileName);
-                ScriptPathTextBox.Text = _script.FullName;
-                _scriptContents = File.ReadAllLines(_script.FullName);
+                _scriptPath = dialog.FileName;
+                ScriptPathTextBox.Text = _scriptPath;
             } else {
                 return;
             }
         }
 
+        /// <summary>
+        /// Read and execute the script contents.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void RunScript_Click(object sender, RoutedEventArgs e) {
             Reset();
-            _scriptContents = File.ReadAllLines(_script.FullName);
-            _scriptVersion = GetScriptVersion();
+            _scriptRules = File.ReadAllLines(_scriptPath);
 
-            //if script version is 2 additionally support output comments with ">" and searching of TGIs
             log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
             log.Inlines.Add(RunStyles.BlackMono("            R E P O R T            \r\n"));
             log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
 
-            for (int idx = 0; idx < _scriptContents.Length; idx++) {
-                EvaluateRule(_scriptContents[idx]);
+            for (int idx = 0; idx < _scriptRules.Length; idx++) {
+                EvaluateRule(_scriptRules[idx]);
             }
 
-            log.Inlines.InsertAfter(log.Inlines.ElementAt(2), RunStyles.BlackMono($"{_filesToRemove.Count} files found to remove.\r\n"));
-            log.Inlines.InsertAfter(log.Inlines.ElementAt(3), RunStyles.BlueMono($"##/### dependencies found.\r\n"));
-            log.Inlines.InsertAfter(log.Inlines.ElementAt(4), RunStyles.RedMono($"##/### dependencies missing.\r\n"));
+            log.Inlines.InsertAfter(log.Inlines.ElementAt(2), RunStyles.BlackMono($"{_filesToRemove.Count} files to remove.\r\n"));
+            log.Inlines.InsertAfter(log.Inlines.ElementAt(3), RunStyles.BlueMono($"{_countDepsFound}/{_countDepsScanned} dependencies found.\r\n"));
+            log.Inlines.InsertAfter(log.Inlines.ElementAt(4), RunStyles.RedMono($"{_countDepsMissing}/{_countDepsScanned} dependencies missing.\r\n"));
             log.Inlines.InsertAfter(log.Inlines.ElementAt(5), RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n\r\n"));
 
             doc.Blocks.Add(log);
             ScriptOutput.Document = doc;
         }
 
-
+        /// <summary>
+        /// Evaluate a given rule and log the result.
+        /// </summary>
+        /// <param name="ruleText">Rule to evaluate</param>
         private void EvaluateRule(string ruleText) {
-            switch (ParseRule(ruleText)) {
+            switch (ParseRuleType(ruleText)) {
+
                 case RuleType.Removal:
                     IEnumerable<string> matchingFiles = Directory.EnumerateFiles(_playerPluginsFolder, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any()) {
@@ -93,18 +106,61 @@ namespace SC4CleanitolWPF {
                     }
                     break;
 
+
                 case RuleType.Dependency:
                     //run loop for the file matching the criteria
-                    log.Inlines.Add(RunStyles.RedStd(ruleText + "\r\n"));
+                    IEnumerable<string> allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
+                    DependencyRule dr = new DependencyRule(ruleText);
+                    bool isMissing = true;
+
+
+                    //log.Inlines.Add(RunStyles.RedStd(ruleText + "\r\n"));
+                    //https://stackoverflow.com/questions/2288999/how-can-i-get-a-flowdocument-hyperlink-to-launch-browser-and-go-to-url-in-a-wpf
+                    if (isMissing) {
+                        log.Inlines.Add(RunStyles.RedMono("Missing: "));
+                        log.Inlines.Add(RunStyles.RedStd(dr.TargetItem));
+                        log.Inlines.Add(RunStyles.BlackStd(" is missing. Download at: "));
+                        Hyperlink link = new Hyperlink(new Run(dr.SourceName));
+                        link.NavigateUri = new Uri(dr.SourceURL);
+                        link.RequestNavigate += new System.Windows.Navigation.RequestNavigateEventHandler(hlink_RequestNavigate);
+                        log.Inlines.Add(link + "\r\n");
+                    }
+
+                    _countDepsScanned++;
                     break;
 
+                
                 case RuleType.UserComment:
+                    //TODO - allow markdown formatting???
+                    //https://github.com/xoofx/markdig
                     log.Inlines.Add(RunStyles.GreenStd(ruleText + "\r\n"));
                     break;
 
+                
                 case RuleType.ScriptComment:
                 default:
                     break;
+            }
+        }
+        void hlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e) {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+            e.Handled = true;
+        }
+
+
+        private class DependencyRule {
+            public string TargetItem { get; set; }
+            public bool IsTargetTGI { get; set; }
+            public string SourceName { get; set; }
+            public string SourceURL { get; set; }
+
+            public DependencyRule(string ruleText) {
+                int semicolonLocn = ruleText.IndexOf(';');
+                TargetItem = ruleText.Substring(0, semicolonLocn);
+                IsTargetTGI = ruleText.Substring(0, 2) == "0x";
+                int urlLocn = ruleText.IndexOf("http");
+                SourceName = ruleText.Substring(semicolonLocn + 1, urlLocn-semicolonLocn-2);
+                SourceURL = ruleText.Substring(urlLocn);
             }
         }
 
@@ -121,14 +177,6 @@ namespace SC4CleanitolWPF {
             _countDepsFound = 0;
             _countDepsMissing = 0;
             _filesToRemove.Clear();
-            _scriptVersion = 0;
-        }
-
-        private int GetScriptVersion() {
-            string firstLine = _scriptContents[0];
-            int locn = firstLine.IndexOf('=');
-            int.TryParse(firstLine.AsSpan(locn + 1), out int version);
-            return version;
         }
 
 
@@ -137,7 +185,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         /// <param name="rule">Rule text</param>
         /// <returns>A <see cref="RuleType"/> informing the action to be taken</returns>
-        private static RuleType ParseRule(string rule) {
+        private static RuleType ParseRuleType(string rule) {
             int locn = rule.IndexOf('>');
             if (locn == 0) { return RuleType.UserComment; }
 

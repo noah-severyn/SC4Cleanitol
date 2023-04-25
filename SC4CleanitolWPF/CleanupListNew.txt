@@ -1,4 +1,3 @@
-;ScriptVersion=2
 >Running revised cleanup list
 *.html
 *.htm
