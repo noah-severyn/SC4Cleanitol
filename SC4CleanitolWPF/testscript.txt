@@ -1,6 +1,40 @@
-JRJ_TC_Aesculus_01a-0x6534284a-0x0f55ca9c-0xb0f8ec8b.SC4Desc;BSC Props Jeronij Vol 02 Trees http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
->Don't Forget; Read The ReadMe
-;;; BSC_Flag_Pack_1 cleanitol
+;;; COMMENT RULES
+;This is a script comment. This comment will not be visible to users. The first character on this line is a semicolon [;].
+>This is a user coment. This comment will be shown to users in the script output window. The first character on this line a right angle bracket [>]. 
+
+>#A Heading
+>A heading adds a bit of spacing in the output and is handy for segmenting the output of your script.
+>Immediately follow a right angle bracket with a pound sign [>#] to show a comment styled as a heading.
+
+
+;;; REMOVAL RULES
+>#Removal Rules
+>List a file name and its extension to signal that the file should be removed.
 BSC Flag Pack 1 Test Lot.SC4Lot
-Jigsaw 2010 tilesets.dat;http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
-Jigsaw 2010 tilesets2.dat;http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+>Wildcards are supported with asterisks.
+*.jpeg
+*._Loose*
+
+
+
+;;; DEPENDENCY RULES
+>#Dependency Rules
+>Dependencies are specified with a filename or TGI and an HTTP URL, separated by a semicolon. I recommend using TGIs instead of filenames to ensure accurate results of a dependency scan - if a user changes a filename or datpacks their plugins, a required file might otherwise be missed. 
+>Searching for TGIs is a new feature of this program.
+JRJ_TC_Aesculus_01a-0x6534284a-0x0f55ca9c-0xb0f8ec8b.SC4Desc; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+
+>If you specify a TGI, each Type, Group, and Index number must be prefaced with 0x and no file extension may be included. 
+>The separator between the Type, Group, and Index values is not important, as long as each number starts with 0x.
+0x6534284a-0x0f55ca9c-0xb0f8ec8b; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+0x6534284a 0x0f55ca9c 0xb0f8ec8b; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+0x6534284a, 0x0f55ca9c, 0xb0f8ec8b; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+
+>You can specify a "friendly" name to show in place of the URL. Add this text in between the semicolon and the HTTP URL.
+0x6534284a 0x0f55ca9c 0xb0f8ec8b;BSC Props Jeronij Vol 02 Trees http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+
+
+>#Conditional Dependencies
+>Conditional dependencies will only trigger if a specified file or TGI is present. Specify a second filename or TGI right after the first, separated with two question marks [??].
+>These are useful if there are options to inctall only certian parts of a mod, so the user will not be prompted for a missing dependency for a component they did not install.
+>The first filename/TGI will show as a dependency if the second filename/TGI is present in plugins.
+Jigsaw 2010 tilesets.dat ?? Jigsaw 2010 tilesets.dat; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/

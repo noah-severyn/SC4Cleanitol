@@ -64,5 +64,12 @@
 				Width="80"
 				Margin="200,0,0,0"
 				Click="Quit_Click">Quit</Button>
+		<CheckBox x:Name="WordWrapCheckbox"
+				  Grid.Row="2"
+				  Content="Word Wrap"
+				  HorizontalAlignment="Left"
+				  Margin="14,5,0,0"
+				  VerticalAlignment="Top"
+				  Checked="WordWrapCheckbox_Checked" />
 	</Grid>
 </Window>

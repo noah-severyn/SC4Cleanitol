@@ -33,14 +33,25 @@ namespace SC4CleanitolWPF {
         private Paragraph log;
         private FlowDocument doc;
 
+        //Output setting
+        private bool _isWrapped = false;
+        private bool _isVerbose;
+
+
+        //TODO - verbose & non verbose outputs
+
+
+
         public MainWindow() {
             _filesToRemove = new List<string>();
             doc = new FlowDocument();
-            doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
+            //doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
+            
             log = new Paragraph();
 
             InitializeComponent();
         }
+
 
         /// <summary>
         /// Opens a file dialog to choose the cleanitol script.
@@ -48,7 +59,7 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ChooseScript_Click(object sender, RoutedEventArgs e) {
-            Reset();
+            ResetTextBox();
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true) {
                 _scriptPath = dialog.FileName;
@@ -58,16 +69,17 @@ namespace SC4CleanitolWPF {
             }
         }
 
+
         /// <summary>
         /// Read and execute the script contents.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void RunScript_Click(object sender, RoutedEventArgs e) {
-            Reset();
+            ResetTextBox();
             _scriptRules = File.ReadAllLines(_scriptPath);
             _allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
-            _allFiles = _allFiles.Select(fileName => fileName.Replace(_playerPluginsFolder, string.Empty));
+            _allFiles = _allFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
 
             log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
             log.Inlines.Add(RunStyles.BlackMono("            R E P O R T            \r\n"));
@@ -89,9 +101,9 @@ namespace SC4CleanitolWPF {
         /// </summary>
         /// <param name="ruleText">Rule to evaluate</param>
         private void EvaluateRule(string ruleText) {
-            switch (ParseRuleType(ruleText)) {
-
-                case RuleType.Removal:
+            ScriptRule.RuleType result = ScriptRule.ParseRuleType(ruleText);
+            switch (result) {
+                case ScriptRule.RuleType.Removal:
                     IEnumerable<string> matchingFiles = Directory.EnumerateFiles(_playerPluginsFolder, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any()) {
                         log.Inlines.Add(RunStyles.BlueStd(ruleText));
@@ -108,69 +120,55 @@ namespace SC4CleanitolWPF {
                     break;
 
 
-                case RuleType.Dependency:
-                    //run loop for the file matching the criteria
-                    
-                    
-                    DependencyRule dr = new DependencyRule(ruleText);
-                    bool isMissing = true;
+                case ScriptRule.RuleType.Dependency:
+                    ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
+                    bool isMissing = _allFiles.Any(r => r.Contains(rule.SourceName));
 
-
-                    //log.Inlines.Add(RunStyles.RedStd(ruleText + "\r\n"));
                     //https://stackoverflow.com/questions/2288999/how-can-i-get-a-flowdocument-hyperlink-to-launch-browser-and-go-to-url-in-a-wpf
                     if (isMissing) {
                         log.Inlines.Add(RunStyles.RedMono("Missing: "));
-                        log.Inlines.Add(RunStyles.RedStd(dr.TargetItem));
+                        log.Inlines.Add(RunStyles.RedStd(rule.SearchItem));
                         log.Inlines.Add(RunStyles.BlackStd(" is missing. Download at: "));
-                        Hyperlink link = new Hyperlink(new Run(dr.SourceName));
-                        link.NavigateUri = new Uri(dr.SourceURL);
-                        link.RequestNavigate += new System.Windows.Navigation.RequestNavigateEventHandler(hlink_RequestNavigate);
+                        Hyperlink link = new Hyperlink(new Run(rule.SourceName));
+                        link.NavigateUri = new Uri(rule.SourceURL);
+                        //Hyperlink link = new Hyperlink(new Run("test link"));
+                        //link.NavigateUri = new Uri("http://www.google.com");
+                        link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                         log.Inlines.Add(link);
                         log.Inlines.Add(new Run("\r\n"));
+                    } else {
+                        log.Inlines.Add(RunStyles.BlueStd(rule.SearchItem));
+                        log.Inlines.Add(RunStyles.BlackStd(" was located." + "\r\n"));
+
                     }
 
                     _countDepsScanned++;
                     break;
 
-                
-                case RuleType.UserComment:
-                    //TODO - allow markdown formatting???
-                    //https://github.com/xoofx/markdig
-                    log.Inlines.Add(RunStyles.GreenStd(ruleText + "\r\n"));
+
+                case ScriptRule.RuleType.UserCommentHeading:
+                    log.Inlines.Add(new Run("\r\n"));
+                    log.Inlines.Add(RunStyles.BlackHeading(ruleText.Substring(2) + "\r\n"));
+                    break;
+
+
+                case ScriptRule.RuleType.UserComment:
+                    log.Inlines.Add(RunStyles.GreenStd(ruleText.Substring(1) + "\r\n"));
                     break;
 
                 
-                case RuleType.ScriptComment:
+                case ScriptRule.RuleType.ScriptComment:
                 default:
                     break;
             }
         }
-        void hlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e) {
+        void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
             e.Handled = true;
         }
 
 
-        private class DependencyRule {
-            public string TargetItem { get; set; }
-            public bool IsTargetTGI { get; set; }
-            public string SourceName { get; set; }
-            public string SourceURL { get; set; }
-
-            public DependencyRule(string ruleText) {
-                int semicolonLocn = ruleText.IndexOf(';');
-                TargetItem = ruleText.Substring(0, semicolonLocn);
-                IsTargetTGI = ruleText.Substring(0, 2) == "0x";
-                int httpLocn = ruleText.IndexOf("http");
-                if (httpLocn > semicolonLocn + 1) { //if there's no source file name specified.
-                    SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2);
-                } else {
-                    SourceName = ruleText.Substring(httpLocn); ;
-                }
-                
-                SourceURL = ruleText.Substring(httpLocn);
-            }
-        }
+        
 
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
 
@@ -180,60 +178,24 @@ namespace SC4CleanitolWPF {
             Application.Current.Shutdown();
         }
 
-        private void Reset() {
+
+        /// <summary>
+        /// Clear all inlines and reset file lists and counts.
+        /// </summary>
+        private void ResetTextBox() {
             log.Inlines.Clear();
             _countDepsFound = 0;
             _countDepsMissing = 0;
             _filesToRemove.Clear();
         }
 
-
-        /// <summary>
-        /// Determine the action to be taken for this ruleText.
-        /// </summary>
-        /// <param name="rule">Rule text</param>
-        /// <returns>A <see cref="RuleType"/> informing the action to be taken</returns>
-        private static RuleType ParseRuleType(string rule) {
-            int locn = rule.IndexOf('>');
-            if (locn == 0) { return RuleType.UserComment; }
-
-            locn = rule.IndexOf(';');
-            if (locn == 0) {
-                return RuleType.ScriptComment;
-            } else if (locn > 0) {
-                return RuleType.Dependency;
-            }
-
-            locn = rule.IndexOf("http");
-            if (locn > 0) { return RuleType.Dependency; }
-
-            return RuleType.Removal;
-        }
-
-        /// <summary>
-        /// The action to be taken for this ruleText.
-        /// </summary>
-        /// <see ref="https://www.sc4devotion.com/forums/index.php?topic=3797.0"/>
-        public enum RuleType {
-            /// <summary>
-            /// Specifying a filename or extension type (wildcards ARE supported) signals a removal ruleText.
-            /// </summary>
-            Removal,
-            /// <summary>
-            /// Specifying a filename then semicolon then a HTTP URL signals a dependency required ruleText.
-            /// </summary>
-            /// <remarks>
-            /// A friendly file name for the URL can also be specified. Following the semicolon specify the friendly name and the URL, separated by a space.
-            /// </remarks>
-            Dependency,
-            /// <summary>
-            /// Text shown to the user in the script output.
-            /// </summary>
-            UserComment,
-            /// <summary>
-            /// Internal comments not shown to the user for script documentation.
-            /// </summary>
-            ScriptComment
+        private void WordWrapCheckbox_Checked(object sender, RoutedEventArgs e) {
+            //_isWrapped = !_isWrapped;
+            //if (_isWrapped) {
+            //    doc.PageWidth = this.ActualWidth - 10;
+            //} else {
+            //    //doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
+            //}
         }
     }
 }

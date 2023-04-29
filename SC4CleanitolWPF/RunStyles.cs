@@ -21,44 +21,49 @@ namespace SC4CleanitolWPF {
         /// Blue mono spaced bold text.
         /// </summary>
         internal static Run BlueMono(string text) {
-            Run r = new Run(text);
-            r.Foreground = Brushes.Blue;
-            r.FontFamily = new FontFamily("Consolas, Courier New");
-            r.FontWeight = FontWeights.Bold;
+            Run r = new Run(text) {
+                Foreground = Brushes.Blue,
+                FontFamily = new FontFamily("Consolas, Courier New"),
+                FontWeight = FontWeights.Bold
+            };
             return r;
         }
         /// <summary>
         /// Red porportionally spaced text.
         /// </summary>
         internal static Run RedStd(string text) {
-            Run r = new Run(text);
-            r.Foreground = Brushes.Firebrick;
+            Run r = new Run(text) {
+                Foreground = Brushes.Firebrick
+            };
             return r;
         }
         /// <summary>
         /// Red mono spaced bold text.
         /// </summary>
         internal static Run RedMono(string text) {
-            Run r = new Run(text);
-            r.Foreground = Brushes.Firebrick;
-            r.FontFamily = new FontFamily("Consolas, Courier New");
-            r.FontWeight = FontWeights.Bold;
+            Run r = new Run(text) {
+                Foreground = Brushes.Firebrick,
+                FontFamily = new FontFamily("Consolas, Courier New"),
+                FontWeight = FontWeights.Bold
+            };
             return r;
         }
         /// <summary>
         /// Green porportionally spaced text.
         /// </summary>
         internal static Run GreenStd(string text) {
-            Run r = new Run(text);
-            r.Foreground = Brushes.DarkGreen;
+            Run r = new Run(text) {
+                Foreground = Brushes.DarkGreen
+            };
             return r;
         }
         /// <summary>
         /// Black mono spaced text.
         /// </summary>
         internal static Run BlackMono(string text) {
-            Run r = new Run(text);
-            r.FontFamily = new FontFamily("Consolas, Courier New");
+            Run r = new Run(text) {
+                FontFamily = new FontFamily("Consolas, Courier New")
+            };
             return r;
         }
         /// <summary>
@@ -66,6 +71,13 @@ namespace SC4CleanitolWPF {
         /// </summary>
         internal static Run BlackStd(string text) {
             Run r = new Run(text);
+            return r;
+        }
+        internal static Run BlackHeading(string text) {
+            Run r = new Run(text) {
+                FontSize = 18,
+                TextDecorations = TextDecorations.Underline
+            };
             return r;
         }
     }
