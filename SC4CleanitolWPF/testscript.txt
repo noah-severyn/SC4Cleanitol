@@ -2,3 +2,5 @@ JRJ_TC_Aesculus_01a-0x6534284a-0x0f55ca9c-0xb0f8ec8b.SC4Desc;BSC Props Jeronij V
 >Don't Forget; Read The ReadMe
 ;;; BSC_Flag_Pack_1 cleanitol
 BSC Flag Pack 1 Test Lot.SC4Lot
+Jigsaw 2010 tilesets.dat;http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
+Jigsaw 2010 tilesets2.dat;http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167

@@ -25,10 +25,11 @@ namespace SC4CleanitolWPF {
         private int _countDepsScanned;
         private int _countDepsFound;
         private int _countDepsMissing;
+        private IEnumerable<string> _allFiles;
         private List<string> _filesToRemove;
 
-        private string _playerPluginsFolder = "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins";
-        private string _systemPluginsFolder = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins";
+        private string _playerPluginsFolder = "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\";
+        private string _systemPluginsFolder = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins\\";
         private Paragraph log;
         private FlowDocument doc;
 
@@ -65,15 +66,15 @@ namespace SC4CleanitolWPF {
         private void RunScript_Click(object sender, RoutedEventArgs e) {
             Reset();
             _scriptRules = File.ReadAllLines(_scriptPath);
+            _allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
+            _allFiles = _allFiles.Select(fileName => fileName.Replace(_playerPluginsFolder, string.Empty));
 
             log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
             log.Inlines.Add(RunStyles.BlackMono("            R E P O R T            \r\n"));
             log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
-
             for (int idx = 0; idx < _scriptRules.Length; idx++) {
                 EvaluateRule(_scriptRules[idx]);
             }
-
             log.Inlines.InsertAfter(log.Inlines.ElementAt(2), RunStyles.BlackMono($"{_filesToRemove.Count} files to remove.\r\n"));
             log.Inlines.InsertAfter(log.Inlines.ElementAt(3), RunStyles.BlueMono($"{_countDepsFound}/{_countDepsScanned} dependencies found.\r\n"));
             log.Inlines.InsertAfter(log.Inlines.ElementAt(4), RunStyles.RedMono($"{_countDepsMissing}/{_countDepsScanned} dependencies missing.\r\n"));
@@ -109,7 +110,8 @@ namespace SC4CleanitolWPF {
 
                 case RuleType.Dependency:
                     //run loop for the file matching the criteria
-                    IEnumerable<string> allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
+                    
+                    
                     DependencyRule dr = new DependencyRule(ruleText);
                     bool isMissing = true;
 
@@ -123,7 +125,8 @@ namespace SC4CleanitolWPF {
                         Hyperlink link = new Hyperlink(new Run(dr.SourceName));
                         link.NavigateUri = new Uri(dr.SourceURL);
                         link.RequestNavigate += new System.Windows.Navigation.RequestNavigateEventHandler(hlink_RequestNavigate);
-                        log.Inlines.Add(link + "\r\n");
+                        log.Inlines.Add(link);
+                        log.Inlines.Add(new Run("\r\n"));
                     }
 
                     _countDepsScanned++;
@@ -158,9 +161,14 @@ namespace SC4CleanitolWPF {
                 int semicolonLocn = ruleText.IndexOf(';');
                 TargetItem = ruleText.Substring(0, semicolonLocn);
                 IsTargetTGI = ruleText.Substring(0, 2) == "0x";
-                int urlLocn = ruleText.IndexOf("http");
-                SourceName = ruleText.Substring(semicolonLocn + 1, urlLocn-semicolonLocn-2);
-                SourceURL = ruleText.Substring(urlLocn);
+                int httpLocn = ruleText.IndexOf("http");
+                if (httpLocn > semicolonLocn + 1) { //if there's no source file name specified.
+                    SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2);
+                } else {
+                    SourceName = ruleText.Substring(httpLocn); ;
+                }
+                
+                SourceURL = ruleText.Substring(httpLocn);
             }
         }
 
