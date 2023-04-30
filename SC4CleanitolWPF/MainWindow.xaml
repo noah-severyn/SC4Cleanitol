@@ -16,6 +16,8 @@
 			<RowDefinition Height="*" />
 			<RowDefinition Height="48" />
 		</Grid.RowDefinitions>
+		
+		<!--Row 0-->
 		<TextBlock x:Name="ScriptLabel"
 				   Grid.Row="0"
 				   HorizontalAlignment="Left"
@@ -39,11 +41,16 @@
 				VerticalAlignment="Top"
 				Margin="0,10,10,0"
 				Click="ChooseScript_Click" />
+		
+		<!--Row 1-->
 		<RichTextBox x:Name="ScriptOutput"
 					 Grid.Row="1"
 					 IsReadOnly="True"
 					 ScrollViewer.VerticalScrollBarVisibility="Auto"
-					 ScrollViewer.HorizontalScrollBarVisibility="Auto"></RichTextBox>
+					 ScrollViewer.HorizontalScrollBarVisibility="Auto">
+		</RichTextBox>
+		
+		<!--Row 2-->
 		<Button x:Name="RunScript"
 				Grid.Row="2"
 				Height="24"
@@ -69,7 +76,13 @@
 				  Content="Word Wrap"
 				  HorizontalAlignment="Left"
 				  Margin="14,5,0,0"
+				  VerticalAlignment="Top" />
+		<CheckBox x:Name="UpdateTGICheckbox"
+				  Grid.Row="2"
+				  Content="Update TGI Database"
+				  HorizontalAlignment="Left"
+				  Margin="14,25,0,0"
 				  VerticalAlignment="Top"
-				  Checked="WordWrapCheckbox_Checked" />
+				  IsChecked="{Binding UpdateTGIdb}" />
 	</Grid>
 </Window>

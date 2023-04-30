@@ -52,20 +52,22 @@ namespace SC4CleanitolWPF {
                 if (conditionalLocn == -1) {
                     SearchItem = ruleText.Substring(0, semicolonLocn).Trim();
                     ConditionalItem = string.Empty;
+                    IsConditionalItemTGI = false;
                 } else {
                     SearchItem = ruleText.Substring(0, conditionalLocn).Trim();
                     ConditionalItem = ruleText.Substring(conditionalLocn + 2, semicolonLocn - conditionalLocn - 2).Trim();
+                    IsConditionalItemTGI = ConditionalItem.Substring(0, 2) == "0x";
                 }
 
                 IsSearchItemTGI = SearchItem.Substring(0, 2) == "0x";
-                IsConditionalItemTGI = ConditionalItem.Substring(0, 2) == "0x";
+                
 
-                if (httpLocn > semicolonLocn + 2) { //if there's no source file name specified.
-                    SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2).Trim();
-                } else {
-                    SourceName = string.Empty;
-                }
-
+                //if (httpLocn >= semicolonLocn + 2) { //if there's no source file name specified.
+                //    SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2).Trim();
+                //} else {
+                //    SourceName = string.Empty;
+                //}
+                SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2).Trim();
                 SourceURL = ruleText.Substring(httpLocn).Trim();
             }
         }

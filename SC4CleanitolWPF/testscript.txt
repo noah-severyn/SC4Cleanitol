@@ -11,6 +11,7 @@
 >#Removal Rules
 >List a file name and its extension to signal that the file should be removed.
 BSC Flag Pack 1 Test Lot.SC4Lot
+Jigsaw 2010 tilesets.dat
 >Wildcards are supported with asterisks.
 *.jpeg
 *._Loose*
@@ -37,4 +38,5 @@ JRJ_TC_Aesculus_01a-0x6534284a-0x0f55ca9c-0xb0f8ec8b.SC4Desc; http://sc4devotion
 >Conditional dependencies will only trigger if a specified file or TGI is present. Specify a second filename or TGI right after the first, separated with two question marks [??].
 >These are useful if there are options to inctall only certian parts of a mod, so the user will not be prompted for a missing dependency for a component they did not install.
 >The first filename/TGI will show as a dependency if the second filename/TGI is present in plugins.
-Jigsaw 2010 tilesets.dat ?? Jigsaw 2010 tilesets.dat; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
+Jigsaw 2010 tilesets2.dat ?? Jigsaw 2010 tilesets.dat; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
+Jigsaw 2010 tilesets.dat ?? Jigsaw 2010 tilesets2.dat; https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/

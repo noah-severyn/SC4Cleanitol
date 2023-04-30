@@ -1,8 +1,9 @@
->Running revised cleanup list
+>#Running revised cleanup list
 *.html
 *.htm
 *.jpeg
 *.jpg
+*.png
 *.txt
 *.sav
 *.gif
