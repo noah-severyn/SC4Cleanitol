@@ -64,7 +64,7 @@
 				HorizontalAlignment="Center"
 				VerticalAlignment="Center"
 				Click="BackupFiles_Click"
-				Content="Backup files" />
+				Content="Move files" />
 		<Button Name="Quit"
 				Grid.Row="2"
 				Height="24"

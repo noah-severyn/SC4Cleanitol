@@ -8,9 +8,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="SummaryTemplate.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="csDBPF">
       <HintPath>..\..\csDBPF\csDBPF\csDBPF\obj\Debug\net7.0\csDBPF.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SummaryTemplate.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

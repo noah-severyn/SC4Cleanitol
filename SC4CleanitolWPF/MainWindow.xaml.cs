@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -81,9 +82,13 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void RunScript_Click(object sender, RoutedEventArgs e) {
+            if (_scriptPath is null) return; 
             ResetTextBox();
             //Fill File List
             //Log.Inlines.Add(RunStyles.BlueStd("Scanning Plugins files ...\r\n"));
+
+
+
             _scriptRules = File.ReadAllLines(_scriptPath);
             IEnumerable<string> allfiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
             _allFiles = allfiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
@@ -206,7 +211,28 @@ namespace SC4CleanitolWPF {
         
 
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            //batch file: copy "Jigsaw 2010 tilesets.dat" "..\..\Plugins\Jigsaw 2010 tilesets.dat"
+            string outputDir = "C:\\Users\\Administrator\\Documents\\SimCity 4\\BSC_Cleanitol\\" + DateTime.Now.ToString("yyyyMMdd HHmmss");
+            StringBuilder batchFile = new StringBuilder();
+            Directory.CreateDirectory(outputDir);
+
+            foreach (string file in _filesToRemove) {
+                File.Move(file, Path.Combine(outputDir, Path.GetFileName(file)));
+                //batch file: copy "Jigsaw 2010 tilesets.dat" "..\..\Plugins\Jigsaw 2010 tilesets.dat"
+                batchFile.AppendLine("copy \"" + Path.GetFileName(file) + "\" \"..\\..\\Plugins\\" + Path.GetFileName(file));
+            }
+            File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
+
+            //Write Summary HTML File.
+            //https://stackoverflow.com/a/3314213
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "SC4CleanitolWPF.SummaryTemplate.html";
+            StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(resourceName));
+            string summarytemplate = reader.ReadToEnd();
+            summarytemplate = summarytemplate.Replace("#COUNTFILES", _filesToRemove.Count.ToString());
+            summarytemplate = summarytemplate.Replace("#FOLDERPATH", outputDir);
+            summarytemplate = summarytemplate.Replace("#HELPDOC", ""); //TODO - input path to help document
+            summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
+            File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"),summarytemplate);
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e) {
