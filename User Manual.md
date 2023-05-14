@@ -7,12 +7,16 @@ This new version is designed to be backwards compatible with old Cleanitol scrip
 1. Cross platform compatibility. The previous version of this program was available to Windows users ony.
 1. Multilingual support. The previous version of this program was available only in English.
 
+# Installation Instructions
+...
 
 # For Users
 This program works by analyzing the contents of a script (commonly referred to as a Cleanitol file or Cleanitol script). These scripts are text files and may be included wich certain mods or dependency packs. These scripts can
 * Search for outdated and obsolete plugin files and give you the option to remove them from your plugins folder
 * Search for non SC4 files and give you the option to remove them from your plugins folder
 * Search your plugins folder for dependencies and notify you of missing dependencies and where to download them.
+
+This program also includes an updated version of `CleanupList.txt`, which is a nearly comprehensive list of all non SC4 files which may be in your plugins folder. Running this script to find and remove these files from plugins will result in a quicker loading time when playing the game - the few files in Plugins the game has to parse the quicker the game will load. Let me know if I am missing any extensions and I will add them to this file for future distributions.
 
 ## To Use
 First, select a script to run, and then run the script. The results of the script are shown in the output window. If there are files marked for removal after running the script, pressing the Move files button will move the designated files to a new folder located in the Simcity 4 directory adjacent to the Plugins folder in your user directory, i.e. `\Simcity 4\BSC_Cleanitol\...`. Each time files are moved a new directory will be created here of the date/time the script is run. Also included in each directory is an HTML file summarizing the actions taken and an `undo.bat` file which will copy these files back into their original location in the Plugins folder.
