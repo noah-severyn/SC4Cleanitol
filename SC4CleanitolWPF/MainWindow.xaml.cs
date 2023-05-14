@@ -28,11 +28,12 @@ namespace SC4CleanitolWPF {
         private int _countDepsFound;
         private int _countDepsMissing;
         private IEnumerable<string> _allFiles;
+        private IEnumerable<string> _allFileNames;
         private List<string> _allTGIs;
         private List<string> _filesToRemove;
 
-        private string _playerPluginsFolder = "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\";
-        private string _systemPluginsFolder = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins\\";
+        private string _playerPluginsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
+        private string _systemPluginsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
         private readonly Paragraph Log;
         private readonly FlowDocument Doc;
 
@@ -90,18 +91,23 @@ namespace SC4CleanitolWPF {
 
 
             _scriptRules = File.ReadAllLines(_scriptPath);
-            IEnumerable<string> allfiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
-            _allFiles = allfiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
+            _allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
+            _allFileNames = _allFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
             
             //Fill TGI list if required
             //Log.Inlines.Add(RunStyles.BlueStd("Scanning Plugins TGIs ...\r\n"));
             if (UpdateTGIdb) {
+                ScanTGIWindow scanWindow = new ScanTGIWindow();
+                scanWindow.Show();
+
                 foreach (string filepath in _allFiles) {
                     if (DBPFUtil.IsValidDBPF(filepath)) {
                         DBPFFile dbpf = new DBPFFile(filepath);
                         _allTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
                     }
                 }
+
+                scanWindow.Hide();
             }
             
             //Evaluate script and report results
@@ -157,29 +163,41 @@ namespace SC4CleanitolWPF {
                 case ScriptRule.RuleType.Dependency:
                     ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
 
-                    bool isMissing;
-                    if (rule.IsSearchItemTGI) {
-                        isMissing = !_allTGIs.Any(r => r.Contains(rule.SearchItem));
-                    } else {
-                        isMissing = !_allFiles.Any(r => r.Contains(rule.SearchItem));
+                    bool isConditionalFound = true;
+                    if (rule.ConditionalItem != "") {
+                        if (rule.IsConditionalItemTGI) {
+                            isConditionalFound = _allTGIs.Any(r => r.Contains(rule.ConditionalItem));
+                        } else {
+                            isConditionalFound = _allFiles.Any(r => r.Contains(rule.ConditionalItem));
+                        }
                     }
-
-                    //https://stackoverflow.com/questions/2288999/how-can-i-get-a-flowdocument-hyperlink-to-launch-browser-and-go-to-url-in-a-wpf
-                    if (isMissing) {
+                    
+                    bool isItemFound = false;
+                    if (isConditionalFound) {
+                        if (rule.IsSearchItemTGI) {
+                            isItemFound = _allTGIs.Any(r => r.Contains(rule.SearchItem));
+                        } else {
+                            isItemFound = _allFiles.Any(r => r.Contains(rule.SearchItem));
+                        }
+                    }
+                    
+                    if (isConditionalFound && !isItemFound) {
                         Log.Inlines.Add(RunStyles.RedMono("Missing: "));
                         Log.Inlines.Add(RunStyles.RedStd(rule.SearchItem));
                         Log.Inlines.Add(RunStyles.BlackStd(" is missing. Download from: "));
-                        Hyperlink link = new Hyperlink(new Run(rule.SourceName == "" ? rule.SourceURL : rule.SourceName));
-                        link.NavigateUri = new Uri(rule.SourceURL);
+
+                        //https://stackoverflow.com/questions/2288999/how-can-i-get-a-flowdocument-hyperlink-to-launch-browser-and-go-to-url-in-a-wpf
+                        Hyperlink link = new Hyperlink(new Run(rule.SourceName == "" ? rule.SourceURL : rule.SourceName)) {
+                            NavigateUri = new Uri(rule.SourceURL)
+                        };
                         //Hyperlink link = new Hyperlink(new Run("test link"));
                         //link.NavigateUri = new Uri("http://www.google.com");
                         link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                         Log.Inlines.Add(link);
                         Log.Inlines.Add(new Run("\r\n"));
-                    } else {
+                    } else if (isConditionalFound && isItemFound) {
                         Log.Inlines.Add(RunStyles.BlueStd(rule.SearchItem));
                         Log.Inlines.Add(RunStyles.BlackStd(" was located." + "\r\n"));
-
                     }
 
                     _countDepsScanned++;

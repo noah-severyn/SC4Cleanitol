@@ -13,8 +13,9 @@ namespace SC4CleanitolWPF {
         /// Blue porportionally spaced text.
         /// </summary>
         internal static Run BlueStd(string text) {
-            Run r = new Run(text);
-            r.Foreground = Brushes.Blue;
+            Run r = new Run(text) {
+                Foreground = Brushes.Blue
+            };
             return r;
         }
         /// <summary>
