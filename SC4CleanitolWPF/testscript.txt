@@ -40,3 +40,11 @@ JRJ_TC_Aesculus_01a-0x6534284a-0x0f55ca9c-0xb0f8ec8b.SC4Desc; http://sc4devotion
 >The first filename/TGI will show as a dependency if the second filename/TGI is present in plugins.
 Jigsaw 2010 tilesets2.dat ?? Jigsaw 2010 tilesets.dat; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
 Jigsaw 2010 tilesets.dat ?? Jigsaw 2010 tilesets2.dat; https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
+
+>Dependency=Filename - Condition=TGI
+Jigsaw 2010 tilesets.dat ?? 0x2026960B, 0x6A231EAA, 0x6BBBD875; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
+Jigsaw 2010 tilesets.dat2 ?? 0x2026960B, 0x6A231EAA, 0x12345678; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
+
+>Dependency=TGI - Condition=Filename
+0x2026960B, 0x6A231EAA, 0x6BBBD875 ?? Jigsaw 2010 tilesets.dat; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/
+0x2026960B, 0x6A231EAA, 0x6BBBD877 ?? Jigsaw 2010 tilesets3.dat; JIGSAW'S 'J-SPEC' 2010 MODERN TILESETS https://community.simtropolis.com/files/file/23723-jigsaws-j-spec-2010-modern-tilesets/

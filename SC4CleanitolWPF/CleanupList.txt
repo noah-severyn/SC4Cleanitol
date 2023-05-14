@@ -1,0 +1,29 @@
+>#Running revised cleanup list
+*.html
+*.htm
+*.jpeg
+*.jpg
+;Note an exception is hardcoded into the program for the five files called Background3D0.png through Background3D4.png which are used for the in-game grid (the one that appears in the background when you play city tiles)
+*.png
+*.txt
+*.sav
+*.gif
+thumbs.db
+*.doc
+*.docx
+*.xlsx
+*.xlsm
+*.rtf
+*.zip
+*.rar
+*.7z
+*.xml
+*.iit
+*.exe
+*.bak
+*.ico
+*.pdf
+*.sg
+*.tgi
+*.url
+*._Loose*
