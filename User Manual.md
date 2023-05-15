@@ -87,9 +87,9 @@ jes_AcmeBoilerFactory-0x5ad0e817_0x5283112c_0x30000.SC4Model ?? IRM W2W jes_Acme
 In the above example, the model file is only required if the descriptor file is present in plugins.
 
 TGIs and filenames *can* be intermixed. The following combinations are supported:
-| Dependency | Condition | Supported ✔❌ |
+| Dependency | Condition | Supported |
 | :---: | :---: | :---: |
 | Filename | Filename | ✔ |
-| Filename | TGI | ? |
-| TGI | Filename | ? |
+| Filename | TGI | ✔ |
+| TGI | Filename | ✔ |
 | TGI | TGI | ✔ |
