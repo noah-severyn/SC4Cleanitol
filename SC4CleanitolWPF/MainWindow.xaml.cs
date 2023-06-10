@@ -97,17 +97,10 @@ namespace SC4CleanitolWPF {
             //Fill TGI list if required
             //Log.Inlines.Add(RunStyles.BlueStd("Scanning Plugins TGIs ...\r\n"));
             if (UpdateTGIdb) {
-                ScanTGIWindow scanWindow = new ScanTGIWindow();
-                scanWindow.Show();
+                StatusBar.Visibility = Visibility.Visible;
+                _allTGIs = ProcessFiles(_allFiles);
 
-                foreach (string filepath in _allFiles) {
-                    if (DBPFUtil.IsValidDBPF(filepath)) {
-                        DBPFFile dbpf = new DBPFFile(filepath);
-                        _allTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
-                    }
-                }
-
-                scanWindow.Hide();
+                TGIsFoundLabel.Text = _allTGIs.Count.ToString("N0", new System.Globalization.NumberFormatInfo {NumberGroupSeparator = " "}) + " TGIs discovered";
             }
             
             //Evaluate script and report results
@@ -125,6 +118,37 @@ namespace SC4CleanitolWPF {
             Doc.Blocks.Add(Log);
             ScriptOutput.Document = Doc;
             UpdateTGIdb = false;
+        }
+
+        //https://www.codeproject.com/articles/38555/wpf-progressbar
+        //Create a Delegate that matches the Signature of the ProgressBar's SetValue method
+        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
+        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
+
+        public List<string> ProcessFiles(IEnumerable<string> listOfFiles) {
+            int totalfiles = listOfFiles.Count();
+            double filesScanned = 0;
+
+            FilesScannedProgress.Minimum = 0;
+            FilesScannedProgress.Maximum = totalfiles;
+            FilesScannedProgress.Value = 0;
+            FilesScannedLabel.Text = "0 / " + totalfiles;
+            List<string> listOfTGIs = new List<string>();
+
+            ProgressBarSetValueDelegate updatePBdelegate = new ProgressBarSetValueDelegate(FilesScannedProgress.SetValue);
+            TextBlockSetTextDelegate updateTBdelegate = new TextBlockSetTextDelegate(FilesScannedLabel.SetValue);
+
+            foreach (string filepath in listOfFiles) {
+                filesScanned++;
+                if (DBPFUtil.IsValidDBPF(filepath)) {
+                    DBPFFile dbpf = new DBPFFile(filepath);
+                    listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
+                }
+
+                Dispatcher.Invoke(updatePBdelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
+                Dispatcher.Invoke(updateTBdelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, "(" + filesScanned + " / " + totalfiles + ")"});
+            }
+            return listOfTGIs;
         }
 
 
@@ -267,6 +291,10 @@ namespace SC4CleanitolWPF {
             _countDepsMissing = 0;
             _countDepsScanned = 0;
             _filesToRemove.Clear();
+        }
+
+        private void OkButton_Click(object sender, RoutedEventArgs e) {
+            StatusBar.Visibility = Visibility.Collapsed;
         }
     }
 }

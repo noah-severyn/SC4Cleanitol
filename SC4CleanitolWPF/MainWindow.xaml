@@ -49,16 +49,54 @@
 					 ScrollViewer.VerticalScrollBarVisibility="Auto"
 					 ScrollViewer.HorizontalScrollBarVisibility="Auto">
 		</RichTextBox>
-		
+
+		<StatusBar x:Name="StatusBar"
+				   Grid.Row="1"
+				   Height="25"
+				   VerticalAlignment="Bottom">
+			<StatusBarItem>
+				<TextBlock
+					Width="100">
+					Scanning Files . . .
+				</TextBlock>
+			</StatusBarItem>
+			<Separator />
+			<StatusBarItem>
+				<ProgressBar  x:Name="FilesScannedProgress"
+							  Width="100"
+							  Height="15"
+							  Minimum="0" />
+			</StatusBarItem>
+			<StatusBarItem>
+				<TextBlock x:Name="FilesScannedLabel"
+						   Text="(##### / #####)"
+						   Width="70"
+						   TextAlignment="Center"/>
+			</StatusBarItem>
+			<Separator />
+			<StatusBarItem>
+				<TextBlock x:Name="TGIsFoundLabel"
+						   Text="# TGIs discovered"
+						   Width="150" />
+			</StatusBarItem>
+			<Separator />
+			<StatusBarItem>
+				<Button x:Name="OkButton"
+						Content="Ok"
+						Width="60"
+						Click="OkButton_Click" />
+			</StatusBarItem>
+		</StatusBar>
+
 		<!--Row 2-->
 		<Button x:Name="RunScript"
-				Grid.Row="2"
+				Grid.Row="3"
 				Height="24"
 				Width="80"
 				Margin="-200,0,0,0"
 				Click="RunScript_Click">Run Script</Button>
 		<Button x:Name="BackupFiles"
-				Grid.Row="2"
+				Grid.Row="3"
 				Height="24"
 				Width="80"
 				HorizontalAlignment="Center"
@@ -66,23 +104,24 @@
 				Click="BackupFiles_Click"
 				Content="Move files" />
 		<Button Name="Quit"
-				Grid.Row="2"
+				Grid.Row="3"
 				Height="24"
 				Width="80"
 				Margin="200,0,0,0"
 				Click="Quit_Click">Quit</Button>
 		<CheckBox x:Name="WordWrapCheckbox"
-				  Grid.Row="2"
+				  Grid.Row="3"
 				  Content="Word Wrap"
 				  HorizontalAlignment="Left"
 				  Margin="14,5,0,0"
 				  VerticalAlignment="Top" />
 		<CheckBox x:Name="UpdateTGICheckbox"
-				  Grid.Row="2"
+				  Grid.Row="3"
 				  Content="Update TGI Database"
 				  HorizontalAlignment="Left"
 				  Margin="14,25,0,0"
 				  VerticalAlignment="Top"
 				  IsChecked="{Binding UpdateTGIdb}" />
+		
 	</Grid>
 </Window>
