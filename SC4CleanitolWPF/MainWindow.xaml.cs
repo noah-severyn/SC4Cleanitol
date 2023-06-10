@@ -78,6 +78,11 @@ namespace SC4CleanitolWPF {
 
 
 
+        //https://www.codeproject.com/articles/38555/wpf-progressbar
+        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
+        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
+
+
         /// <summary>
         /// Read and execute the script contents.
         /// </summary>
@@ -86,22 +91,39 @@ namespace SC4CleanitolWPF {
         private void RunScript_Click(object sender, RoutedEventArgs e) {
             if (_scriptPath is null) return; 
             ResetTextBox();
+
             //Fill File List
-            //Log.Inlines.Add(RunStyles.BlueStd("Scanning Plugins files ...\r\n"));
-
-
-
             _scriptRules = File.ReadAllLines(_scriptPath);
             _allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
             _allFileNames = _allFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
             
             //Fill TGI list if required
-            //Log.Inlines.Add(RunStyles.BlueStd("Scanning Plugins TGIs ...\r\n"));
             if (UpdateTGIdb) {
                 StatusBar.Visibility = Visibility.Visible;
-                _allTGIs = ProcessFiles(_allFiles);
+                int totalfiles = _allFiles.Count();
+                double filesScanned = 0;
 
-                //TGICountLabel.Text = _allTGIs.Count.ToString("N0") + " TGIs discovered";
+                FileProgressBar.Minimum = 0;
+                FileProgressBar.Maximum = totalfiles;
+                FileProgressBar.Value = 0;
+                FileProgressLabel.Text = "0 / " + totalfiles;
+                List<string> listOfTGIs = new List<string>();
+
+                ProgressBarSetValueDelegate updateProgressDelegate = new ProgressBarSetValueDelegate(FileProgressBar.SetValue);
+                TextBlockSetTextDelegate updateFileCountDelegate = new TextBlockSetTextDelegate(FileProgressLabel.SetValue);
+                TextBlockSetTextDelegate updateTGICountDelegate = new TextBlockSetTextDelegate(TGICountLabel.SetValue);
+
+                foreach (string filepath in _allFiles) {
+                    filesScanned++;
+                    if (DBPFUtil.IsValidDBPF(filepath)) {
+                        DBPFFile dbpf = new DBPFFile(filepath);
+                        listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
+                    }
+
+                    Dispatcher.Invoke(updateProgressDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
+                    Dispatcher.Invoke(updateFileCountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, filesScanned + " / " + totalfiles });
+                    Dispatcher.Invoke(updateTGICountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, listOfTGIs.Count.ToString("N0") + " TGIs discovered" });
+                }
                 StatusLabel.Text = "Scan complete";
             }
             
@@ -120,39 +142,7 @@ namespace SC4CleanitolWPF {
             Doc.Blocks.Add(Log);
             ScriptOutput.Document = Doc;
             UpdateTGIdb = false;
-        }
-
-        //https://www.codeproject.com/articles/38555/wpf-progressbar
-        //Create a Delegate that matches the Signature of the ProgressBar's SetValue method
-        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
-        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
-
-        public List<string> ProcessFiles(IEnumerable<string> listOfFiles) {
-            int totalfiles = listOfFiles.Count();
-            double filesScanned = 0;
-
-            FileProgressBar.Minimum = 0;
-            FileProgressBar.Maximum = totalfiles;
-            FileProgressBar.Value = 0;
-            FileProgressLabel.Text = "0 / " + totalfiles;
-            List<string> listOfTGIs = new List<string>();
-
-            ProgressBarSetValueDelegate updateProgressDelegate = new ProgressBarSetValueDelegate(FileProgressBar.SetValue);
-            TextBlockSetTextDelegate updateFileCountDelegate = new TextBlockSetTextDelegate(FileProgressLabel.SetValue);
-            TextBlockSetTextDelegate updateTGICountDelegate = new TextBlockSetTextDelegate(TGICountLabel.SetValue);
-
-            foreach (string filepath in listOfFiles) {
-                filesScanned++;
-                if (DBPFUtil.IsValidDBPF(filepath)) {
-                    DBPFFile dbpf = new DBPFFile(filepath);
-                    listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
-                }
-
-                Dispatcher.Invoke(updateProgressDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
-                Dispatcher.Invoke(updateFileCountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, filesScanned + " / " + totalfiles });
-                Dispatcher.Invoke(updateTGICountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, listOfTGIs.Count.ToString("N0") + " TGIs discovered" });
-            }
-            return listOfTGIs;
+            UpdateTGICheckbox.IsChecked = false;
         }
 
 
@@ -215,11 +205,8 @@ namespace SC4CleanitolWPF {
                         Log.Inlines.Add(RunStyles.BlackStd(" is missing. Download from: "));
 
                         //https://stackoverflow.com/questions/2288999/how-can-i-get-a-flowdocument-hyperlink-to-launch-browser-and-go-to-url-in-a-wpf
-                        Hyperlink link = new Hyperlink(new Run(rule.SourceName == "" ? rule.SourceURL : rule.SourceName)) {
-                            NavigateUri = new Uri(rule.SourceURL)
-                        };
-                        //Hyperlink link = new Hyperlink(new Run("test link"));
-                        //link.NavigateUri = new Uri("http://www.google.com");
+                        Hyperlink link = new Hyperlink(new Run(rule.SourceName == "" ? rule.SourceURL : rule.SourceName));
+                        link.NavigateUri = new Uri(rule.SourceURL);
                         link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                         Log.Inlines.Add(link);
                         Log.Inlines.Add(new Run("\r\n"));
@@ -248,8 +235,15 @@ namespace SC4CleanitolWPF {
                     break;
             }
         }
+        /// <summary>
+        /// Helper function to handle the hyperlink request.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
-            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+            var sinfo = new ProcessStartInfo(e.Uri.AbsoluteUri);
+            sinfo.UseShellExecute = true;
+            Process.Start(sinfo);
             e.Handled = true;
         }
 
@@ -280,6 +274,8 @@ namespace SC4CleanitolWPF {
             summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"),summarytemplate);
         }
+
+
 
         private void Quit_Click(object sender, RoutedEventArgs e) {
             Application.Current.Shutdown();
