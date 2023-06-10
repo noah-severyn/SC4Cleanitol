@@ -55,29 +55,28 @@
 				   Height="25"
 				   VerticalAlignment="Bottom">
 			<StatusBarItem>
-				<TextBlock
-					Width="100">
-					Scanning Files . . .
-				</TextBlock>
+				<TextBlock x:Name="StatusLabel"
+						   Width="100"
+						   Text="Scanning Files ..." />
 			</StatusBarItem>
 			<Separator />
 			<StatusBarItem>
-				<ProgressBar  x:Name="FilesScannedProgress"
+				<ProgressBar  x:Name="FileProgressBar"
 							  Width="100"
 							  Height="15"
 							  Minimum="0" />
 			</StatusBarItem>
 			<StatusBarItem>
-				<TextBlock x:Name="FilesScannedLabel"
-						   Text="(##### / #####)"
+				<TextBlock x:Name="FileProgressLabel"
+						   Text="#### / ####"
 						   Width="70"
 						   TextAlignment="Center"/>
 			</StatusBarItem>
 			<Separator />
 			<StatusBarItem>
-				<TextBlock x:Name="TGIsFoundLabel"
+				<TextBlock x:Name="TGICountLabel"
 						   Text="# TGIs discovered"
-						   Width="150" />
+						   Width="140" />
 			</StatusBarItem>
 			<Separator />
 			<StatusBarItem>

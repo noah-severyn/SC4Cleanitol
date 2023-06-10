@@ -56,6 +56,7 @@ namespace SC4CleanitolWPF {
 
             InitializeComponent();
             UpdateTGICheckbox.DataContext = this;
+            StatusBar.Visibility = Visibility.Collapsed;
         }
 
 
@@ -100,7 +101,8 @@ namespace SC4CleanitolWPF {
                 StatusBar.Visibility = Visibility.Visible;
                 _allTGIs = ProcessFiles(_allFiles);
 
-                TGIsFoundLabel.Text = _allTGIs.Count.ToString("N0", new System.Globalization.NumberFormatInfo {NumberGroupSeparator = " "}) + " TGIs discovered";
+                //TGICountLabel.Text = _allTGIs.Count.ToString("N0") + " TGIs discovered";
+                StatusLabel.Text = "Scan complete";
             }
             
             //Evaluate script and report results
@@ -129,14 +131,15 @@ namespace SC4CleanitolWPF {
             int totalfiles = listOfFiles.Count();
             double filesScanned = 0;
 
-            FilesScannedProgress.Minimum = 0;
-            FilesScannedProgress.Maximum = totalfiles;
-            FilesScannedProgress.Value = 0;
-            FilesScannedLabel.Text = "0 / " + totalfiles;
+            FileProgressBar.Minimum = 0;
+            FileProgressBar.Maximum = totalfiles;
+            FileProgressBar.Value = 0;
+            FileProgressLabel.Text = "0 / " + totalfiles;
             List<string> listOfTGIs = new List<string>();
 
-            ProgressBarSetValueDelegate updatePBdelegate = new ProgressBarSetValueDelegate(FilesScannedProgress.SetValue);
-            TextBlockSetTextDelegate updateTBdelegate = new TextBlockSetTextDelegate(FilesScannedLabel.SetValue);
+            ProgressBarSetValueDelegate updateProgressDelegate = new ProgressBarSetValueDelegate(FileProgressBar.SetValue);
+            TextBlockSetTextDelegate updateFileCountDelegate = new TextBlockSetTextDelegate(FileProgressLabel.SetValue);
+            TextBlockSetTextDelegate updateTGICountDelegate = new TextBlockSetTextDelegate(TGICountLabel.SetValue);
 
             foreach (string filepath in listOfFiles) {
                 filesScanned++;
@@ -145,8 +148,9 @@ namespace SC4CleanitolWPF {
                     listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
                 }
 
-                Dispatcher.Invoke(updatePBdelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
-                Dispatcher.Invoke(updateTBdelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, "(" + filesScanned + " / " + totalfiles + ")"});
+                Dispatcher.Invoke(updateProgressDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
+                Dispatcher.Invoke(updateFileCountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, filesScanned + " / " + totalfiles });
+                Dispatcher.Invoke(updateTGICountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, listOfTGIs.Count.ToString("N0") + " TGIs discovered" });
             }
             return listOfTGIs;
         }
