@@ -20,7 +20,7 @@ namespace SC4CleanitolWPF {
             /// </summary>
             public string SearchItem { get; set; }
             /// <summary>
-            /// Search for the SearchItem if this filename or TGI is present.
+            /// Scan for the SearchItem if this item is present. Can be a filename or TGI.
             /// </summary>
             public string ConditionalItem { get; set; }
             /// <summary>
@@ -60,17 +60,31 @@ namespace SC4CleanitolWPF {
                 }
 
                 IsSearchItemTGI = SearchItem.Substring(0, 2) == "0x";
-                
-
-                //if (httpLocn >= semicolonLocn + 2) { //if there's no source file name specified.
-                //    SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2).Trim();
-                //} else {
-                //    SourceName = string.Empty;
-                //}
                 SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2).Trim();
                 SourceURL = ruleText.Substring(httpLocn).Trim();
+
+                CleanTGIFormat();
+            }
+
+            /// <summary>
+            /// The script can allow for any separator between TGI numbers, but csDBPF uses comma space ", ". Automatically reformat the script format behind the scenes to allow for equality comparison.
+            /// </summary>
+            private void CleanTGIFormat() {
+                int second0x;
+                string separator;
+                if (IsSearchItemTGI) {
+                    second0x = SearchItem.IndexOf("0x", 10);
+                    separator = SearchItem.Substring(10, second0x - 10);
+                    SearchItem = SearchItem.Replace(separator, ", ");
+                }
+                if (IsConditionalItemTGI) {
+                    second0x = ConditionalItem.IndexOf("0x", 10);
+                    separator = ConditionalItem.Substring(10, second0x - 10);
+                    ConditionalItem = ConditionalItem.Replace(separator, ", ");
+                }
             }
         }
+
 
 
         /// <summary>
