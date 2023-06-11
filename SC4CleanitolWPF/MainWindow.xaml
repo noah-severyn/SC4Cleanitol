@@ -57,7 +57,7 @@
 				   VerticalAlignment="Bottom">
 			<StatusBarItem>
 				<TextBlock x:Name="StatusLabel"
-						   Width="100"
+						   Width="90"
 						   Text="Scanning Files ..." />
 			</StatusBarItem>
 			<Separator />

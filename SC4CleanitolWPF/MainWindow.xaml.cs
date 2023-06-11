@@ -27,9 +27,9 @@ namespace SC4CleanitolWPF {
         private int _countDepsScanned;
         private int _countDepsFound;
         private int _countDepsMissing;
-        private IEnumerable<string> _allFiles;
-        private IEnumerable<string> _allFileNames;
-        private List<string> _allTGIs;
+        private IEnumerable<string> _listOfFiles;
+        private IEnumerable<string> _listOfFileNames;
+        private List<string> _listOfTGIs;
         private List<string> _filesToRemove;
 
         private string _playerPluginsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
@@ -37,19 +37,18 @@ namespace SC4CleanitolWPF {
         private readonly Paragraph Log;
         private readonly FlowDocument Doc;
 
-        //Output setting
-        //private bool _isWrapped = false;
-        //private bool _isVerbose;
+        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
+        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
+
+        //private bool _isWrapped = false; //TODO - option to word wrap text
         public bool UpdateTGIdb { get; set; } = true;
 
-
-        //TODO - verbose & non verbose outputs
         //TODO - option for output of script window to text file.
 
 
         public MainWindow() {
             _filesToRemove = new List<string>();
-            _allTGIs = new List<string>();
+            _listOfTGIs = new List<string>();
             Doc = new FlowDocument();
             Log = new Paragraph();
             //Doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
@@ -77,12 +76,6 @@ namespace SC4CleanitolWPF {
         }
 
 
-
-        //https://www.codeproject.com/articles/38555/wpf-progressbar
-        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
-        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
-
-
         /// <summary>
         /// Read and execute the script contents.
         /// </summary>
@@ -94,37 +87,38 @@ namespace SC4CleanitolWPF {
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath);
-            _allFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
-            _allFileNames = _allFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
+            _listOfFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
+            _listOfFileNames = _listOfFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
             
             //Fill TGI list if required
             if (UpdateTGIdb) {
                 StatusBar.Visibility = Visibility.Visible;
-                int totalfiles = _allFiles.Count();
+                int totalfiles = _listOfFiles.Count();
                 double filesScanned = 0;
 
                 FileProgressBar.Minimum = 0;
                 FileProgressBar.Maximum = totalfiles;
                 FileProgressBar.Value = 0;
                 FileProgressLabel.Text = "0 / " + totalfiles;
-                List<string> listOfTGIs = new List<string>();
 
                 ProgressBarSetValueDelegate updateProgressDelegate = new ProgressBarSetValueDelegate(FileProgressBar.SetValue);
                 TextBlockSetTextDelegate updateFileCountDelegate = new TextBlockSetTextDelegate(FileProgressLabel.SetValue);
                 TextBlockSetTextDelegate updateTGICountDelegate = new TextBlockSetTextDelegate(TGICountLabel.SetValue);
 
-                foreach (string filepath in _allFiles) {
+                foreach (string filepath in _listOfFiles) {
                     filesScanned++;
                     if (DBPFUtil.IsValidDBPF(filepath)) {
                         DBPFFile dbpf = new DBPFFile(filepath);
-                        listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
+                        _listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
                     }
 
                     Dispatcher.Invoke(updateProgressDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
                     Dispatcher.Invoke(updateFileCountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, filesScanned + " / " + totalfiles });
-                    Dispatcher.Invoke(updateTGICountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, listOfTGIs.Count.ToString("N0") + " TGIs discovered" });
+                    Dispatcher.Invoke(updateTGICountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, _listOfTGIs.Count.ToString("N0") + " TGIs discovered" });
                 }
                 StatusLabel.Text = "Scan complete";
+
+                //TODO - write TGI list to DB for local storage?
             }
             
             //Evaluate script and report results
@@ -154,6 +148,7 @@ namespace SC4CleanitolWPF {
         private void EvaluateRule(string ruleText) {
             ScriptRule.RuleType result = ScriptRule.ParseRuleType(ruleText);
             switch (result) {
+
                 case ScriptRule.RuleType.Removal:
                     IEnumerable<string> matchingFiles = Directory.EnumerateFiles(_playerPluginsFolder, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any()) {
@@ -181,21 +176,21 @@ namespace SC4CleanitolWPF {
                 case ScriptRule.RuleType.Dependency:
                     ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
 
-                    bool isConditionalFound = true;
+                     bool isConditionalFound = true;
                     if (rule.ConditionalItem != "") {
                         if (rule.IsConditionalItemTGI) {
-                            isConditionalFound = _allTGIs.Any(r => r.Contains(rule.ConditionalItem));
+                            isConditionalFound = _listOfTGIs.Any(tgi => tgi.Contains(rule.ConditionalItem));
                         } else {
-                            isConditionalFound = _allFiles.Any(r => r.Contains(rule.ConditionalItem));
+                            isConditionalFound = _listOfFiles.Any(tgi => tgi.Contains(rule.ConditionalItem));
                         }
                     }
                     
                     bool isItemFound = false;
                     if (isConditionalFound) {
                         if (rule.IsSearchItemTGI) {
-                            isItemFound = _allTGIs.Any(r => r.Contains(rule.SearchItem));
+                            isItemFound = _listOfTGIs.Any(r => r.Contains(rule.SearchItem));
                         } else {
-                            isItemFound = _allFiles.Any(r => r.Contains(rule.SearchItem));
+                            isItemFound = _listOfFiles.Any(r => r.Contains(rule.SearchItem));
                         }
                     }
                     
@@ -204,15 +199,16 @@ namespace SC4CleanitolWPF {
                         Log.Inlines.Add(RunStyles.RedStd(rule.SearchItem));
                         Log.Inlines.Add(RunStyles.BlackStd(" is missing. Download from: "));
 
-                        //https://stackoverflow.com/questions/2288999/how-can-i-get-a-flowdocument-hyperlink-to-launch-browser-and-go-to-url-in-a-wpf
                         Hyperlink link = new Hyperlink(new Run(rule.SourceName == "" ? rule.SourceURL : rule.SourceName));
                         link.NavigateUri = new Uri(rule.SourceURL);
                         link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                         Log.Inlines.Add(link);
                         Log.Inlines.Add(new Run("\r\n"));
+                        _countDepsMissing++;
                     } else if (isConditionalFound && isItemFound) {
                         Log.Inlines.Add(RunStyles.BlueStd(rule.SearchItem));
                         Log.Inlines.Add(RunStyles.BlackStd(" was located." + "\r\n"));
+                        _countDepsFound++;
                     }
 
                     _countDepsScanned++;
