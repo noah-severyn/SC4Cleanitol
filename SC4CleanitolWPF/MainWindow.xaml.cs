@@ -113,17 +113,17 @@ namespace SC4CleanitolWPF {
                     }
 
                     Dispatcher.Invoke(updateProgressDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
-                    Dispatcher.Invoke(updateFileCountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, filesScanned + " / " + totalfiles });
+                    Dispatcher.Invoke(updateFileCountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, filesScanned + " / " + totalfiles + " files"});
                     Dispatcher.Invoke(updateTGICountDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { TextBlock.TextProperty, _listOfTGIs.Count.ToString("N0") + " TGIs discovered" });
                 }
                 StatusLabel.Text = "Scan complete";
 
                 //TODO - write TGI list to DB for local storage?
             }
-            
+
             //Evaluate script and report results
             Log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
-            Log.Inlines.Add(RunStyles.BlackMono("            R E P O R T            \r\n"));
+            Log.Inlines.Add(RunStyles.BlackMono("    R E P O R T   S U M M A R Y    \r\n"));
             Log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
             for (int idx = 0; idx < _scriptRules.Length; idx++) {
                 EvaluateRule(_scriptRules[idx]);

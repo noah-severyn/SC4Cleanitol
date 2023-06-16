@@ -70,7 +70,7 @@
 			<StatusBarItem>
 				<TextBlock x:Name="FileProgressLabel"
 						   Text="#### / ####"
-						   Width="80"
+						   Width="100"
 						   TextAlignment="Center"/>
 			</StatusBarItem>
 			<Separator />
