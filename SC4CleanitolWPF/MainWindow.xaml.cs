@@ -40,10 +40,8 @@ namespace SC4CleanitolWPF {
         private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
         private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
 
-        //private bool _isWrapped = false; //TODO - option to word wrap text
         public bool UpdateTGIdb { get; set; } = true;
-
-        //TODO - option for output of script window to text file.
+        public bool VerboseOutput { get; set; } = false;
 
 
         public MainWindow() {
@@ -55,6 +53,7 @@ namespace SC4CleanitolWPF {
 
             InitializeComponent();
             UpdateTGICheckbox.DataContext = this;
+            VerboseOutputCheckbox.DataContext = this;
             StatusBar.Visibility = Visibility.Collapsed;
         }
 
@@ -95,6 +94,7 @@ namespace SC4CleanitolWPF {
                 StatusBar.Visibility = Visibility.Visible;
                 int totalfiles = _listOfFiles.Count();
                 double filesScanned = 0;
+                _listOfTGIs.Clear();
 
                 FileProgressBar.Minimum = 0;
                 FileProgressBar.Maximum = totalfiles;
@@ -151,7 +151,7 @@ namespace SC4CleanitolWPF {
 
                 case ScriptRule.RuleType.Removal:
                     IEnumerable<string> matchingFiles = Directory.EnumerateFiles(_playerPluginsFolder, ruleText, SearchOption.AllDirectories);
-                    if (!matchingFiles.Any()) {
+                    if (!matchingFiles.Any() && VerboseOutput) {
                         Log.Inlines.Add(RunStyles.BlueStd(ruleText));
                         Log.Inlines.Add(RunStyles.BlackStd(" not present." + "\r\n"));
                     } else {
@@ -205,7 +205,7 @@ namespace SC4CleanitolWPF {
                         Log.Inlines.Add(link);
                         Log.Inlines.Add(new Run("\r\n"));
                         _countDepsMissing++;
-                    } else if (isConditionalFound && isItemFound) {
+                    } else if (isConditionalFound && isItemFound && VerboseOutput) {
                         Log.Inlines.Add(RunStyles.BlueStd(rule.SearchItem));
                         Log.Inlines.Add(RunStyles.BlackStd(" was located." + "\r\n"));
                         _countDepsFound++;
