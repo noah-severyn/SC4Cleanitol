@@ -56,7 +56,7 @@ namespace SC4CleanitolWPF {
             StatusBar.Visibility = Visibility.Collapsed;
 
             //Set Properties
-            if (!Properties.Settings.Default.PluginsDirectory.Equals("")) {
+            if (!Properties.Settings.Default.UserPluginsDirectory.Equals("")) {
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
                 Properties.Settings.Default.Save();
             }
@@ -91,7 +91,7 @@ namespace SC4CleanitolWPF {
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath);
-            _listOfFiles = Directory.EnumerateFiles(Properties.Settings.Default.PluginsDirectory, "*", SearchOption.AllDirectories);
+            _listOfFiles = Directory.EnumerateFiles(Properties.Settings.Default.UserPluginsDirectory, "*", SearchOption.AllDirectories);
             _listOfFileNames = _listOfFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
             
             //Fill TGI list if required
@@ -155,7 +155,7 @@ namespace SC4CleanitolWPF {
             switch (result) {
 
                 case ScriptRule.RuleType.Removal:
-                    IEnumerable<string> matchingFiles = Directory.EnumerateFiles(Properties.Settings.Default.PluginsDirectory, ruleText, SearchOption.AllDirectories);
+                    IEnumerable<string> matchingFiles = Directory.EnumerateFiles(Properties.Settings.Default.UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any() && VerboseOutput) {
                         Log.Inlines.Add(RunStyles.BlueStd(ruleText));
                         Log.Inlines.Add(RunStyles.BlackStd(" not present." + "\r\n"));

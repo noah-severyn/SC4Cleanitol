@@ -21,27 +21,25 @@ namespace SC4CleanitolWPF {
     public partial class Preferences : Window {
         public Preferences() {
             InitializeComponent();
-            PluginsDirectory.Text = Properties.Settings.Default.PluginsDirectory;
+            UserPluginsDirectory.Text = Properties.Settings.Default.UserPluginsDirectory;
+            SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
             LanguageChoice.Text = Properties.Settings.Default.Language;
-        }
-
-        private void Preferences_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            
         }
 
         private void ChooseFolder_Click(object sender, RoutedEventArgs e) {
             CommonOpenFileDialog dialog = new CommonOpenFileDialog {
-                InitialDirectory = Properties.Settings.Default.PluginsDirectory,
+                InitialDirectory = Properties.Settings.Default.UserPluginsDirectory,
                 IsFolderPicker = true
             };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
-                PluginsDirectory.Text = dialog.FileName;
+                UserPluginsDirectory.Text = dialog.FileName;
             }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            Properties.Settings.Default.PluginsDirectory = PluginsDirectory.Text;
-            Properties.Settings.Default.Language = LanguageChoice.SelectedItem.ToString();
+            Properties.Settings.Default.UserPluginsDirectory = UserPluginsDirectory.Text;
+            Properties.Settings.Default.SystemPluginsDirectory = SystemPluginsDirectory.Text;
+            //Properties.Settings.Default.Language = LanguageChoice.SelectedItem.ToString();
             Properties.Settings.Default.Save();
         }
     }
