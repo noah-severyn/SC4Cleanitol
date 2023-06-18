@@ -1,0 +1,82 @@
+﻿<Window x:Class="SC4CleanitolWPF.Preferences"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:SC4CleanitolWPF"
+		mc:Ignorable="d"
+		Title="Preferences"
+		Height="250"
+		Width="550"
+		Closing="Window_Closing">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="30" />
+			<RowDefinition Height="30" />
+			<RowDefinition Height="30" />
+		</Grid.RowDefinitions>
+
+		<!-- Grid Row 0 : User Plugins -->
+		<TextBlock x:Name="PluginsDirectoryLabel"
+				   Grid.Row="0"
+				   HorizontalAlignment="Left"
+				   Margin="10,10,0,0"
+				   TextWrapping="Wrap"
+				   Text="Plugins Directory"
+				   VerticalAlignment="Top" />
+		<TextBox x:Name="PluginsDirectory"
+				 Grid.Row="0"
+				 Margin="105,10,115,0"
+				 Text="TextBox"
+				 VerticalAlignment="Top"
+				 TextWrapping="NoWrap"/>
+		<Button x:Name="ChooseFolder"
+				Grid.Row="0"
+				Content="Choose Folder"
+				HorizontalAlignment="Right"
+				Margin="0,9,10,0"
+				VerticalAlignment="Top"
+				Width="100"
+				Click="ChooseFolder_Click" />
+
+		<!-- Grid Row 1 : System Plugins -->
+		<TextBlock x:Name="SystemPluginsDirectoryLabel"
+				   Grid.Row="1"
+				   HorizontalAlignment="Left"
+				   Margin="10,10,0,0"
+				   TextWrapping="Wrap"
+				   Text="Plugins Directory"
+				   VerticalAlignment="Top" />
+		<TextBox x:Name="SystemPluginsDirectory"
+				 Grid.Row="1"
+				 Margin="105,10,115,0"
+				 Text="TextBox"
+				 VerticalAlignment="Top"
+				 TextWrapping="NoWrap" />
+		<Button x:Name="SystemChooseFolder"
+				Grid.Row="1"
+				Content="Choose Folder"
+				HorizontalAlignment="Right"
+				Margin="0,9,10,0"
+				VerticalAlignment="Top"
+				Width="100"
+				Click="ChooseFolder_Click" />
+
+		<!-- Grid Row 2 : Language -->
+		<TextBlock x:Name="LanguageLabel"
+				   Grid.Row="2"
+				   HorizontalAlignment="Left"
+				   Margin="10,36,0,0"
+				   TextWrapping="Wrap"
+				   Text="Language"
+				   VerticalAlignment="Top" />
+		<ComboBox x:Name="LanguageChoice"
+				  Grid.Row="2"
+				  HorizontalAlignment="Left"
+				  Margin="105,33,0,0"
+				  VerticalAlignment="Top"
+				  Width="120">
+			<ComboBoxItem IsSelected="True">English</ComboBoxItem>
+		</ComboBox>
+	</Grid>
+</Window>

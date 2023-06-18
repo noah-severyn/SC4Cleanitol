@@ -32,7 +32,6 @@ namespace SC4CleanitolWPF {
         private List<string> _listOfTGIs;
         private List<string> _filesToRemove;
 
-        private string _playerPluginsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
         private string _systemPluginsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
         private readonly Paragraph Log;
         private readonly FlowDocument Doc;
@@ -55,6 +54,12 @@ namespace SC4CleanitolWPF {
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
             StatusBar.Visibility = Visibility.Collapsed;
+
+            //Set Properties
+            if (!Properties.Settings.Default.PluginsDirectory.Equals("")) {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
+                Properties.Settings.Default.Save();
+            }
         }
 
 
@@ -86,7 +91,7 @@ namespace SC4CleanitolWPF {
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath);
-            _listOfFiles = Directory.EnumerateFiles(_playerPluginsFolder, "*", SearchOption.AllDirectories);
+            _listOfFiles = Directory.EnumerateFiles(Properties.Settings.Default.PluginsDirectory, "*", SearchOption.AllDirectories);
             _listOfFileNames = _listOfFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
             
             //Fill TGI list if required
@@ -150,7 +155,7 @@ namespace SC4CleanitolWPF {
             switch (result) {
 
                 case ScriptRule.RuleType.Removal:
-                    IEnumerable<string> matchingFiles = Directory.EnumerateFiles(_playerPluginsFolder, ruleText, SearchOption.AllDirectories);
+                    IEnumerable<string> matchingFiles = Directory.EnumerateFiles(Properties.Settings.Default.PluginsDirectory, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any() && VerboseOutput) {
                         Log.Inlines.Add(RunStyles.BlueStd(ruleText));
                         Log.Inlines.Add(RunStyles.BlackStd(" not present." + "\r\n"));
@@ -291,6 +296,11 @@ namespace SC4CleanitolWPF {
 
         private void OkButton_Click(object sender, RoutedEventArgs e) {
             StatusBar.Visibility = Visibility.Collapsed;
+        }
+
+        private void Settings_Click(object sender, RoutedEventArgs e) {
+            Preferences p = new Preferences();
+            p.Show();
         }
     }
 }
