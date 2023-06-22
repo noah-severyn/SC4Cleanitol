@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using Microsoft.Win32;
 using csDBPF;
+using Options = SC4CleanitolWPF.Properties.Settings;
 
 namespace SC4CleanitolWPF {
     /// <summary>
@@ -32,15 +33,13 @@ namespace SC4CleanitolWPF {
         private List<string> _listOfTGIs;
         private List<string> _filesToRemove;
 
-        private string _systemPluginsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
         private readonly Paragraph Log;
         private readonly FlowDocument Doc;
+        public bool UpdateTGIdb { get; set; } = true;
+        public bool VerboseOutput { get; set; } = false;
 
         private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
         private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
-
-        public bool UpdateTGIdb { get; set; } = true;
-        public bool VerboseOutput { get; set; } = false;
 
 
         public MainWindow() {
@@ -56,9 +55,18 @@ namespace SC4CleanitolWPF {
             StatusBar.Visibility = Visibility.Collapsed;
 
             //Set Properties
-            if (!Properties.Settings.Default.UserPluginsDirectory.Equals("")) {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
-                Properties.Settings.Default.Save();
+            if (!Options.Default.UserPluginsDirectory.Equals("")) {
+                Options.Default.UserPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
+                Options.Default.Save();
+            }
+            if (!Options.Default.SystemPluginsDirectory.Equals("")) {
+                string steamDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
+                if (Directory.Exists(steamDir)) {
+                    Options.Default.SystemPluginsDirectory = steamDir;
+                } else {
+                    Options.Default.SystemPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
+                }
+                Options.Default.Save();
             }
         }
 
@@ -91,7 +99,10 @@ namespace SC4CleanitolWPF {
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath);
-            _listOfFiles = Directory.EnumerateFiles(Properties.Settings.Default.UserPluginsDirectory, "*", SearchOption.AllDirectories);
+            _listOfFiles = Directory.EnumerateFiles(Options.Default.UserPluginsDirectory, "*", SearchOption.AllDirectories);
+            if (Options.Default.ScanSystemPlugins) {
+                _listOfFiles = _listOfFiles.Concat(Directory.EnumerateFiles(Options.Default.SystemPluginsDirectory));
+            }
             _listOfFileNames = _listOfFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
             
             //Fill TGI list if required
@@ -155,7 +166,7 @@ namespace SC4CleanitolWPF {
             switch (result) {
 
                 case ScriptRule.RuleType.Removal:
-                    IEnumerable<string> matchingFiles = Directory.EnumerateFiles(Properties.Settings.Default.UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
+                    IEnumerable<string> matchingFiles = Directory.EnumerateFiles(Options.Default.UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any() && VerboseOutput) {
                         Log.Inlines.Add(RunStyles.BlueStd(ruleText));
                         Log.Inlines.Add(RunStyles.BlackStd(" not present." + "\r\n"));
@@ -222,12 +233,12 @@ namespace SC4CleanitolWPF {
 
                 case ScriptRule.RuleType.UserCommentHeading:
                     Log.Inlines.Add(new Run("\r\n"));
-                    Log.Inlines.Add(RunStyles.BlackHeading(ruleText.Substring(2) + "\r\n"));
+                    Log.Inlines.Add(RunStyles.BlackHeading(string.Concat(ruleText.AsSpan(2), "\r\n")));
                     break;
 
 
                 case ScriptRule.RuleType.UserComment:
-                    Log.Inlines.Add(RunStyles.GreenStd(ruleText.Substring(1) + "\r\n"));
+                    Log.Inlines.Add(RunStyles.GreenStd(string.Concat(ruleText.AsSpan(1), "\r\n")));
                     break;
 
                 

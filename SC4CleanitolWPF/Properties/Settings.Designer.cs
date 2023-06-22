@@ -58,5 +58,17 @@ namespace SC4CleanitolWPF.Properties {
                 this["SystemPluginsDirectory"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ScanSystemPlugins {
+            get {
+                return ((bool)(this["ScanSystemPlugins"]));
+            }
+            set {
+                this["ScanSystemPlugins"] = value;
+            }
+        }
     }
 }

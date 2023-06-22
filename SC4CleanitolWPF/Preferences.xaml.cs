@@ -23,10 +23,11 @@ namespace SC4CleanitolWPF {
             InitializeComponent();
             UserPluginsDirectory.Text = Properties.Settings.Default.UserPluginsDirectory;
             SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
+            ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
             LanguageChoice.Text = Properties.Settings.Default.Language;
         }
 
-        private void ChooseFolder_Click(object sender, RoutedEventArgs e) {
+        private void UserChooseFolder_Click(object sender, RoutedEventArgs e) {
             CommonOpenFileDialog dialog = new CommonOpenFileDialog {
                 InitialDirectory = Properties.Settings.Default.UserPluginsDirectory,
                 IsFolderPicker = true
@@ -35,11 +36,24 @@ namespace SC4CleanitolWPF {
                 UserPluginsDirectory.Text = dialog.FileName;
             }
         }
+        private void SystemChooseFolder_Click(object sender, RoutedEventArgs e) {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog {
+                InitialDirectory = Properties.Settings.Default.SystemPluginsDirectory,
+                IsFolderPicker = true
+            };
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                SystemPluginsDirectory.Text = dialog.FileName;
+            }
+        }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Properties.Settings.Default.UserPluginsDirectory = UserPluginsDirectory.Text;
             Properties.Settings.Default.SystemPluginsDirectory = SystemPluginsDirectory.Text;
+            if (ScanSystemDirectoryCheckbox.IsChecked is not null) {
+                Properties.Settings.Default.ScanSystemPlugins = (bool) ScanSystemDirectoryCheckbox.IsChecked;
+            }
             //Properties.Settings.Default.Language = LanguageChoice.SelectedItem.ToString();
+            //TODO - fix the language setting.
             Properties.Settings.Default.Save();
         }
     }

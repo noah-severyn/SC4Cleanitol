@@ -12,7 +12,7 @@
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30" />
-			<RowDefinition Height="30" />
+			<RowDefinition Height="60" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
@@ -29,14 +29,15 @@
 				 Margin="105,10,33,0"
 				 Text="TextBox"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap"/>
-		<Button x:Name="ChooseFolder"
+				 TextWrapping="NoWrap"
+				 TextAlignment="Right" />
+		<Button x:Name="UserChooseFolder"
 				Grid.Row="0"
 				Content=" ... "
 				HorizontalAlignment="Right"
 				Margin="0,9,10,0"
 				VerticalAlignment="Top"
-				Click="ChooseFolder_Click" />
+				Click="UserChooseFolder_Click" />
 
 		<!-- Grid Row 1 : System Plugins -->
 		<TextBlock x:Name="SystemPluginsDirectoryLabel"
@@ -51,13 +52,21 @@
 				 Margin="105,10,33,0"
 				 Text="TextBox"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap" />
+				 TextWrapping="NoWrap"
+				 TextAlignment="Right" />
 		<Button x:Name="SystemChooseFolder"
 				Grid.Row="1"
 				Content=" ... "
 				HorizontalAlignment="Right"
-				Margin="0,9,10,1"
-				Click="ChooseFolder_Click" />
+				Margin="0,9,10,32"
+				Click="SystemChooseFolder_Click" />
+		<CheckBox x:Name="ScanSystemDirectoryCheckbox"
+				  Content="Scan system Plugins folder too"
+				  HorizontalAlignment="Left"
+				  Margin="10,35,0,0"
+				  Grid.Row="1"
+				  VerticalAlignment="Top" />
+
 
 		<!-- Grid Row 2 : Language -->
 		<TextBlock x:Name="LanguageLabel"
