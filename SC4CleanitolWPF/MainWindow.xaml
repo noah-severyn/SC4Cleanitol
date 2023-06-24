@@ -5,7 +5,6 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:SC4CleanitolWPF"
 		mc:Ignorable="d"
-		Title="SC4 Cleanitol 2023 - R0"
 		Height="500"
 		MinHeight="257"
 		Width="800"

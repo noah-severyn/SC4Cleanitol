@@ -35,6 +35,7 @@ namespace SC4CleanitolWPF {
 
         private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
         private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
+        private readonly Version version = new Version(0, 1);
 
 
         public MainWindow() {
@@ -67,6 +68,7 @@ namespace SC4CleanitolWPF {
                 }
                 Options.Default.Save();
             }
+            this.Title = "SC4 Cleanitol 2023 - " + version.ToString();
         }
 
 
@@ -335,7 +337,7 @@ namespace SC4CleanitolWPF {
                 list.AppendLine(tgi);
             }
 
-            File.WriteAllText(Path.Combine(Options.Default.UserPluginsDirectory, "PluginsTGIs.csv"),_listOfTGIs.ToString());
+            File.WriteAllText(Path.Combine(Options.Default.UserPluginsDirectory, "PluginsTGIs.csv"),list.ToString());
             MessageBox.Show("Export Complete!","Exporting TGIs",MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
         }
     }
