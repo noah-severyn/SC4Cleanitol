@@ -3,11 +3,11 @@ SC4 Cleanitol is a modern implementation of the original [BSC Cleanitol](https:/
 
 ![Application Screenshot](/SC4CleanitolWPF/images/concise.png)
 
-This new version is designed to be backwards compatible with old Cleanitol scripts, but neverthless includes numerous improvements including:
+This new version is designed to be backwards compatible with old Cleanitol scripts, but nevertheless includes numerous improvements including:
 1. Ability to specify TGIs in addition to file names as a dependency. One of the drawbacks of using filenames is if a user renames a file or datpacks their plugins folder the Cleanitol script will report a missing dependency even if that asset might *actually* be there.
 1. Ability to specify conditional dependencies - i.e. only report `item A` as a dependency if `item B` is present. This is very useful for mods which may allow the user to choose certain components to install. This way the user will not be prompted for a missing dependency for a component they did not install.
 1. Multilingual support. The previous version of this program was available only in English.
-1. Cross platform compatibility. The previous version of this program was available to Windows users ony. WIP - to come later.
+1. Cross platform compatibility. The previous version of this program was available to Windows users only. WIP - to come later.
 
 # Installation Instructions
 ...
@@ -20,7 +20,7 @@ This program works by analyzing the contents of a script (commonly referred to a
 
 This program also includes an updated version of `CleanupList.txt`, which is a nearly comprehensive list of all non SC4 files which may be in your plugins folder. Running this script to find and remove these files from plugins will result in a quicker loading time when playing the game - the fewer files in Plugins the game has to parse the quicker the game will load. Contact me if I am missing any extensions and I will add them to this file for future distributions.
 
-## To Use
+## Using the Program
 First, select a script to run, then run the script. The results of the script are shown in the output window. If there are files marked for removal after running the script, pressing the **Move files** button will move the designated files to a new folder located in the Simcity 4 directory adjacent to the Plugins folder in your user directory, i.e. `My Documents\Simcity 4\BSC_Cleanitol\...`. Each time files are moved a new directory will be created here with the date/time the script is run. Also included in each directory is an HTML file summarizing the actions taken and an `undo.bat` file which will copy these files back into their original location in the Plugins folder if executed. To execute the undo script, double click the file.
 
 ### Script Execution Options
