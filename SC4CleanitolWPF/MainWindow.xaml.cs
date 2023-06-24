@@ -5,14 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using Microsoft.Win32;
 using csDBPF;
@@ -24,7 +19,7 @@ namespace SC4CleanitolWPF {
     /// </summary>
     public partial class MainWindow : Window {
         private string _scriptPath;
-        private string[] _scriptRules;
+        private List<string> _scriptRules;
         private int _countDepsScanned;
         private int _countDepsFound;
         private int _countDepsMissing;
@@ -43,8 +38,12 @@ namespace SC4CleanitolWPF {
 
 
         public MainWindow() {
-            _filesToRemove = new List<string>();
+            _scriptPath = string.Empty;
+            _scriptRules = new List<string>();
+            _listOfFiles = new List<string>();
+            _listOfFileNames = new List<string>();
             _listOfTGIs = new List<string>();
+            _filesToRemove = new List<string>();
             Doc = new FlowDocument();
             Log = new Paragraph();
             //Doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
@@ -98,12 +97,12 @@ namespace SC4CleanitolWPF {
             ResetTextBox();
 
             //Fill File List
-            _scriptRules = File.ReadAllLines(_scriptPath);
+            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
             _listOfFiles = Directory.EnumerateFiles(Options.Default.UserPluginsDirectory, "*", SearchOption.AllDirectories);
             if (Options.Default.ScanSystemPlugins) {
                 _listOfFiles = _listOfFiles.Concat(Directory.EnumerateFiles(Options.Default.SystemPluginsDirectory));
             }
-            _listOfFileNames = _listOfFiles.Select(fileName => Path.GetFileName(fileName)); //TODO .AsParallel
+            _listOfFileNames = _listOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
             
             //Fill TGI list if required
             if (UpdateTGIdb) {
@@ -125,7 +124,7 @@ namespace SC4CleanitolWPF {
                     filesScanned++;
                     if (DBPFUtil.IsValidDBPF(filepath)) {
                         DBPFFile dbpf = new DBPFFile(filepath);
-                        _listOfTGIs.AddRange(dbpf.GetTGIs().Select(tgi => tgi.ToStringShort()));
+                        _listOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
                     }
 
                     Dispatcher.Invoke(updateProgressDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, filesScanned });
@@ -141,7 +140,7 @@ namespace SC4CleanitolWPF {
             Log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
             Log.Inlines.Add(RunStyles.BlackMono("    R E P O R T   S U M M A R Y    \r\n"));
             Log.Inlines.Add(RunStyles.BlackMono("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n"));
-            for (int idx = 0; idx < _scriptRules.Length; idx++) {
+            for (int idx = 0; idx < _scriptRules.Count; idx++) {
                 EvaluateRule(_scriptRules[idx]);
             }
             Log.Inlines.InsertAfter(Log.Inlines.ElementAt(2), RunStyles.BlackMono($"{_filesToRemove.Count} files to remove.\r\n"));
@@ -164,7 +163,7 @@ namespace SC4CleanitolWPF {
         private void EvaluateRule(string ruleText) {
             ScriptRule.RuleType result = ScriptRule.ParseRuleType(ruleText);
             switch (result) {
-
+                //Removal Rule
                 case ScriptRule.RuleType.Removal:
                     IEnumerable<string> matchingFiles = Directory.EnumerateFiles(Options.Default.UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
                     if (!matchingFiles.Any() && VerboseOutput) {
@@ -187,7 +186,7 @@ namespace SC4CleanitolWPF {
                     }
                     break;
 
-
+                //Dependency Rules
                 case ScriptRule.RuleType.ConditionalDependency:
                 case ScriptRule.RuleType.Dependency:
                     ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
@@ -230,23 +229,24 @@ namespace SC4CleanitolWPF {
                     _countDepsScanned++;
                     break;
 
-
+                //Comment heading rule
                 case ScriptRule.RuleType.UserCommentHeading:
                     Log.Inlines.Add(new Run("\r\n"));
                     Log.Inlines.Add(RunStyles.BlackHeading(string.Concat(ruleText.AsSpan(2), "\r\n")));
                     break;
 
-
+                //User comment rule
                 case ScriptRule.RuleType.UserComment:
                     Log.Inlines.Add(RunStyles.GreenStd(string.Concat(ruleText.AsSpan(1), "\r\n")));
                     break;
 
-                
+                //Script comment rule
                 case ScriptRule.RuleType.ScriptComment:
                 default:
                     break;
             }
         }
+
         /// <summary>
         /// Helper function to handle the hyperlink request.
         /// </summary>
@@ -261,30 +261,37 @@ namespace SC4CleanitolWPF {
 
 
         
-
+        /// <summary>
+        /// Move the files in <see cref="_filesToRemove"/> to an external folder and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
             string outputDir = "C:\\Users\\Administrator\\Documents\\SimCity 4\\BSC_Cleanitol\\" + DateTime.Now.ToString("yyyyMMdd HHmmss");
             StringBuilder batchFile = new StringBuilder();
             Directory.CreateDirectory(outputDir);
 
+            //Write batch undo file
             foreach (string file in _filesToRemove) {
                 File.Move(file, Path.Combine(outputDir, Path.GetFileName(file)));
-                //batch file: copy "Jigsaw 2010 tilesets.dat" "..\..\Plugins\Jigsaw 2010 tilesets.dat"
                 batchFile.AppendLine("copy \"" + Path.GetFileName(file) + "\" \"..\\..\\Plugins\\" + Path.GetFileName(file));
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
-            //Write Summary HTML File.
-            //https://stackoverflow.com/a/3314213
+            //Write Summary HTML File (https://stackoverflow.com/a/3314213)
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "SC4CleanitolWPF.SummaryTemplate.html";
-            StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(resourceName));
-            string summarytemplate = reader.ReadToEnd();
-            summarytemplate = summarytemplate.Replace("#COUNTFILES", _filesToRemove.Count.ToString());
-            summarytemplate = summarytemplate.Replace("#FOLDERPATH", outputDir);
-            summarytemplate = summarytemplate.Replace("#HELPDOC", ""); //TODO - input path to help document
-            summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
-            File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"),summarytemplate);
+            Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream is not null) {
+                StreamReader reader = new StreamReader(stream);
+
+                string summarytemplate = reader.ReadToEnd();
+                summarytemplate = summarytemplate.Replace("#COUNTFILES", _filesToRemove.Count.ToString());
+                summarytemplate = summarytemplate.Replace("#FOLDERPATH", outputDir);
+                summarytemplate = summarytemplate.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
+                summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
+                File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), summarytemplate);
+            }
         }
 
 

@@ -1,17 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace SC4CleanitolWPF {
@@ -46,6 +36,7 @@ namespace SC4CleanitolWPF {
             }
         }
 
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Properties.Settings.Default.UserPluginsDirectory = UserPluginsDirectory.Text;
             Properties.Settings.Default.SystemPluginsDirectory = SystemPluginsDirectory.Text;
@@ -55,6 +46,31 @@ namespace SC4CleanitolWPF {
             //Properties.Settings.Default.Language = LanguageChoice.SelectedItem.ToString();
             //TODO - fix the language setting.
             Properties.Settings.Default.Save();
+        }
+
+
+        private void VersionCheckButton_Click(object sender, RoutedEventArgs e) {
+            //https://stackoverflow.com/questions/47576074/get-releases-github-api-v3
+            //const string API_URL = "https://api.github.com/repos/noah-severyn/SC4Cleanitol/releases/";
+            //HttpClient client = new HttpClient();
+            //HttpRequestMessage request = new HttpRequestMessage() {
+            //    RequestUri = new Uri("https://api.github.com/noah-severyn/SC4Cleanitol/releases/"),
+            //    Method = HttpMethod.Get
+            //};
+
+            //// Added user agent
+            //client.DefaultRequestHeaders.Add("User-Agent", "SC4Cleanitol");
+            //Uri uri = new Uri(API_URL);
+            //var releases = await client.SendAsync(request);
+            ////return releases;
+
+            //TODO - fix this to pull release and only open webpage if out of date
+            string target = "https://github.com/noah-severyn/SC4Cleanitol/releases/latest";
+            //System.Diagnostics.Process.Start(target);
+
+            var sinfo = new ProcessStartInfo(target);
+            sinfo.UseShellExecute = true;
+            Process.Start(sinfo);
         }
     }
 }
