@@ -81,6 +81,12 @@
 			</StatusBarItem>
 			<Separator />
 			<StatusBarItem>
+				<Button x:Name="ExportButton"
+						Content="Export TGIs"
+						Width="75"
+						Click="ExportButton_Click" />
+			</StatusBarItem>
+			<StatusBarItem>
 				<Button x:Name="OkButton"
 						Content="Ok"
 						Width="50"

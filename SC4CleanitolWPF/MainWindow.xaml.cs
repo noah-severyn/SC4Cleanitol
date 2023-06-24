@@ -312,13 +312,31 @@ namespace SC4CleanitolWPF {
             _filesToRemove.Clear();
         }
 
+
+
         private void OkButton_Click(object sender, RoutedEventArgs e) {
             StatusBar.Visibility = Visibility.Collapsed;
         }
 
+
+
         private void Settings_Click(object sender, RoutedEventArgs e) {
             Preferences p = new Preferences();
             p.Show();
+        }
+
+
+
+        private void ExportButton_Click(object sender, RoutedEventArgs e) {
+            //DatabaseBuilder db = new DatabaseBuilder(Options.Default.UserPluginsDirectory);
+            StringBuilder list = new StringBuilder("Type,Group,Instance");
+            foreach (string tgi in _listOfTGIs) {
+                //db.AddTGI(string.Empty, tgi);
+                list.AppendLine(tgi);
+            }
+
+            File.WriteAllText(Path.Combine(Options.Default.UserPluginsDirectory, "PluginsTGIs.csv"),_listOfTGIs.ToString());
+            MessageBox.Show("Export Complete!","Exporting TGIs",MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
         }
     }
 }
