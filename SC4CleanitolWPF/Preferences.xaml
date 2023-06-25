@@ -1,0 +1,107 @@
+﻿<Window x:Class="SC4CleanitolWPF.Preferences"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:SC4CleanitolWPF"
+		mc:Ignorable="d"
+		Title="Preferences"
+		Height="250"
+		Width="450"
+		Closing="Window_Closing"
+		Topmost="True">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="30" />
+			<RowDefinition Height="60" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!-- Grid Row 0 : User Plugins -->
+		<TextBlock x:Name="UserPluginsDirectoryLabel"
+				   Grid.Row="0"
+				   HorizontalAlignment="Left"
+				   Margin="10,10,0,0"
+				   TextWrapping="Wrap"
+				   Text="User Plugins"
+				   VerticalAlignment="Top" />
+		<TextBox x:Name="UserPluginsDirectory"
+				 Grid.Row="0"
+				 Margin="105,10,33,0"
+				 Text="TextBox"
+				 VerticalAlignment="Top"
+				 TextWrapping="NoWrap"
+				 TextAlignment="Right" />
+		<Button x:Name="UserChooseFolder"
+				Grid.Row="0"
+				Content=" ... "
+				HorizontalAlignment="Right"
+				Margin="0,9,10,0"
+				VerticalAlignment="Top"
+				Click="UserChooseFolder_Click" />
+
+		<!-- Grid Row 1 : System Plugins -->
+		<TextBlock x:Name="SystemPluginsDirectoryLabel"
+				   Grid.Row="1"
+				   HorizontalAlignment="Left"
+				   Margin="10,10,0,0"
+				   TextWrapping="Wrap"
+				   Text="System Plugins"
+				   VerticalAlignment="Top" />
+		<TextBox x:Name="SystemPluginsDirectory"
+				 Grid.Row="1"
+				 Margin="105,10,33,0"
+				 Text="TextBox"
+				 VerticalAlignment="Top"
+				 TextWrapping="NoWrap"
+				 TextAlignment="Right" />
+		<Button x:Name="SystemChooseFolder"
+				Grid.Row="1"
+				Content=" ... "
+				HorizontalAlignment="Right"
+				Margin="0,9,10,32"
+				Click="SystemChooseFolder_Click" />
+		<CheckBox x:Name="ScanSystemDirectoryCheckbox"
+				  Content="Scan system Plugins folder too"
+				  HorizontalAlignment="Left"
+				  Margin="10,35,0,0"
+				  Grid.Row="1"
+				  VerticalAlignment="Top" />
+
+
+		<!-- Grid Row 2 : Language -->
+		<TextBlock x:Name="LanguageLabel"
+				   Grid.Row="2"
+				   HorizontalAlignment="Left"
+				   Margin="10,10,0,0"
+				   TextWrapping="Wrap"
+				   Text="Language"
+				   VerticalAlignment="Top" />
+		<ComboBox x:Name="LanguageChoice"
+				  Grid.Row="2"
+				  HorizontalAlignment="Left"
+				  Margin="105,10,0,0"
+				  VerticalAlignment="Top"
+				  Width="120">
+			<ComboBoxItem IsSelected="True">English</ComboBoxItem>
+		</ComboBox>
+		<TextBlock x:Name="VersionInfoLabel"
+				   Grid.Row="2"
+				   HorizontalAlignment="Right"
+				   TextAlignment="Right"
+				   Margin="0,10,10,0"
+				   TextWrapping="Wrap"
+				   VerticalAlignment="Top"
+				   Width="175">
+			Current Version: 0.1 (Jun 2023)
+		</TextBlock>
+		<Button x:Name="VersionCheckButton"
+				Grid.Row="2"
+				Content="Check for Updates"
+				HorizontalAlignment="Right"
+				Margin="0,31,10,0"
+				VerticalAlignment="Top"
+				Width="110"
+				Click="VersionCheckButton_Click" />
+	</Grid>
+</Window>
