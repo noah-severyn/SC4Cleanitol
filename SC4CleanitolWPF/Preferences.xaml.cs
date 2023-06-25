@@ -72,5 +72,10 @@ namespace SC4CleanitolWPF {
             sinfo.UseShellExecute = true;
             Process.Start(sinfo);
         }
+
+        private void Window_Deactivated(object sender, EventArgs e) {
+            Window window = (Window) sender;
+            window.Topmost = true;
+        }
     }
 }
