@@ -97,6 +97,14 @@ namespace SC4CleanitolWPF {
         private void RunScript_Click(object sender, RoutedEventArgs e) {
             if (_scriptPath is null) return; 
             ResetTextBox();
+            if (!Directory.Exists(Options.Default.UserPluginsDirectory)) {
+                MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            if (!Directory.Exists(Options.Default.SystemPluginsDirectory)) {
+                MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
