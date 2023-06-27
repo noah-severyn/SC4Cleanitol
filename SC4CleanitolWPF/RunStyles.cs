@@ -6,9 +6,16 @@ using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows;
+using SC4Cleanitol;
+using Microsoft.VisualBasic.Logging;
+using System.Data;
+using System.Windows.Navigation;
 
 namespace SC4CleanitolWPF {
     internal static class RunStyles {
+
+
+
         /// <summary>
         /// Blue porportionally spaced text.
         /// </summary>
@@ -74,6 +81,9 @@ namespace SC4CleanitolWPF {
             Run r = new Run(text);
             return r;
         }
+        /// <summary>
+        /// Black large sized, underlined, porportionally spaced text.
+        /// </summary>
         internal static Run BlackHeading(string text) {
             Run r = new Run(text) {
                 FontSize = 18,
