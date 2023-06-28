@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Navigation;
 using Microsoft.Win32;
@@ -31,11 +30,12 @@ namespace SC4CleanitolWPF {
 
         private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
         private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
-        private readonly Version version = new Version(0, 1);
+        public readonly Version ReleaseVersion = new Version(0, 2);
+        public readonly string ReleaseDate = "Jun 2023";
 
         private CleanitolEngine Cleanitol;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
-        private List<SC4Cleanitol.GenericRun> runList;
+        private List<GenericRun> runList;
 
         public MainWindow() {
             Doc = new FlowDocument();
@@ -71,7 +71,7 @@ namespace SC4CleanitolWPF {
             _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins\\BSC_Cleanitol");
 
             Cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
-            this.Title = "SC4 Cleanitol 2023 - " + version.ToString();
+            this.Title = "SC4 Cleanitol 2023 - " + ReleaseVersion.ToString();
 
         }
 

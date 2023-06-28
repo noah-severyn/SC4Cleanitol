@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SC4CleanitolEngine\SC4CleanitolEngine.csproj" />
+  </ItemGroup>
+
 </Project>
