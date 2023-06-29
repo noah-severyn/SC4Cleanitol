@@ -8,11 +8,11 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Location of the plugins folder found in the user's Documents folder.
         /// </summary>
-        public string UserPluginsDirectory { get; set; }
+        public string UserPluginsDirectory { get; private set; }
         /// <summary>
         /// Location of the plugins folder found in the game install directory.
         /// </summary>
-        public string SystemPluginsDirectory { get; set; }
+        public string SystemPluginsDirectory { get; private set; }
         /// <summary>
         /// Location files will be removed to and the output summary will be saved to.
         /// </summary>
@@ -22,7 +22,7 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Full path to the cleanitol script.
         /// </summary>
-        public string ScriptPath { get; set; }
+        public string ScriptPath { get; private set; }
         /// <summary>
         /// List of script rules. Updated when <see cref="RunScript"/> is called.
         /// </summary>
@@ -62,13 +62,22 @@ namespace SC4Cleanitol {
 
 
         //presume that user and system plugin folders exist.
+        /// <summary>
+        /// Instantiate a Cleanitol instance which holds the functions and logic to operate on a user's plugins folder.
+        /// </summary>
+        /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder)</param>
+        /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder)</param>
+        /// <param name="cleanitolOutputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
+        /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations are not valid or do not exist</exception>
         public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string cleanitolOutputDirectory) {
             if (!Directory.Exists(userPluginsDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
                 UserPluginsDirectory = userPluginsDirectory;
             }
-            if (!Directory.Exists(systemPluginsDirectory)) {
+            if (systemPluginsDirectory == string.Empty) {
+                SystemPluginsDirectory = string.Empty;
+            } else if (!Directory.Exists(systemPluginsDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
                 SystemPluginsDirectory = systemPluginsDirectory;
@@ -87,19 +96,60 @@ namespace SC4Cleanitol {
             FilesToRemove = new List<string>();
         }
 
+        /// <summary>
+        /// Instantiate a Cleanitol instance which holds the functions and logic to operate on a user's plugins folder.
+        /// </summary>
+        /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder)</param>
+        /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder)</param>
+        /// <param name="cleanitolOutputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
+        /// <param name="scriptPath">Path to the cleanitol script to run</param>
+        /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations do not exist</exception>
+        /// <exception cref="FileNotFoundException">Thrown if the provided script cannot be found</exception>
+        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string cleanitolOutputDirectory, string scriptPath) : this(userPluginsDirectory, systemPluginsDirectory, cleanitolOutputDirectory) {
+            if (!File.Exists(scriptPath)) {
+                throw new FileNotFoundException();
+            } else {
+                ScriptPath = scriptPath;
+            }
+            
+        }
+
+        /// <summary>
+        /// Set or change the cleanitol script to run.
+        /// </summary>
+        /// <param name="scriptPath">Path to the cleanitol script to run</param>
+        /// /// <exception cref="FileNotFoundException">Thrown if the provided script cannot be found</exception>
+        public void SetScriptPath(string scriptPath) {
+            if (!File.Exists(scriptPath)) {
+                throw new FileNotFoundException();
+            } else {
+                ScriptPath = scriptPath;
+            }
+        }
+
+        /// <summary>
+        /// Change the output folder where files will be moved to after the cleaning process.
+        /// </summary>
+        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process</param>
+        /// <exception cref="DirectoryNotFoundException">Thrown if the provided folder location does not exist</exception>
+        public void ChangeOutputDirectory(string outputDirectory) {
+            if (!Directory.Exists(outputDirectory)) {
+                throw new DirectoryNotFoundException();
+            } else {
+                CleanitolOutputDirectory = outputDirectory;
+            }
+        }
+
+
+
 
         //worker example: https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2010/waw3xexc(v=vs.100)?redirectedfrom=MSDN
         public List<GenericRun> RunScript(bool updateTGIdatabase, bool includeSystemPlugins, BackgroundWorker worker, DoWorkEventArgs e) {
-            Reset();
+            CountDepsFound = 0;
+            CountDepsMissing = 0;
+            CountDepsScanned = 0;
+            FilesToRemove.Clear();
             List<GenericRun> runs = new List<GenericRun>();
-            if (ScriptPath is null) {
-                runs.Add(new GenericRun("No script selected.", RunType.BlueMono));
-                return runs;
-            }
-            if (!Directory.Exists(ScriptPath)) {
-                runs.Add(new GenericRun($"The script at < {ScriptPath} > cannot be found. Was the file moved or renamed?", RunType.RedMono));
-                return runs;
-            }
 
             //Fill File List
             ScriptRules = File.ReadAllLines(ScriptPath).ToList();
@@ -136,33 +186,78 @@ namespace SC4Cleanitol {
 
 
             //Evaluate script and report results
-            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
-            runs.Add(new GenericRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono));
-            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
+            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+            runs.Add(new GenericRun("    R E P O R T   S U M M A R Y    ", RunType.BlackMono));
+            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
             for (int idx = 0; idx < ScriptRules.Count; idx++) {
                 runs.AddRange(EvaluateRule(ScriptRules[idx]));
             }
-            runs.Insert(3, new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono));
-            runs.Insert(4, new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono));
-            runs.Insert(5, new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono));
-            runs.Insert(6, new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n\r\n", RunType.BlackMono));
+            runs.Insert(3, new GenericRun($"{FilesToRemove.Count} files to remove.", RunType.BlackMono));
+            runs.Insert(4, new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.", RunType.BlueMono));
+            runs.Insert(5, new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.", RunType.RedMono));
+            runs.Insert(6, new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+
+            return runs;
+        }
+
+        public List<GenericRun> RunScript(bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
+            CountDepsFound = 0;
+            CountDepsMissing = 0;
+            CountDepsScanned = 0;
+            FilesToRemove.Clear();
+            List<GenericRun> runs = new List<GenericRun>();
+
+            //Fill File List
+            ScriptRules = File.ReadAllLines(ScriptPath).ToList();
+            ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories);
+            if (includeSystemPlugins) {
+                ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
+            }
+            ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
+
+            //Fill TGI list if required
+            if (!updateTGIdatabase) {
+                int totalfiles = ListOfFiles.Count();
+                double filesScanned = 0;
+                ListOfTGIs.Clear();
+
+                foreach (string filepath in ListOfFiles) {
+                    filesScanned++;
+                    if (DBPFUtil.IsValidDBPF(filepath)) {
+                        DBPFFile dbpf = new DBPFFile(filepath);
+                        ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
+                    }
+
+                    int pctComplete = (int) filesScanned / totalfiles * 100;
+                    if (pctComplete > highestPctReached) {
+                        highestPctReached = pctComplete;
+                    }
+                }
+            }
+
+            //TODO - write TGI list to DB for local storage?
+
+
+            //Evaluate script and report results
+            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+            runs.Add(new GenericRun("    R E P O R T   S U M M A R Y    ", RunType.BlackMono));
+            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+            for (int idx = 0; idx < ScriptRules.Count; idx++) {
+                runs.AddRange(EvaluateRule(ScriptRules[idx], verboseOutput)); //TODO this is problemnatic when output to console because we are flattening out which runs belong to which rule
+            }
+            runs.Insert(3, new GenericRun($"{FilesToRemove.Count} files to remove.", RunType.BlackMono));
+            runs.Insert(4, new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.", RunType.BlueMono));
+            runs.Insert(5, new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.", RunType.RedMono));
+            runs.Insert(6, new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
 
             return runs;
         }
 
 
+
+
         private void UpdateTGIDatabase() {
 
-        }
-
-        /// <summary>
-        /// Reset the script scan results. Run each time before a script is exectuted.
-        /// </summary>
-        private void Reset() {
-            CountDepsFound = 0;
-            CountDepsMissing = 0;
-            CountDepsScanned = 0;
-            FilesToRemove.Clear();
         }
 
 
@@ -170,6 +265,9 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Evaluate a rule and return the outcome.
         /// </summary>
+        /// <remarks>
+        /// This function can be used to run individual rules if you do not want to create a script file. Otherwise the <see cref="RunScript"/>  function is recommended to process rules from a script file. Ensure the rule is syntactically correct or unpredectible results can occur.
+        /// </remarks>
         /// <param name="ruleText">Rule to evaluate</param>
         /// <param name="verboseOutput">Show verbose output or not</param>
         /// <returns></returns>
@@ -184,10 +282,10 @@ namespace SC4Cleanitol {
                     return EvaluateDependencyRule(ruleText, verboseOutput);
 
                 case ScriptRule.RuleType.UserComment:
-                    return new List<GenericRun> { new GenericRun(ruleText, RunType.GreenStd) };
+                    return new List<GenericRun> { new GenericRun(ruleText.Substring(1), RunType.GreenStd) };
 
                 case ScriptRule.RuleType.UserCommentHeading:
-                    return new List<GenericRun> { new GenericRun(ruleText, RunType.BlackHeading) };
+                    return new List<GenericRun> { new GenericRun(ruleText.Substring(2), RunType.BlackHeading) };
 
                 case ScriptRule.RuleType.ScriptComment:
                 default:
@@ -203,7 +301,7 @@ namespace SC4Cleanitol {
             List<GenericRun> runs = new List<GenericRun>();
             if (!matchingFiles.Any() && verboseOutput) {
                 runs.Add(new GenericRun(ruleText, RunType.BlueStd));
-                runs.Add(new GenericRun(" not present." + "\r\n", RunType.BlackStd));
+                runs.Add(new GenericRun(" not present.", RunType.BlackStd));
             } else {
                 string filename;
                 foreach (string file in matchingFiles) {
@@ -215,7 +313,7 @@ namespace SC4Cleanitol {
                     runs.Add(new GenericRun(ruleText, RunType.BlueStd));
                     runs.Add(new GenericRun(" (" + filename + ")", RunType.BlueMono));
                     runs.Add(new GenericRun(" found in ", RunType.BlackStd));
-                    runs.Add(new GenericRun(Path.GetDirectoryName(file) + "\r\n", RunType.RedStd));
+                    runs.Add(new GenericRun(Path.GetDirectoryName(file), RunType.RedStd));
                     FilesToRemove.Add(file);
                 }
             }
@@ -250,11 +348,11 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
 
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink));
-                runs.Add(new GenericRun("\r\n"));
+                runs.Add(new GenericRun(""));
                 CountDepsMissing++;
             } else if (isConditionalFound && isItemFound && verboseOutput) {
                 runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                runs.Add(new GenericRun(" was located." + "\r\n", RunType.BlackStd));
+                runs.Add(new GenericRun(" was located.", RunType.BlackStd));
                 CountDepsFound++;
             }
 
