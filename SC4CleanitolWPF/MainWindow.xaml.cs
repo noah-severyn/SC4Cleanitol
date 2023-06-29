@@ -68,7 +68,7 @@ namespace SC4CleanitolWPF {
             } else {
                 _systemPluginsDir = string.Empty;
             }
-            _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins\\BSC_Cleanitol");
+            _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
             Cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
             this.Title = "SC4 Cleanitol 2023 - " + ReleaseVersion.ToString();
