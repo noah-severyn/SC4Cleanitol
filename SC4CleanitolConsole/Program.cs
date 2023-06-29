@@ -16,14 +16,21 @@ public class Program {
 
         string cleantiolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
         CleanitolEngine cleanitol = new CleanitolEngine(userPluginsDir, systemPluginsDir, cleantiolOutputDir, scriptPath);
-        List<GenericRun> runList = cleanitol.RunScript(updateTGIdb, scanSystemPlugins, verbose);
+        List<List<GenericRun>> runList = cleanitol.RunScript(updateTGIdb, scanSystemPlugins, verbose);
 
-        foreach (GenericRun run in runList) {
-            Console.WriteLine(ConvertRun(run));
+        StringBuilder message = new StringBuilder();
+        foreach (List<GenericRun> line in runList) {
+            foreach (GenericRun run in line) {
+                message.Append(ConvertRun(run));
+            }
+            Console.Write(message.ToString());
+            message.Clear();
         }
+        
     }
 
-    static void ValidateInputs(string[] args) {
+    
+    private static void ValidateInputs(string[] args) {
         if (args.Length < 2 || args.Length > 5) {
             throw new ArgumentException("Invalid number of arguments provided! Must provide 2 to 5 arguments.");
         }
@@ -68,9 +75,7 @@ public class Program {
         }
     }
 
-
-
-    static string ConvertRun(GenericRun genericRun) {
+    private static string ConvertRun(GenericRun genericRun) {
         switch (genericRun.Type) {
             case RunType.BlueStd:
             case RunType.BlueMono:
@@ -81,7 +86,7 @@ public class Program {
             case RunType.BlackStd:
                 return genericRun.Text;
             case RunType.BlackHeading:
-                return "\r\n" + genericRun.Text + "\r\n" + new string('=', genericRun.Text.Length);
+                return "\r\n" + genericRun.Text + new string('=', genericRun.Text.Length - 4) + "\r\n"; //Minus 4 for the ">#" at the start and the "\r\n" at the end
             case RunType.Hyperlink:
                 return genericRun.Text + " >> " + genericRun.URL;
             default:

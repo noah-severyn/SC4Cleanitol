@@ -144,68 +144,77 @@ namespace SC4Cleanitol {
 
 
         //worker example: https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2010/waw3xexc(v=vs.100)?redirectedfrom=MSDN
-        public List<GenericRun> RunScript(bool updateTGIdatabase, bool includeSystemPlugins, BackgroundWorker worker, DoWorkEventArgs e) {
+        //public List<GenericRun> RunScript(bool updateTGIdatabase, bool includeSystemPlugins, BackgroundWorker worker, DoWorkEventArgs e) {
+        //    CountDepsFound = 0;
+        //    CountDepsMissing = 0;
+        //    CountDepsScanned = 0;
+        //    FilesToRemove.Clear();
+        //    List<GenericRun> runs = new List<GenericRun>();
+
+        //    //Fill File List
+        //    ScriptRules = File.ReadAllLines(ScriptPath).ToList();
+        //    ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories);
+        //    if (includeSystemPlugins) {
+        //        ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
+        //    }
+        //    ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
+
+        //    //Fill TGI list if required
+        //    if (!worker.CancellationPending && updateTGIdatabase) {
+        //        int totalfiles = ListOfFiles.Count();
+        //        double filesScanned = 0;
+        //        ListOfTGIs.Clear();
+
+        //        foreach (string filepath in ListOfFiles) {
+        //            filesScanned++;
+        //            if (DBPFUtil.IsValidDBPF(filepath)) {
+        //                DBPFFile dbpf = new DBPFFile(filepath);
+        //                ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
+        //            }
+
+        //            int pctComplete = (int) filesScanned / totalfiles * 100;
+        //            if (pctComplete > highestPctReached) {
+        //                highestPctReached = pctComplete;
+        //                worker.ReportProgress(pctComplete);
+        //            }
+        //        }
+        //    } else {
+        //        e.Cancel = true;
+        //    }
+
+        //    //TODO - write TGI list to DB for local storage?
+
+
+        //    //Evaluate script and report results
+        //    runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+        //    runs.Add(new GenericRun("    R E P O R T   S U M M A R Y    ", RunType.BlackMono));
+        //    runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+        //    for (int idx = 0; idx < ScriptRules.Count; idx++) {
+        //        runs.AddRange(EvaluateRule(ScriptRules[idx]));
+        //    }
+        //    runs.Insert(3, new GenericRun($"{FilesToRemove.Count} files to remove.", RunType.BlackMono));
+        //    runs.Insert(4, new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.", RunType.BlueMono));
+        //    runs.Insert(5, new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.", RunType.RedMono));
+        //    runs.Insert(6, new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+
+        //    return runs;
+        //}
+
+
+
+        /// <summary>
+        /// Execute the script and return the results of each rule.
+        /// </summary>
+        /// <param name="updateTGIdatabase">Rebuild the internal index of TGIs</param>
+        /// <param name="includeSystemPlugins">TRUE to include the system plugins folder in the TGI scan; FALSE to scan only the user plugins (recommended)</param>
+        /// <param name="verboseOutput">TRUE returns a message for every rule; FALSE only returns a message if an action needs to be taken</param>
+        /// <returns>A series of messages detailing the result of each script rule. The outer list respresents one line (rule), and the inner list holds one or more runs which are combined to form the message.</returns>
+        public List<List<GenericRun>> RunScript(bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
             CountDepsScanned = 0;
             FilesToRemove.Clear();
-            List<GenericRun> runs = new List<GenericRun>();
-
-            //Fill File List
-            ScriptRules = File.ReadAllLines(ScriptPath).ToList();
-            ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories);
-            if (includeSystemPlugins) {
-                ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
-            }
-            ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
-
-            //Fill TGI list if required
-            if (!worker.CancellationPending && updateTGIdatabase) {
-                int totalfiles = ListOfFiles.Count();
-                double filesScanned = 0;
-                ListOfTGIs.Clear();
-
-                foreach (string filepath in ListOfFiles) {
-                    filesScanned++;
-                    if (DBPFUtil.IsValidDBPF(filepath)) {
-                        DBPFFile dbpf = new DBPFFile(filepath);
-                        ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
-                    }
-
-                    int pctComplete = (int) filesScanned / totalfiles * 100;
-                    if (pctComplete > highestPctReached) {
-                        highestPctReached = pctComplete;
-                        worker.ReportProgress(pctComplete);
-                    }
-                }
-            } else {
-                e.Cancel = true;
-            }
-
-            //TODO - write TGI list to DB for local storage?
-
-
-            //Evaluate script and report results
-            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
-            runs.Add(new GenericRun("    R E P O R T   S U M M A R Y    ", RunType.BlackMono));
-            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
-            for (int idx = 0; idx < ScriptRules.Count; idx++) {
-                runs.AddRange(EvaluateRule(ScriptRules[idx]));
-            }
-            runs.Insert(3, new GenericRun($"{FilesToRemove.Count} files to remove.", RunType.BlackMono));
-            runs.Insert(4, new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.", RunType.BlueMono));
-            runs.Insert(5, new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.", RunType.RedMono));
-            runs.Insert(6, new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
-
-            return runs;
-        }
-
-        public List<GenericRun> RunScript(bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
-            CountDepsFound = 0;
-            CountDepsMissing = 0;
-            CountDepsScanned = 0;
-            FilesToRemove.Clear();
-            List<GenericRun> runs = new List<GenericRun>();
+            List<List<GenericRun>> runs = new List<List<GenericRun>>();
 
             //Fill File List
             ScriptRules = File.ReadAllLines(ScriptPath).ToList();
@@ -239,16 +248,16 @@ namespace SC4Cleanitol {
 
 
             //Evaluate script and report results
-            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
-            runs.Add(new GenericRun("    R E P O R T   S U M M A R Y    ", RunType.BlackMono));
-            runs.Add(new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+            runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) } );
+            runs.Add(new List<GenericRun> { new GenericRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono) } );
+            runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
             for (int idx = 0; idx < ScriptRules.Count; idx++) {
-                runs.AddRange(EvaluateRule(ScriptRules[idx], verboseOutput)); //TODO this is problemnatic when output to console because we are flattening out which runs belong to which rule
+                runs.Add(EvaluateRule(ScriptRules[idx], verboseOutput)); //TODO this is problemnatic when output to console because we are flattening out which runs belong to which rule
             }
-            runs.Insert(3, new GenericRun($"{FilesToRemove.Count} files to remove.", RunType.BlackMono));
-            runs.Insert(4, new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.", RunType.BlueMono));
-            runs.Insert(5, new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.", RunType.RedMono));
-            runs.Insert(6, new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", RunType.BlackMono));
+            runs.Insert(3, new List<GenericRun> { new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
+            runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono) });
+            runs.Insert(5, new List<GenericRun> { new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono) });
+            runs.Insert(6, new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
 
             return runs;
         }
@@ -282,10 +291,10 @@ namespace SC4Cleanitol {
                     return EvaluateDependencyRule(ruleText, verboseOutput);
 
                 case ScriptRule.RuleType.UserComment:
-                    return new List<GenericRun> { new GenericRun(ruleText.Substring(1), RunType.GreenStd) };
+                    return new List<GenericRun> { new GenericRun(ruleText.Substring(1) + "\r\n", RunType.GreenStd) };
 
                 case ScriptRule.RuleType.UserCommentHeading:
-                    return new List<GenericRun> { new GenericRun(ruleText.Substring(2), RunType.BlackHeading) };
+                    return new List<GenericRun> { new GenericRun("\r\n" + ruleText.Substring(2) + "\r\n", RunType.BlackHeading) };
 
                 case ScriptRule.RuleType.ScriptComment:
                 default:
@@ -301,7 +310,7 @@ namespace SC4Cleanitol {
             List<GenericRun> runs = new List<GenericRun>();
             if (!matchingFiles.Any() && verboseOutput) {
                 runs.Add(new GenericRun(ruleText, RunType.BlueStd));
-                runs.Add(new GenericRun(" not present.", RunType.BlackStd));
+                runs.Add(new GenericRun(" not present." + "\r\n", RunType.BlackStd));
             } else {
                 string filename;
                 foreach (string file in matchingFiles) {
@@ -313,7 +322,7 @@ namespace SC4Cleanitol {
                     runs.Add(new GenericRun(ruleText, RunType.BlueStd));
                     runs.Add(new GenericRun(" (" + filename + ")", RunType.BlueMono));
                     runs.Add(new GenericRun(" found in ", RunType.BlackStd));
-                    runs.Add(new GenericRun(Path.GetDirectoryName(file), RunType.RedStd));
+                    runs.Add(new GenericRun(Path.GetDirectoryName(file) + "\r\n", RunType.RedStd));
                     FilesToRemove.Add(file);
                 }
             }
@@ -348,11 +357,11 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
 
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink));
-                runs.Add(new GenericRun(""));
+                runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
             } else if (isConditionalFound && isItemFound && verboseOutput) {
                 runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                runs.Add(new GenericRun(" was located.", RunType.BlackStd));
+                runs.Add(new GenericRun(" was located.\r\n", RunType.BlackStd));
                 CountDepsFound++;
             }
 
