@@ -33,7 +33,7 @@ namespace SC4CleanitolWPF {
         public readonly Version ReleaseVersion = new Version(0, 2);
         public readonly string ReleaseDate = "Jun 2023";
 
-        private CleanitolEngine Cleanitol;
+        private CleanitolEngine cleanitol;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private List<GenericRun> runList;
 
@@ -43,7 +43,7 @@ namespace SC4CleanitolWPF {
             //Doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
 
             InitializeComponent();
-            InitializeBackgroundWorker();
+            //InitializeBackgroundWorker();
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
             StatusBar.Visibility = Visibility.Collapsed;
@@ -70,7 +70,7 @@ namespace SC4CleanitolWPF {
             }
             _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
-            Cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
+            cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
             this.Title = "SC4 Cleanitol 2023 - " + ReleaseVersion.ToString();
 
         }
@@ -85,7 +85,7 @@ namespace SC4CleanitolWPF {
             Log.Inlines.Clear();
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true) {
-                Cleanitol.ScriptPath = dialog.FileName;
+                cleanitol.SetScriptPath(dialog.FileName);
                 ScriptPathTextBox.Text = dialog.FileName;
             } else {
                 return;
@@ -100,31 +100,33 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private void RunScript_Click(object sender, RoutedEventArgs e) {
             Log.Inlines.Clear();
-            if (!Directory.Exists(Cleanitol.UserPluginsDirectory)) {
+            if (!Directory.Exists(cleanitol.UserPluginsDirectory)) {
                 MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (!Directory.Exists(Cleanitol.SystemPluginsDirectory)) {
+            if (!Directory.Exists(cleanitol.SystemPluginsDirectory)) {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-
+            List<List<GenericRun>> runList = cleanitol.RunScript(UpdateTGIdb, false, VerboseOutput);
             // Start the asynchronous operation.
-            backgroundWorker1.RunWorkerAsync();
+            //backgroundWorker1.RunWorkerAsync();
 
-            backgroundWorker1.CancelAsync();
-
-            foreach (GenericRun run in runList) {
-                if (run.Type is RunType.Hyperlink) {
-                    Hyperlink link = new Hyperlink(new Run(run.Text + "\r\n"));
-                    link.NavigateUri = new Uri(run.URL);
-                    link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-                    Log.Inlines.Add(link);
-                    Log.Inlines.Add(new Run("\r\n"));
-                } else {
-                    Log.Inlines.Add(ConvertRun(run));
+            //backgroundWorker1.CancelAsync();
+            foreach (List<GenericRun> line in runList) {
+                foreach (GenericRun run in line) {
+                    if (run.Type is RunType.Hyperlink) {
+                        Hyperlink link = new Hyperlink(new Run(run.Text + "\r\n"));
+                        link.NavigateUri = new Uri(run.URL);
+                        link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                        Log.Inlines.Add(link);
+                        Log.Inlines.Add(new Run("\r\n"));
+                    } else {
+                        Log.Inlines.Add(ConvertRun(run));
+                    }
                 }
             }
+
             Doc.Blocks.Add(Log);
             ScriptOutput.Document = Doc;
             UpdateTGIdb = false;
@@ -147,7 +149,7 @@ namespace SC4CleanitolWPF {
             BackgroundWorker worker = sender as BackgroundWorker;// Get the BackgroundWorker that raised this event.
 
             // Assign the result of the computation to the Result property of the DoWorkEventArgs object. This is will be available to the RunWorkerCompleted eventhandler.
-            e.Result = Cleanitol.RunScript(UpdateTGIdb, _includeSystemPlugins, worker, e);
+            //e.Result = cleanitol.RunScript(UpdateTGIdb, _includeSystemPlugins, worker, e);
         }
 
         // This event handler deals with the results of the background operation.
@@ -168,7 +170,7 @@ namespace SC4CleanitolWPF {
         // This event handler updates the progress bar.
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e) {
             int progressPct = e.ProgressPercentage;
-            int fileCount = Cleanitol.ListOfFiles.Count();
+            int fileCount = cleanitol.ListOfFiles.Count();
             FileProgressBar.Value = progressPct;
             FileProgressLabel.Text = (progressPct * fileCount) + " / " + fileCount + " files";
         }
@@ -224,7 +226,7 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            Cleanitol.BackupFiles();
+            cleanitol.BackupFiles();
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e) {
@@ -244,7 +246,7 @@ namespace SC4CleanitolWPF {
         }
 
         private void ExportButton_Click(object sender, RoutedEventArgs e) {
-            Cleanitol.ExportTGIs();
+            cleanitol.ExportTGIs();
             MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
         }
     }
