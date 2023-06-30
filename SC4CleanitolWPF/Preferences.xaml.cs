@@ -16,7 +16,11 @@ namespace SC4CleanitolWPF {
             ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
             LanguageChoice.Text = Properties.Settings.Default.Language;
 
-            VersionInfoLabel.Text = "Current Version: " + SC4CleanitolWPF.MainWindow.
+            Window window = Application.Current.MainWindow;
+            if (window is not null) {
+                VersionInfoLabel.Text = "Current Version: " + ((MainWindow) window).ReleaseVersion + " (" + ((MainWindow) window).ReleaseDate + ")";
+            }
+            
         }
 
         private void UserChooseFolder_Click(object sender, RoutedEventArgs e) {
