@@ -98,25 +98,6 @@ public class Program {
         );
 
         return rootCommand.InvokeAsync(args).Result;
-
-
-
-        //ValidateInputs(args);
-        //RunScript();
-        //return 1;
-
-        //CleanitolEngine cleanitol = new CleanitolEngine(userPluginsDir, systemPluginsFolder, cleantiolOutputFolder, scriptPath);
-        //List<List<GenericRun>> runList = cleanitol.RunScript(updateTGIdb, scanSystemPlugins, verbose);
-
-        //StringBuilder message = new StringBuilder();
-        //foreach (List<GenericRun> line in runList) {
-        //    foreach (GenericRun run in line) {
-        //        message.Append(ConvertRun(run));
-        //    }
-        //    Console.Write(message.ToString());
-        //    message.Clear();
-        //}
-
     }
 
     private static void RunScript(string userPlugins, string scriptPath, string systemPlugins, string outputFolder, bool updateTGIs, bool verbose ) {
