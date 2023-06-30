@@ -67,25 +67,25 @@ namespace SC4Cleanitol {
         /// </summary>
         /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder)</param>
         /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder)</param>
-        /// <param name="cleanitolOutputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
+        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
         /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations are not valid or do not exist</exception>
-        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string cleanitolOutputDirectory) {
+        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory) {
             if (!Directory.Exists(userPluginsDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
                 UserPluginsDirectory = userPluginsDirectory;
             }
-            if (systemPluginsDirectory == string.Empty) {
+            if (systemPluginsDirectory == string.Empty || systemPluginsDirectory is null) {
                 SystemPluginsDirectory = string.Empty;
             } else if (!Directory.Exists(systemPluginsDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
                 SystemPluginsDirectory = systemPluginsDirectory;
             }
-            if (!Directory.Exists(cleanitolOutputDirectory)) {
+            if (!Directory.Exists(outputDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
-                CleanitolOutputDirectory = cleanitolOutputDirectory;
+                CleanitolOutputDirectory = outputDirectory;
             }
 
             ScriptPath = string.Empty;
@@ -101,11 +101,11 @@ namespace SC4Cleanitol {
         /// </summary>
         /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder)</param>
         /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder)</param>
-        /// <param name="cleanitolOutputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
+        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
         /// <param name="scriptPath">Path to the cleanitol script to run</param>
         /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations do not exist</exception>
         /// <exception cref="FileNotFoundException">Thrown if the provided script cannot be found</exception>
-        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string cleanitolOutputDirectory, string scriptPath) : this(userPluginsDirectory, systemPluginsDirectory, cleanitolOutputDirectory) {
+        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory, string scriptPath) : this(userPluginsDirectory, systemPluginsDirectory, outputDirectory) {
             if (!File.Exists(scriptPath)) {
                 throw new FileNotFoundException();
             } else {
