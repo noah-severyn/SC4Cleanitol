@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "RequiredParamsOnly": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\"\r\n\"C:\\source\\repos\\SC4Cleanitol\\SC4CleanitolWPF\\CleanupList.txt\""
+    },
+    "AllParams": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\"\r\n\"C:\\source\\repos\\SC4Cleanitol\\SC4CleanitolWPF\\CleanupList.txt\"\r\n\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins\"\r\n\"true\"\r\n\"true\""
+    },
+    "NoParams": {
+      "commandName": "Project"
+    }
+  }
+}

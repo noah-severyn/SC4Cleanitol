@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static SC4CleanitolWPF.MainWindow;
 
-namespace SC4CleanitolWPF {
+namespace SC4Cleanitol {
     /// <summary>
     /// Classes, enums, and functions related to parsing script rules. A rule is a single line read from the script.
     /// </summary>
