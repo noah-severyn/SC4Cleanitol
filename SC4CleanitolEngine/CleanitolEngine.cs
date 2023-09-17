@@ -320,7 +320,7 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Move the files requested for removal to an external location and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files in the location.
         /// </summary>
-        public void BackupFiles() {
+        public string BackupFiles() {
             string outputDir = Path.Combine(CleanitolOutputDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             StringBuilder batchFile = new StringBuilder();
             Directory.CreateDirectory(outputDir);
@@ -346,6 +346,8 @@ namespace SC4Cleanitol {
                 summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
                 File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), summarytemplate);
             }
+
+            return outputDir;
         }
 
 

@@ -13,7 +13,6 @@ using SC4Cleanitol;
 using Options = SC4CleanitolWPF.Properties.Settings;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Threading;
 using System.Windows.Controls;
 
 namespace SC4CleanitolWPF {
@@ -31,14 +30,9 @@ namespace SC4CleanitolWPF {
         public bool UpdateTGIdb { get; set; } = true;
         public bool VerboseOutput { get; set; } = false;
 
-        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
-        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
         public readonly Version ReleaseVersion = new Version(0, 2);
         public readonly string ReleaseDate = "Jun 2023";
-
         private CleanitolEngine cleanitol;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
-        private List<GenericRun> runList;
 
         public MainWindow() {
             Doc = new FlowDocument();
@@ -59,6 +53,7 @@ namespace SC4CleanitolWPF {
             } else {
                 _userPluginsDir = string.Empty;
             }
+
             if (!Options.Default.SystemPluginsDirectory.Equals("")) {
                 string steamDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
                 if (Directory.Exists(steamDir)) {
@@ -71,6 +66,7 @@ namespace SC4CleanitolWPF {
             } else {
                 _systemPluginsDir = string.Empty;
             }
+
             _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
             cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
@@ -151,8 +147,7 @@ namespace SC4CleanitolWPF {
             StatusLabel.Text = "Scan Complete";
         }
 
-
-        internal static Run ConvertRun(GenericRun genericRun) {
+        private static Run ConvertRun(GenericRun genericRun) {
             switch (genericRun.Type) {
                 case RunType.BlueStd:
                     return RunStyles.BlueStd(genericRun.Text);
@@ -198,7 +193,12 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
+            string outputDir = 
+
             cleanitol.BackupFiles();
+            FileMoveConfirmWindow fw = new FileMoveConfirmWindow();
+            fw.TitleLabel.Content = cleanitol.FilesToRemove.Count + "files removed from plugins.";
+            fw.ShowDialog();
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e) {
