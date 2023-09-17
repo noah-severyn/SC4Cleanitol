@@ -12,6 +12,9 @@ using Microsoft.Win32;
 using SC4Cleanitol;
 using Options = SC4CleanitolWPF.Properties.Settings;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Windows.Controls;
 
 namespace SC4CleanitolWPF {
     /// <summary>
@@ -98,7 +101,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RunScript_Click(object sender, RoutedEventArgs e) {
+        private async void RunScript_Click(object sender, RoutedEventArgs e) {
             Log.Inlines.Clear();
             if (!Directory.Exists(cleanitol.UserPluginsDirectory)) {
                 MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -108,11 +111,25 @@ namespace SC4CleanitolWPF {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            List<List<GenericRun>> runList = cleanitol.RunScript(UpdateTGIdb, false, VerboseOutput);
-            // Start the asynchronous operation.
-            //backgroundWorker1.RunWorkerAsync();
+            if (cleanitol.ScriptPath == "") {
+                MessageBox.Show("Please choose a script first.", "No script selected.", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
-            //backgroundWorker1.CancelAsync();
+            StatusBar.Visibility = Visibility.Visible;
+
+            var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
+            var progresScannedFiles = new Progress<int>(scannedFiles => { 
+                FileProgressBar.Value = scannedFiles; 
+                FileProgressLabel.Text = scannedFiles + " / " + FileProgressBar.Maximum + " files";
+                if (scannedFiles == FileProgressBar.Maximum) {
+                    StatusLabel.Text = "Creating Report ...";
+                }
+            });
+            var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
+
+            List<List<GenericRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, UpdateTGIdb, false, VerboseOutput));
+            
             foreach (List<GenericRun> line in runList) {
                 foreach (GenericRun run in line) {
                     if (run.Type is RunType.Hyperlink) {
@@ -131,53 +148,8 @@ namespace SC4CleanitolWPF {
             ScriptOutput.Document = Doc;
             UpdateTGIdb = false;
             UpdateTGICheckbox.IsChecked = false;
+            StatusLabel.Text = "Scan Complete";
         }
-
-
-
-
-        //https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2010/waw3xexc(v=vs.100)?redirectedfrom=MSDN
-        // Set up the BackgroundWorker object by attaching event handlers. 
-        private void InitializeBackgroundWorker() {
-            backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
-            backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
-            backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
-        }
-
-        // This event handler is where the actual, potentially time-consuming work is done.
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e) {
-            BackgroundWorker worker = sender as BackgroundWorker;// Get the BackgroundWorker that raised this event.
-
-            // Assign the result of the computation to the Result property of the DoWorkEventArgs object. This is will be available to the RunWorkerCompleted eventhandler.
-            //e.Result = cleanitol.RunScript(UpdateTGIdb, _includeSystemPlugins, worker, e);
-        }
-
-        // This event handler deals with the results of the background operation.
-        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
-            if (e.Error != null) { // Handle the case where an exception was thrown.
-                MessageBox.Show(e.Error.Message);
-            } else if (e.Cancelled) { // Handle the case where the user canceled the operation.
-                // Note that due to a race condition in the DoWork event handler, the Cancelled flag may not have been set, even though CancelAsync was called.
-                StatusLabel.Text = "Scan canceled";
-            } else { // Handle the case where the operation succeeded.
-                if (e.Result is not null) {
-                    runList = (List<GenericRun>) e.Result;
-                }
-                StatusLabel.Text = "Scan complete";
-            }
-        }
-
-        // This event handler updates the progress bar.
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e) {
-            int progressPct = e.ProgressPercentage;
-            int fileCount = cleanitol.ListOfFiles.Count();
-            FileProgressBar.Value = progressPct;
-            FileProgressLabel.Text = (progressPct * fileCount) + " / " + fileCount + " files";
-        }
-
-
-
-
 
 
         internal static Run ConvertRun(GenericRun genericRun) {

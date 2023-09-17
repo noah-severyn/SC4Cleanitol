@@ -11,7 +11,7 @@ namespace SC4Cleanitol {
     /// <remarks>
     /// Platform-specific implementations should convert this to the appropriate run type for the UI element, e.g. <c>System.Windows.Documents.Run</c> (WPF) or <c>Microsoft.UI.Xaml.Documents.Run</c> (WinUI).
     /// </remarks>
-    public struct GenericRun {
+    public readonly struct GenericRun {
         /// <summary>
         /// Text to display.
         /// </summary>

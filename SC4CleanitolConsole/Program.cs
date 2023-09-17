@@ -109,9 +109,13 @@ public class Program {
         Console.WriteLine("Update TGIs: " + updateTGIs);
         Console.WriteLine("Verbose: " + verbose);
 
+        var progressTotalFiles = new Progress<int>(totalFiles => { });
+        var progresScannedFiles = new Progress<int>(scannedFiles => { });
+        var progressTotalTGIs = new Progress<int>(totalTGIs => { });
+
 
         CleanitolEngine cleanitol = new CleanitolEngine(userPlugins, systemPlugins, outputFolder, scriptPath);
-        List<List<GenericRun>> runList = cleanitol.RunScript(updateTGIs, scanSystemPlugins, verbose);
+        List<List<GenericRun>> runList = cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, updateTGIs, scanSystemPlugins, verbose);
 
         StringBuilder message = new StringBuilder();
         foreach (List<GenericRun> line in runList) {
