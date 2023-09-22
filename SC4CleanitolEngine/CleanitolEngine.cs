@@ -16,7 +16,12 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Location files will be removed to and the output summary will be saved to.
         /// </summary>
-        public string CleanitolOutputDirectory { get; set; }
+        public string CleanitolOutputBaseDirectory { get; set; }
+
+        /// <summary>
+        /// Location the last script run moved files to. Equivalent to the <see cref="CleanitolOutputBaseDirectory"/> plus a date time stamp.
+        /// </summary>
+        public string CleanitolOutputDirectory { get; private set; }
 
 
         /// <summary>
@@ -85,7 +90,7 @@ namespace SC4Cleanitol {
             if (!Directory.Exists(outputDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
-                CleanitolOutputDirectory = outputDirectory;
+                CleanitolOutputBaseDirectory = outputDirectory;
             }
 
             ScriptPath = string.Empty;
@@ -136,7 +141,7 @@ namespace SC4Cleanitol {
             if (!Directory.Exists(outputDirectory)) {
                 throw new DirectoryNotFoundException();
             } else {
-                CleanitolOutputDirectory = outputDirectory;
+                CleanitolOutputBaseDirectory = outputDirectory;
             }
         }
 
@@ -320,8 +325,8 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Move the files requested for removal to an external location and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files in the location.
         /// </summary>
-        public string BackupFiles() {
-            string outputDir = Path.Combine(CleanitolOutputDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
+        public void BackupFiles() {
+            string outputDir = Path.Combine(CleanitolOutputBaseDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             StringBuilder batchFile = new StringBuilder();
             Directory.CreateDirectory(outputDir);
 
@@ -347,7 +352,7 @@ namespace SC4Cleanitol {
                 File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), summarytemplate);
             }
 
-            return outputDir;
+            CleanitolOutputDirectory = outputDir;
         }
 
 
