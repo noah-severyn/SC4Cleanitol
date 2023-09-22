@@ -13,7 +13,6 @@ using SC4Cleanitol;
 using Options = SC4CleanitolWPF.Properties.Settings;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Threading;
 using System.Windows.Controls;
 
 namespace SC4CleanitolWPF {
@@ -31,14 +30,9 @@ namespace SC4CleanitolWPF {
         public bool UpdateTGIdb { get; set; } = true;
         public bool VerboseOutput { get; set; } = false;
 
-        private delegate void ProgressBarSetValueDelegate(DependencyProperty dp, object value);
-        private delegate void TextBlockSetTextDelegate(DependencyProperty dp, object value);
         public readonly Version ReleaseVersion = new Version(0, 2);
         public readonly string ReleaseDate = "Jun 2023";
-
         private CleanitolEngine cleanitol;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
-        private List<GenericRun> runList;
 
         public MainWindow() {
             Doc = new FlowDocument();
@@ -54,11 +48,11 @@ namespace SC4CleanitolWPF {
             //Set Properties
             if (!Options.Default.UserPluginsDirectory.Equals("")) {
                 Options.Default.UserPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
-                Options.Default.Save();
                 _userPluginsDir = Options.Default.UserPluginsDirectory;
             } else {
                 _userPluginsDir = string.Empty;
             }
+
             if (!Options.Default.SystemPluginsDirectory.Equals("")) {
                 string steamDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
                 if (Directory.Exists(steamDir)) {
@@ -66,11 +60,16 @@ namespace SC4CleanitolWPF {
                 } else {
                     Options.Default.SystemPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
                 }
-                Options.Default.Save();
                 _systemPluginsDir = Options.Default.SystemPluginsDirectory;
             } else {
                 _systemPluginsDir = string.Empty;
             }
+
+            if (Options.Default.CleanitolOutputDirectory.Equals("")) {
+
+            }
+
+            Options.Default.Save();
             _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
             cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
@@ -116,7 +115,10 @@ namespace SC4CleanitolWPF {
                 return;
             }
 
-            StatusBar.Visibility = Visibility.Visible;
+            if (UpdateTGIdb) {
+                StatusBar.Visibility = Visibility.Visible;
+            }
+            
 
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progresScannedFiles = new Progress<int>(scannedFiles => { 
@@ -151,8 +153,7 @@ namespace SC4CleanitolWPF {
             StatusLabel.Text = "Scan Complete";
         }
 
-
-        internal static Run ConvertRun(GenericRun genericRun) {
+        private static Run ConvertRun(GenericRun genericRun) {
             switch (genericRun.Type) {
                 case RunType.BlueStd:
                     return RunStyles.BlueStd(genericRun.Text);
@@ -199,6 +200,14 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
             cleanitol.BackupFiles();
+            Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
+            Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+            Hyperlink link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n"));
+            link.NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory);
+            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+            Log.Inlines.Add(link);
+            Doc.Blocks.Add(Log);
+
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e) {
