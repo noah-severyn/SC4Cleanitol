@@ -199,16 +199,13 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-
             cleanitol.BackupFiles();
-            Doc.Blocks.Clear();
+            Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
             Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
-            Log.Inlines.Add(ConvertRun(new GenericRun(, RunType.Hyperlink)));
- 
-                Hyperlink link = new Hyperlink(new Run(Options.Default.CleanitolOutputDirectory + "\r\n"));
-                link.NavigateUri = new Uri(Options.Default.CleanitolOutputDirectory);
-                link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-                Log.Inlines.Add(link);
+            Hyperlink link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n"));
+            link.NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory);
+            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+            Log.Inlines.Add(link);
             Doc.Blocks.Add(Log);
 
         }
