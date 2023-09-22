@@ -14,6 +14,7 @@
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30" />
 			<RowDefinition Height="60" />
+			<RowDefinition Height="30" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
@@ -68,17 +69,38 @@
 				  Grid.Row="1"
 				  VerticalAlignment="Top" />
 
-
-		<!-- Grid Row 2 : Language -->
-		<TextBlock x:Name="LanguageLabel"
+		<!-- Grid Row 2 : User Plugins -->
+		<TextBlock x:Name="CleanitolOutputDirectoryLabel"
 				   Grid.Row="2"
+				   HorizontalAlignment="Left"
+				   Margin="10,10,0,0"
+				   TextWrapping="Wrap"
+				   Text="Cleanitol Output"
+				   VerticalAlignment="Top" />
+		<TextBox x:Name="CleanitolOutputDirectory"
+				 Grid.Row="2"
+				 Margin="105,10,33,0"
+				 Text="TextBox"
+				 VerticalAlignment="Top"
+				 TextWrapping="NoWrap"
+				 TextAlignment="Right" />
+		<Button x:Name="CleanitolOutputChooseFolder"
+				Grid.Row="2"
+				Content=" ... "
+				HorizontalAlignment="Right"
+				Margin="0,9,10,1"
+				Click="CleanitolOutputChooseFolder_Click" />
+
+		<!-- Grid Row 3 : Language -->
+		<TextBlock x:Name="LanguageLabel"
+				   Grid.Row="3"
 				   HorizontalAlignment="Left"
 				   Margin="10,10,0,0"
 				   TextWrapping="Wrap"
 				   Text="Language"
 				   VerticalAlignment="Top" />
 		<ComboBox x:Name="LanguageChoice"
-				  Grid.Row="2"
+				  Grid.Row="3"
 				  HorizontalAlignment="Left"
 				  Margin="105,10,0,0"
 				  VerticalAlignment="Top"
@@ -86,7 +108,7 @@
 			<ComboBoxItem IsSelected="True">English</ComboBoxItem>
 		</ComboBox>
 		<TextBlock x:Name="VersionInfoLabel"
-				   Grid.Row="2"
+				   Grid.Row="3"
 				   HorizontalAlignment="Right"
 				   TextAlignment="Right"
 				   Margin="0,10,10,0"
@@ -96,7 +118,7 @@
 			Current Version: 0.1 (Jun 2023)
 		</TextBlock>
 		<Button x:Name="VersionCheckButton"
-				Grid.Row="2"
+				Grid.Row="3"
 				Content="Check for Updates"
 				HorizontalAlignment="Right"
 				Margin="0,31,10,0"

@@ -48,7 +48,6 @@ namespace SC4CleanitolWPF {
             //Set Properties
             if (!Options.Default.UserPluginsDirectory.Equals("")) {
                 Options.Default.UserPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
-                Options.Default.Save();
                 _userPluginsDir = Options.Default.UserPluginsDirectory;
             } else {
                 _userPluginsDir = string.Empty;
@@ -61,12 +60,16 @@ namespace SC4CleanitolWPF {
                 } else {
                     Options.Default.SystemPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
                 }
-                Options.Default.Save();
                 _systemPluginsDir = Options.Default.SystemPluginsDirectory;
             } else {
                 _systemPluginsDir = string.Empty;
             }
 
+            if (Options.Default.CleanitolOutputDirectory.Equals("")) {
+
+            }
+
+            Options.Default.Save();
             _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
             cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
@@ -112,7 +115,10 @@ namespace SC4CleanitolWPF {
                 return;
             }
 
-            StatusBar.Visibility = Visibility.Visible;
+            if (UpdateTGIdb) {
+                StatusBar.Visibility = Visibility.Visible;
+            }
+            
 
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progresScannedFiles = new Progress<int>(scannedFiles => { 
@@ -193,12 +199,18 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            string outputDir = 
 
             cleanitol.BackupFiles();
-            FileMoveConfirmWindow fw = new FileMoveConfirmWindow();
-            fw.TitleLabel.Content = cleanitol.FilesToRemove.Count + "files removed from plugins.";
-            fw.ShowDialog();
+            Doc.Blocks.Clear();
+            Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+            Log.Inlines.Add(ConvertRun(new GenericRun(, RunType.Hyperlink)));
+ 
+                Hyperlink link = new Hyperlink(new Run(Options.Default.CleanitolOutputDirectory + "\r\n"));
+                link.NavigateUri = new Uri(Options.Default.CleanitolOutputDirectory);
+                link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                Log.Inlines.Add(link);
+            Doc.Blocks.Add(Log);
+
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e) {
