@@ -44,6 +44,8 @@ namespace SC4CleanitolWPF {
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
             StatusBar.Visibility = Visibility.Collapsed;
+            BackupFiles.IsEnabled = false;
+            RunScript.IsEnabled = false;
 
             //Set Properties
             if (!Options.Default.UserPluginsDirectory.Equals("")) {
@@ -89,6 +91,7 @@ namespace SC4CleanitolWPF {
             if (dialog.ShowDialog() == true) {
                 cleanitol.SetScriptPath(dialog.FileName);
                 ScriptPathTextBox.Text = dialog.FileName;
+                RunScript.IsEnabled = true;
             } else {
                 return;
             }
@@ -108,10 +111,6 @@ namespace SC4CleanitolWPF {
             }
             if (!Directory.Exists(cleanitol.SystemPluginsDirectory)) {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            if (cleanitol.ScriptPath == "") {
-                MessageBox.Show("Please choose a script first.", "No script selected.", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -151,6 +150,10 @@ namespace SC4CleanitolWPF {
             UpdateTGIdb = false;
             UpdateTGICheckbox.IsChecked = false;
             StatusLabel.Text = "Scan Complete";
+            if (cleanitol.FilesToRemove.Count > 0) {
+                BackupFiles.IsEnabled = true;
+            }
+            
         }
 
         private static Run ConvertRun(GenericRun genericRun) {
@@ -201,13 +204,15 @@ namespace SC4CleanitolWPF {
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
             cleanitol.BackupFiles();
             Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
-            Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
-            Hyperlink link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n"));
-            link.NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory);
-            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-            Log.Inlines.Add(link);
+            if (cleanitol.FilesToRemove.Count > 0) {
+                Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+                Hyperlink link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n"));
+                link.NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory);
+                link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                Log.Inlines.Add(link);
+            }
             Doc.Blocks.Add(Log);
-
+            BackupFiles.IsEnabled = false;
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e) {

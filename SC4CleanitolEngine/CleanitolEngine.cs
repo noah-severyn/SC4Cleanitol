@@ -323,17 +323,22 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Move the files requested for removal to an external location and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files in the location.
+        /// Move the files requested for removal to <see cref="CleanitolOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
         public void BackupFiles() {
+            if (FilesToRemove.Count == 0) {
+                return;
+            }
             string outputDir = Path.Combine(CleanitolOutputBaseDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             StringBuilder batchFile = new StringBuilder();
             Directory.CreateDirectory(outputDir);
 
             //Write batch undo file
             foreach (string file in FilesToRemove) {
-                File.Move(file, Path.Combine(outputDir, Path.GetFileName(file)));
-                batchFile.AppendLine("copy \"" + Path.GetFileName(file) + "\" \"..\\..\\Plugins\\" + Path.GetFileName(file));
+                if (File.Exists(file)) {
+                    File.Move(file, Path.Combine(outputDir, Path.GetFileName(file)));
+                    batchFile.AppendLine("copy \"" + Path.GetFileName(file) + "\" \"..\\..\\Plugins\\" + Path.GetFileName(file));
+                }
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
