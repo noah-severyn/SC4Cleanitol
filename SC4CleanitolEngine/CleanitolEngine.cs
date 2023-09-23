@@ -335,9 +335,20 @@ namespace SC4Cleanitol {
 
             //Write batch undo file
             foreach (string file in FilesToRemove) {
+                string fname = Path.GetFileName(file);
                 if (File.Exists(file)) {
-                    File.Move(file, Path.Combine(outputDir, Path.GetFileName(file)));
-                    batchFile.AppendLine("copy \"" + Path.GetFileName(file) + "\" \"..\\..\\Plugins\\" + Path.GetFileName(file));
+                    try {
+                        File.Move(file, Path.Combine(outputDir, fname));
+                    }
+                    catch (IOException) {
+                        //To catch where there are files with the same name in different folders. Error moving them to the same location → delete additional files with the same name but still record their locations so they can be moved back.
+                        File.Delete(file);
+                    } finally {
+                        string relativePath = file.Substring(file.IndexOf("Plugins"));
+                        batchFile.AppendLine("copy \"" + fname + "\" \"..\\..\\" + relativePath);
+                    }
+                    
+
                 }
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
