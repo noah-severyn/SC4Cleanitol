@@ -113,7 +113,6 @@ namespace SC4CleanitolWPF {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-
             if (UpdateTGIdb) {
                 StatusBar.Visibility = Visibility.Visible;
             }
@@ -153,9 +152,14 @@ namespace SC4CleanitolWPF {
             if (cleanitol.FilesToRemove.Count > 0) {
                 BackupFiles.IsEnabled = true;
             }
-            
         }
 
+
+        /// <summary>
+        /// Converts a <see cref="GenericRun"/> to a specific run style based on its <see cref="GenericRun.Type"/> property.
+        /// </summary>
+        /// <param name="genericRun">Run to convert</param>
+        /// <returns></returns>
         private static Run ConvertRun(GenericRun genericRun) {
             switch (genericRun.Type) {
                 case RunType.BlueStd:
@@ -197,7 +201,7 @@ namespace SC4CleanitolWPF {
 
 
         /// <summary>
-        /// Move the files in <see cref="_filesToRemove"/> to an external folder and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files.
+        /// Move the files in the current instance of <see cref="CleanitolEngine.FilesToRemove"/> to an external folder and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -214,15 +218,27 @@ namespace SC4CleanitolWPF {
             Doc.Blocks.Add(Log);
             BackupFiles.IsEnabled = false;
         }
-
+        /// <summary>
+        /// Exit the application
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Quit_Click(object sender, RoutedEventArgs e) {
             Application.Current.Shutdown();
         }
-
+        /// <summary>
+        /// Hide the status bar.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OkButton_Click(object sender, RoutedEventArgs e) {
             StatusBar.Visibility = Visibility.Collapsed;
         }
-
+        /// <summary>
+        /// Show the settings window, and pre-populate it with the current settings.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Settings_Click(object sender, RoutedEventArgs e) {
             Preferences p = new Preferences();
             p.Show();
@@ -230,7 +246,11 @@ namespace SC4CleanitolWPF {
             _systemPluginsDir = Options.Default.SystemPluginsDirectory;
             _includeSystemPlugins = Options.Default.ScanSystemPlugins;
         }
-
+        /// <summary>
+        /// Eport the list of TGIs to a CSV file.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ExportButton_Click(object sender, RoutedEventArgs e) {
             cleanitol.ExportTGIs();
             MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);

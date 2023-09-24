@@ -345,10 +345,8 @@ namespace SC4Cleanitol {
                         File.Delete(file);
                     } finally {
                         string relativePath = file.Substring(file.IndexOf("Plugins"));
-                        batchFile.AppendLine("copy \"" + fname + "\" \"..\\..\\" + relativePath);
+                        batchFile.AppendLine("copy \"" + fname + "\" \"..\\..\\" + relativePath + "\"");
                     }
-                    
-
                 }
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
