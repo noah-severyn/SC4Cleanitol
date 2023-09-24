@@ -206,15 +206,27 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            cleanitol.BackupFiles();
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "SC4CleanitolWPF.SummaryTemplate.html";
+            Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            cleanitol.BackupFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),"SummaryTemplate.html"));
             Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
+
+            Hyperlink link;
             if (cleanitol.FilesToRemove.Count > 0) {
                 Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
-                Hyperlink link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n"));
-                link.NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory);
+                link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n")) {
+                    NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory)
+                };
                 link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                 Log.Inlines.Add(link);
             }
+            link = new Hyperlink(ConvertRun(new GenericRun("View Summary",RunType.BlueMono))) {
+                NavigateUri = new Uri(Path.Combine(cleanitol.CleanitolOutputDirectory, "CleanupSummary.html"))
+            };
+            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+            Log.Inlines.Add(link);
+
             Doc.Blocks.Add(Log);
             BackupFiles.IsEnabled = false;
         }

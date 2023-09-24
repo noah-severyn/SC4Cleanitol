@@ -325,7 +325,8 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Move the files requested for removal to <see cref="CleanitolOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
-        public void BackupFiles() {
+        /// <param name="templatePath">Path to the HTML summary template.</param>
+        public void BackupFiles(string templatePath) {
             if (FilesToRemove.Count == 0) {
                 return;
             }
@@ -351,10 +352,7 @@ namespace SC4Cleanitol {
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
-            //Write Summary HTML File (https://stackoverflow.com/a/3314213)
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "SC4CleanitolWPF.SummaryTemplate.html";
-            Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            FileStream stream = File.Open(templatePath, FileMode.Open);
             if (stream is not null) {
                 StreamReader reader = new StreamReader(stream);
 
@@ -362,6 +360,7 @@ namespace SC4Cleanitol {
                 summarytemplate = summarytemplate.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
                 summarytemplate = summarytemplate.Replace("#FOLDERPATH", outputDir);
                 summarytemplate = summarytemplate.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
+                summarytemplate = summarytemplate.Replace("#LISTOFFILES", string.Join("<br/>", FilesToRemove));
                 summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
                 File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), summarytemplate);
             }
