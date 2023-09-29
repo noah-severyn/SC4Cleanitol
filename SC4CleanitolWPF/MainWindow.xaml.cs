@@ -206,10 +206,7 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "SC4CleanitolWPF.SummaryTemplate.html";
-            Stream? stream = assembly.GetManifestResourceStream(resourceName);
-            cleanitol.BackupFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),"SummaryTemplate.html"));
+            cleanitol.BackupFiles(Properties.Resources.SummaryTemplate);
             Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
 
             Hyperlink link;

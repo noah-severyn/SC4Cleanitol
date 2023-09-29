@@ -325,8 +325,8 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Move the files requested for removal to <see cref="CleanitolOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
-        /// <param name="templatePath">Path to the HTML summary template.</param>
-        public void BackupFiles(string templatePath) {
+        /// <param name="templateText">HTML template text.</param>
+        public void BackupFiles(string templateText) {
             if (FilesToRemove.Count == 0) {
                 return;
             }
@@ -352,18 +352,13 @@ namespace SC4Cleanitol {
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
-            FileStream stream = File.Open(templatePath, FileMode.Open);
-            if (stream is not null) {
-                StreamReader reader = new StreamReader(stream);
-
-                string summarytemplate = reader.ReadToEnd();
-                summarytemplate = summarytemplate.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
-                summarytemplate = summarytemplate.Replace("#FOLDERPATH", outputDir);
-                summarytemplate = summarytemplate.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
-                summarytemplate = summarytemplate.Replace("#LISTOFFILES", string.Join("<br/>", FilesToRemove));
-                summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
-                File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), summarytemplate);
-            }
+            //Write HTML Tempalte summary
+            templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
+            templateText = templateText.Replace("#FOLDERPATH", outputDir);
+            templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
+            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", FilesToRemove));
+            templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
+            File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
 
             CleanitolOutputDirectory = outputDir;
         }
