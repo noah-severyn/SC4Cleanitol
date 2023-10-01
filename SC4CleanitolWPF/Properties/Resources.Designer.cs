@@ -22,7 +22,7 @@ namespace SC4CleanitolWPF.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace SC4CleanitolWPF.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SC4CleanitolWPF.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace SC4CleanitolWPF.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -77,7 +77,7 @@ namespace SC4CleanitolWPF.Properties {
         ///    &lt;p&gt;#COUNTFILES files have been moved to &lt;code&gt;#FOLDERPATH&lt;/code&gt;&lt;/p&gt;
         ///    &lt;p&gt;Run &lt;code&gt;undo.bat&lt;/code&gt; to move these files back into their original location in Plugins [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string SummaryTemplate {
+        public static string SummaryTemplate {
             get {
                 return ResourceManager.GetString("SummaryTemplate", resourceCulture);
             }
