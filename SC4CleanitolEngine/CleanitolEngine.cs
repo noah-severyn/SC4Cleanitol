@@ -374,7 +374,7 @@ namespace SC4Cleanitol {
                 list.AppendLine(tgi);
             }
 
-            File.WriteAllText(Path.Combine(UserPluginsDirectory, "ScannedTGIs.csv"), list.ToString());
+            File.WriteAllText(Path.Combine(CleanitolOutputDirectory, "ScannedTGIs.csv"), list.ToString());
         }
     }
 }
