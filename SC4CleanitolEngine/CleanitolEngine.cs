@@ -75,23 +75,10 @@ namespace SC4Cleanitol {
         /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
         /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations are not valid or do not exist</exception>
         public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory) {
-            if (!Directory.Exists(userPluginsDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                UserPluginsDirectory = userPluginsDirectory;
-            }
-            if (systemPluginsDirectory == string.Empty || systemPluginsDirectory is null) {
-                SystemPluginsDirectory = string.Empty;
-            } else if (!Directory.Exists(systemPluginsDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                SystemPluginsDirectory = systemPluginsDirectory;
-            }
-            if (!Directory.Exists(outputDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                CleanitolOutputBaseDirectory = outputDirectory;
-            }
+            UserPluginsDirectory = userPluginsDirectory;
+            SystemPluginsDirectory = systemPluginsDirectory;
+            CleanitolOutputBaseDirectory = outputDirectory;
+            CleanitolOutputDirectory = CleanitolOutputBaseDirectory;
 
             ScriptPath = string.Empty;
             ScriptRules = new List<string>();
@@ -323,34 +310,42 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Move the files requested for removal to an external location and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files in the location.
+        /// Move the files requested for removal to <see cref="CleanitolOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
-        public void BackupFiles() {
+        /// <param name="templateText">HTML template text.</param>
+        public void BackupFiles(string templateText) {
+            if (FilesToRemove.Count == 0) {
+                return;
+            }
             string outputDir = Path.Combine(CleanitolOutputBaseDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             StringBuilder batchFile = new StringBuilder();
             Directory.CreateDirectory(outputDir);
 
             //Write batch undo file
             foreach (string file in FilesToRemove) {
-                File.Move(file, Path.Combine(outputDir, Path.GetFileName(file)));
-                batchFile.AppendLine("copy \"" + Path.GetFileName(file) + "\" \"..\\..\\Plugins\\" + Path.GetFileName(file));
+                string fname = Path.GetFileName(file);
+                if (File.Exists(file)) {
+                    try {
+                        File.Move(file, Path.Combine(outputDir, fname));
+                    }
+                    catch (IOException) {
+                        //To catch where there are files with the same name in different folders. Error moving them to the same location → delete additional files with the same name but still record their locations so they can be moved back.
+                        File.Delete(file);
+                    } finally {
+                        string relativePath = file.Substring(file.IndexOf("Plugins"));
+                        batchFile.AppendLine("copy \"" + fname + "\" \"..\\..\\" + relativePath + "\"");
+                    }
+                }
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
-            //Write Summary HTML File (https://stackoverflow.com/a/3314213)
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "SC4CleanitolWPF.SummaryTemplate.html";
-            Stream? stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream is not null) {
-                StreamReader reader = new StreamReader(stream);
-
-                string summarytemplate = reader.ReadToEnd();
-                summarytemplate = summarytemplate.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
-                summarytemplate = summarytemplate.Replace("#FOLDERPATH", outputDir);
-                summarytemplate = summarytemplate.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
-                summarytemplate = summarytemplate.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
-                File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), summarytemplate);
-            }
+            //Write HTML Tempalte summary
+            templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
+            templateText = templateText.Replace("#FOLDERPATH", outputDir);
+            templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
+            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", FilesToRemove));
+            templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
+            File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
 
             CleanitolOutputDirectory = outputDir;
         }
@@ -366,7 +361,7 @@ namespace SC4Cleanitol {
                 list.AppendLine(tgi);
             }
 
-            File.WriteAllText(Path.Combine(UserPluginsDirectory, "ScannedTGIs.csv"), list.ToString());
+            File.WriteAllText(Path.Combine(CleanitolOutputDirectory, "ScannedTGIs.csv"), list.ToString());
         }
     }
 }

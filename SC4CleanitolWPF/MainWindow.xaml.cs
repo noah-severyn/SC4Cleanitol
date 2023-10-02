@@ -20,10 +20,6 @@ namespace SC4CleanitolWPF {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        private string _userPluginsDir;
-        private string _systemPluginsDir;
-        private string _cleanitolOutputDir;
-        private bool _includeSystemPlugins;
 
         private readonly Paragraph Log;
         private readonly FlowDocument Doc;
@@ -44,35 +40,30 @@ namespace SC4CleanitolWPF {
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
             StatusBar.Visibility = Visibility.Collapsed;
+            BackupFiles.IsEnabled = false;
+            RunScript.IsEnabled = false;
 
             //Set Properties
-            if (!Options.Default.UserPluginsDirectory.Equals("")) {
+            if (Options.Default.UserPluginsDirectory.Equals("")) {
                 Options.Default.UserPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
-                _userPluginsDir = Options.Default.UserPluginsDirectory;
-            } else {
-                _userPluginsDir = string.Empty;
             }
 
-            if (!Options.Default.SystemPluginsDirectory.Equals("")) {
+            if (Options.Default.SystemPluginsDirectory.Equals("")) {
                 string steamDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
                 if (Directory.Exists(steamDir)) {
                     Options.Default.SystemPluginsDirectory = steamDir;
                 } else {
-                    Options.Default.SystemPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
+                    Options.Default.SystemPluginsDirectory = Options.Default.UserPluginsDirectory;
                 }
-                _systemPluginsDir = Options.Default.SystemPluginsDirectory;
-            } else {
-                _systemPluginsDir = string.Empty;
             }
 
             if (Options.Default.CleanitolOutputDirectory.Equals("")) {
-
+                Options.Default.CleanitolOutputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
             }
 
             Options.Default.Save();
-            _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
-            cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
+            
             this.Title = "SC4 Cleanitol 2023 - " + ReleaseVersion.ToString();
 
         }
@@ -89,6 +80,7 @@ namespace SC4CleanitolWPF {
             if (dialog.ShowDialog() == true) {
                 cleanitol.SetScriptPath(dialog.FileName);
                 ScriptPathTextBox.Text = dialog.FileName;
+                RunScript.IsEnabled = true;
             } else {
                 return;
             }
@@ -102,23 +94,19 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private async void RunScript_Click(object sender, RoutedEventArgs e) {
             Log.Inlines.Clear();
-            if (!Directory.Exists(cleanitol.UserPluginsDirectory)) {
+            if (!Directory.Exists(Options.Default.UserPluginsDirectory)) {
                 MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (!Directory.Exists(cleanitol.SystemPluginsDirectory)) {
+            if (!Directory.Exists(Options.Default.SystemPluginsDirectory)) {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (cleanitol.ScriptPath == "") {
-                MessageBox.Show("Please choose a script first.", "No script selected.", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             if (UpdateTGIdb) {
                 StatusBar.Visibility = Visibility.Visible;
             }
-            
+            cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory);
+
 
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progresScannedFiles = new Progress<int>(scannedFiles => { 
@@ -151,8 +139,17 @@ namespace SC4CleanitolWPF {
             UpdateTGIdb = false;
             UpdateTGICheckbox.IsChecked = false;
             StatusLabel.Text = "Scan Complete";
+            if (cleanitol.FilesToRemove.Count > 0) {
+                BackupFiles.IsEnabled = true;
+            }
         }
 
+
+        /// <summary>
+        /// Converts a <see cref="GenericRun"/> to a specific run style based on its <see cref="GenericRun.Type"/> property.
+        /// </summary>
+        /// <param name="genericRun">Run to convert</param>
+        /// <returns></returns>
         private static Run ConvertRun(GenericRun genericRun) {
             switch (genericRun.Type) {
                 case RunType.BlueStd:
@@ -194,38 +191,62 @@ namespace SC4CleanitolWPF {
 
 
         /// <summary>
-        /// Move the files in <see cref="_filesToRemove"/> to an external folder and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files.
+        /// Move the files in the current instance of <see cref="CleanitolEngine.FilesToRemove"/> to an external folder and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            cleanitol.BackupFiles();
+            cleanitol.BackupFiles(Properties.Resources.SummaryTemplate);
             Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
-            Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
-            Hyperlink link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n"));
-            link.NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory);
+
+            Hyperlink link;
+            if (cleanitol.FilesToRemove.Count > 0) {
+                Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+                link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n")) {
+                    NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory)
+                };
+                link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                Log.Inlines.Add(link);
+            }
+            link = new Hyperlink(ConvertRun(new GenericRun("View Summary",RunType.BlueMono))) {
+                NavigateUri = new Uri(Path.Combine(cleanitol.CleanitolOutputDirectory, "CleanupSummary.html"))
+            };
             link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
             Log.Inlines.Add(link);
+
             Doc.Blocks.Add(Log);
-
+            BackupFiles.IsEnabled = false;
         }
-
+        /// <summary>
+        /// Exit the application
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Quit_Click(object sender, RoutedEventArgs e) {
             Application.Current.Shutdown();
         }
-
+        /// <summary>
+        /// Hide the status bar.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OkButton_Click(object sender, RoutedEventArgs e) {
             StatusBar.Visibility = Visibility.Collapsed;
         }
-
+        /// <summary>
+        /// Show the settings window, and pre-populate it with the current settings.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Settings_Click(object sender, RoutedEventArgs e) {
             Preferences p = new Preferences();
             p.Show();
-            _userPluginsDir = Options.Default.UserPluginsDirectory;
-            _systemPluginsDir = Options.Default.SystemPluginsDirectory;
-            _includeSystemPlugins = Options.Default.ScanSystemPlugins;
         }
-
+        /// <summary>
+        /// Eport the list of TGIs to a CSV file.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ExportButton_Click(object sender, RoutedEventArgs e) {
             cleanitol.ExportTGIs();
             MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);

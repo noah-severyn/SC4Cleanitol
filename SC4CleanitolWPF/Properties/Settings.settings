@@ -9,7 +9,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="SystemPluginsDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">C:\Program Files (x86)\Steam\steamapps\common\SimCity 4 Deluxe\Plugins</Value>
     </Setting>
     <Setting Name="ScanSystemPlugins" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

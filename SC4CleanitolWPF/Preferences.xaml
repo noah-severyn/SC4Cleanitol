@@ -29,7 +29,6 @@
 		<TextBox x:Name="UserPluginsDirectory"
 				 Grid.Row="0"
 				 Margin="105,10,33,0"
-				 Text="TextBox"
 				 VerticalAlignment="Top"
 				 TextWrapping="NoWrap"
 				 TextAlignment="Right" />
@@ -52,7 +51,6 @@
 		<TextBox x:Name="SystemPluginsDirectory"
 				 Grid.Row="1"
 				 Margin="105,10,33,0"
-				 Text="TextBox"
 				 VerticalAlignment="Top"
 				 TextWrapping="NoWrap"
 				 TextAlignment="Right" />
@@ -80,7 +78,6 @@
 		<TextBox x:Name="CleanitolOutputDirectory"
 				 Grid.Row="2"
 				 Margin="105,10,33,0"
-				 Text="TextBox"
 				 VerticalAlignment="Top"
 				 TextWrapping="NoWrap"
 				 TextAlignment="Right" />
