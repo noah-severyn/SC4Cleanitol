@@ -75,23 +75,10 @@ namespace SC4Cleanitol {
         /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
         /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations are not valid or do not exist</exception>
         public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory) {
-            if (!Directory.Exists(userPluginsDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                UserPluginsDirectory = userPluginsDirectory;
-            }
-            if (systemPluginsDirectory == string.Empty || systemPluginsDirectory is null) {
-                SystemPluginsDirectory = string.Empty;
-            } else if (!Directory.Exists(systemPluginsDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                SystemPluginsDirectory = systemPluginsDirectory;
-            }
-            if (!Directory.Exists(outputDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                CleanitolOutputBaseDirectory = outputDirectory;
-            }
+            UserPluginsDirectory = userPluginsDirectory;
+            SystemPluginsDirectory = systemPluginsDirectory;
+            CleanitolOutputBaseDirectory = outputDirectory;
+            CleanitolOutputDirectory = CleanitolOutputBaseDirectory;
 
             ScriptPath = string.Empty;
             ScriptRules = new List<string>();

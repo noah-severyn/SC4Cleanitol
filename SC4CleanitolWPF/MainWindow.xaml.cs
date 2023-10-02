@@ -20,10 +20,6 @@ namespace SC4CleanitolWPF {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        private string _userPluginsDir;
-        private string _systemPluginsDir;
-        private string _cleanitolOutputDir;
-        private bool _includeSystemPlugins;
 
         private readonly Paragraph Log;
         private readonly FlowDocument Doc;
@@ -48,33 +44,26 @@ namespace SC4CleanitolWPF {
             RunScript.IsEnabled = false;
 
             //Set Properties
-            if (!Options.Default.UserPluginsDirectory.Equals("")) {
+            if (Options.Default.UserPluginsDirectory.Equals("")) {
                 Options.Default.UserPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
-                _userPluginsDir = Options.Default.UserPluginsDirectory;
-            } else {
-                _userPluginsDir = string.Empty;
             }
 
-            if (!Options.Default.SystemPluginsDirectory.Equals("")) {
+            if (Options.Default.SystemPluginsDirectory.Equals("")) {
                 string steamDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins");
                 if (Directory.Exists(steamDir)) {
                     Options.Default.SystemPluginsDirectory = steamDir;
                 } else {
-                    Options.Default.SystemPluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\Plugins");
+                    Options.Default.SystemPluginsDirectory = Options.Default.UserPluginsDirectory;
                 }
-                _systemPluginsDir = Options.Default.SystemPluginsDirectory;
-            } else {
-                _systemPluginsDir = string.Empty;
             }
 
             if (Options.Default.CleanitolOutputDirectory.Equals("")) {
-
+                Options.Default.CleanitolOutputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
             }
 
             Options.Default.Save();
-            _cleanitolOutputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
 
-            cleanitol = new CleanitolEngine(_userPluginsDir, _systemPluginsDir, _cleanitolOutputDir);
+            
             this.Title = "SC4 Cleanitol 2023 - " + ReleaseVersion.ToString();
 
         }
@@ -105,18 +94,19 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private async void RunScript_Click(object sender, RoutedEventArgs e) {
             Log.Inlines.Clear();
-            if (!Directory.Exists(cleanitol.UserPluginsDirectory)) {
+            if (!Directory.Exists(Options.Default.UserPluginsDirectory)) {
                 MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (!Directory.Exists(cleanitol.SystemPluginsDirectory)) {
+            if (!Directory.Exists(Options.Default.SystemPluginsDirectory)) {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             if (UpdateTGIdb) {
                 StatusBar.Visibility = Visibility.Visible;
             }
-            
+            cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory);
+
 
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progresScannedFiles = new Progress<int>(scannedFiles => { 
@@ -251,9 +241,6 @@ namespace SC4CleanitolWPF {
         private void Settings_Click(object sender, RoutedEventArgs e) {
             Preferences p = new Preferences();
             p.Show();
-            _userPluginsDir = Options.Default.UserPluginsDirectory;
-            _systemPluginsDir = Options.Default.SystemPluginsDirectory;
-            _includeSystemPlugins = Options.Default.ScanSystemPlugins;
         }
         /// <summary>
         /// Eport the list of TGIs to a CSV file.
