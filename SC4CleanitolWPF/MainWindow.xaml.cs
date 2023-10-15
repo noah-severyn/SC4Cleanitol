@@ -27,7 +27,7 @@ namespace SC4CleanitolWPF {
         public bool VerboseOutput { get; set; } = false;
 
         public readonly Version releaseVersion = new Version(0, 2);
-        public readonly string releaseDate = "Jun 2023";
+        public readonly string releaseDate = "Oct 2023";
         private CleanitolEngine cleanitol;
 
         public MainWindow() {
