@@ -332,8 +332,7 @@ namespace SC4Cleanitol {
                         //To catch where there are files with the same name in different folders. Error moving them to the same location → delete additional files with the same name but still record their locations so they can be moved back.
                         File.Delete(file);
                     } finally {
-                        string relativePath = file.Substring(file.IndexOf("Plugins"));
-                        batchFile.AppendLine("copy \"" + fname + "\" \"..\\..\\" + relativePath + "\"");
+                        batchFile.AppendLine($"copy \"{fname}\" \"{file}\"");
                     }
                 }
             }
