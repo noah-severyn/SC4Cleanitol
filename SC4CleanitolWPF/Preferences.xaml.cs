@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
@@ -13,12 +14,13 @@ namespace SC4CleanitolWPF {
             InitializeComponent();
             UserPluginsDirectory.Text = Properties.Settings.Default.UserPluginsDirectory;
             SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
+            CleanitolOutputDirectory.Text = Properties.Settings.Default.CleanitolOutputDirectory;
             ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
-            LanguageChoice.Text = Properties.Settings.Default.Language;
+            LanguageChoice.SelectedItem = Properties.Settings.Default.Language;
 
             Window window = Application.Current.MainWindow;
             if (window is not null) {
-                VersionInfoLabel.Text = "Current Version: " + ((MainWindow) window).ReleaseVersion + " (" + ((MainWindow) window).ReleaseDate + ")";
+                VersionInfoLabel.Text = "Current Version: " + ((MainWindow) window).releaseVersion + " (" + ((MainWindow) window).releaseDate + ")";
             }
             
         }
