@@ -26,8 +26,8 @@ namespace SC4CleanitolWPF {
         public bool UpdateTGIdb { get; set; } = true;
         public bool VerboseOutput { get; set; } = false;
 
-        public readonly Version ReleaseVersion = new Version(0, 2);
-        public readonly string ReleaseDate = "Jun 2023";
+        public readonly Version releaseVersion = new Version(0, 2);
+        public readonly string releaseDate = "Jun 2023";
         private CleanitolEngine cleanitol;
 
         public MainWindow() {
@@ -36,7 +36,6 @@ namespace SC4CleanitolWPF {
             //Doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
 
             InitializeComponent();
-            //InitializeBackgroundWorker();
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
             StatusBar.Visibility = Visibility.Collapsed;
@@ -64,7 +63,7 @@ namespace SC4CleanitolWPF {
             Options.Default.Save();
 
             
-            this.Title = "SC4 Cleanitol 2023 - " + ReleaseVersion.ToString();
+            this.Title = "SC4 Cleanitol 2023 - " + releaseVersion.ToString();
 
         }
 
@@ -78,7 +77,6 @@ namespace SC4CleanitolWPF {
             Log.Inlines.Clear();
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true) {
-                cleanitol.SetScriptPath(dialog.FileName);
                 ScriptPathTextBox.Text = dialog.FileName;
                 RunScript.IsEnabled = true;
             } else {
@@ -105,7 +103,7 @@ namespace SC4CleanitolWPF {
             if (UpdateTGIdb) {
                 StatusBar.Visibility = Visibility.Visible;
             }
-            cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory);
+            cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory, ScriptPathTextBox.Text);
 
 
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
