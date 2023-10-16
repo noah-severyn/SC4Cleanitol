@@ -7,8 +7,4 @@ SC4 Cleanitol is a modern implementation of the original [BSC Cleanitol](https:/
 
 Two of the major improvements for script creators are the ability to specify **TGIs as dependencies** (instead of just file names, meaning Cleanitol scripts will work correctly if a user renames files or datpacks their plugins), and the introduction **conditional dependencies** (only report `item A` as a dependency if `item B` is present, which can be useful for mods which allow the user to choose certain components to install)
 
-For more information, refer to the [user documentation](/User%20Manual.md).
-
-### Roadmap
-- [ ] #1
-- [ ] #2
+For more information, please refer to the [user documentation](https://github.com/noah-severyn/SC4Cleanitol/wiki). 
