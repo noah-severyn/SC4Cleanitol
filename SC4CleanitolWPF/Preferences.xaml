@@ -31,7 +31,8 @@
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
 				 TextWrapping="NoWrap"
-				 TextAlignment="Right" />
+				 TextAlignment="Right"
+				 FlowDirection="RightToLeft"/>
 		<Button x:Name="UserChooseFolder"
 				Grid.Row="0"
 				Content=" ... "
@@ -53,7 +54,8 @@
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
 				 TextWrapping="NoWrap"
-				 TextAlignment="Right" />
+				 TextAlignment="Right"
+				 FlowDirection="RightToLeft"/>
 		<Button x:Name="SystemChooseFolder"
 				Grid.Row="1"
 				Content=" ... "
