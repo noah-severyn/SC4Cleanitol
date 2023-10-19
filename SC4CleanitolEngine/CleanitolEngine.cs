@@ -221,7 +221,7 @@ namespace SC4Cleanitol {
         /// <returns></returns>
         public List<GenericRun> EvaluateRule(string ruleText, bool verboseOutput = true) {
             ScriptRule.RuleType result = ScriptRule.ParseRuleType(ruleText);
-            switch (result) {
+            switch (ScriptRule.ParseRuleType(ruleText)) {
                 case ScriptRule.RuleType.Removal:
                     return EvaluateRemovalRule(ruleText, verboseOutput);
 
@@ -230,7 +230,11 @@ namespace SC4Cleanitol {
                     return EvaluateDependencyRule(ruleText, verboseOutput);
 
                 case ScriptRule.RuleType.UserComment:
-                    return new List<GenericRun> { new GenericRun(ruleText.Substring(1) + "\r\n", RunType.GreenStd) };
+                    if (ruleText.StartsWith('>')) {
+                        return new List<GenericRun> { new GenericRun(ruleText.Substring(1) + "\r\n", RunType.GreenStd) };
+                    } else {
+                        return new List<GenericRun> { new GenericRun(ruleText + "\r\n", RunType.GreenStd) };
+                    }
 
                 case ScriptRule.RuleType.UserCommentHeading:
                     return new List<GenericRun> { new GenericRun("\r\n" + ruleText.Substring(2) + "\r\n", RunType.BlackHeading) };
@@ -272,6 +276,14 @@ namespace SC4Cleanitol {
             ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
             List<GenericRun> runs = new List<GenericRun>();
 
+            if (rule.IsUnchecked) {
+                runs.Add(new GenericRun("[Unchecked dependency]:", RunType.BlueMono));
+                runs.Add(new GenericRun(" " + rule.SearchItem, RunType.RedStd));
+                runs.Add(new GenericRun(". Download from: ", RunType.BlackStd));
+                runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                return runs;
+            }
+
             bool isConditionalFound = true;
             if (rule.ConditionalItem != "") {
                 if (rule.IsConditionalItemTGI) {
@@ -294,8 +306,7 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun("Missing: ", RunType.RedMono));
                 runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
-
-                runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink));
+                runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
                 runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
             } else if (isConditionalFound && isItemFound && verboseOutput) {
@@ -352,7 +363,7 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Export the scanned TGIs to a CSV document in the root user plugins folder.
+        /// Export the scanned TGIs to a CSV document in the assigned Cleanitol folder.
         /// </summary>
         public void ExportTGIs() {
             StringBuilder list = new StringBuilder("Type,Group,Instance");
