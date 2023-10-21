@@ -101,8 +101,24 @@ namespace SC4CleanitolWPF {
                 return;
             }
             if (UpdateTGIdb) {
-                StatusBar.Visibility = Visibility.Visible;
+                StatusLabel.Text = "Scanning Files ...";
+                FileProgressLabel.Visibility = Visibility.Visible;
+                TGICountLabel.Visibility = Visibility.Visible;
+                ExportButton.Visibility = Visibility.Visible;
+                Separator0.Visibility = Visibility.Visible;
+                Separator1.Visibility = Visibility.Visible;
+                Separator2.Visibility = Visibility.Visible;
+            } else {
+                StatusLabel.Text = "Running Script ...";
+                FileProgressLabel.Visibility = Visibility.Hidden;
+                TGICountLabel.Visibility = Visibility.Hidden;
+                ExportButton.Visibility = Visibility.Hidden;
+                Separator0.Visibility = Visibility.Hidden;
+                Separator1.Visibility = Visibility.Hidden;
+                Separator2.Visibility = Visibility.Hidden;
+                FileProgressBar.IsIndeterminate = true;
             }
+            StatusBar.Visibility = Visibility.Visible;
             cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory, ScriptPathTextBox.Text);
 
 
@@ -137,6 +153,7 @@ namespace SC4CleanitolWPF {
             UpdateTGIdb = false;
             UpdateTGICheckbox.IsChecked = false;
             StatusLabel.Text = "Scan Complete";
+            FileProgressBar.IsIndeterminate = false;
             if (cleanitol.FilesToRemove.Count > 0) {
                 BackupFiles.IsEnabled = true;
             }

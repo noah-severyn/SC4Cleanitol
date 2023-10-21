@@ -59,7 +59,7 @@
 						   Width="95"
 						   Text="Scanning Files ..." />
 			</StatusBarItem>
-			<Separator />
+			<Separator  x:Name="Separator0"/>
 			<StatusBarItem>
 				<ProgressBar  x:Name="FileProgressBar"
 							  Width="100"
@@ -72,13 +72,13 @@
 						   Width="100"
 						   TextAlignment="Center"/>
 			</StatusBarItem>
-			<Separator />
+			<Separator x:Name="Separator1"/>
 			<StatusBarItem>
 				<TextBlock x:Name="TGICountLabel"
 						   Text="# TGIs discovered"
 						   Width="140" />
 			</StatusBarItem>
-			<Separator />
+			<Separator  x:Name="Separator2"/>
 			<StatusBarItem>
 				<Button x:Name="ExportButton"
 						Content="Export TGIs"
