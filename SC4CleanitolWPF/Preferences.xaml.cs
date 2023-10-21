@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
@@ -10,6 +8,9 @@ namespace SC4CleanitolWPF {
     /// Interaction logic for Preferences.xaml
     /// </summary>
     public partial class Preferences : Window {
+        /// <summary>
+        /// Initialize the Preferences Window.
+        /// </summary>
         public Preferences() {
             InitializeComponent();
             UserPluginsDirectory.Text = Properties.Settings.Default.UserPluginsDirectory;

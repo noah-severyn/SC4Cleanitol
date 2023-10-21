@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
+﻿using System.Text.RegularExpressions;
 
 namespace SC4Cleanitol {
     /// <summary>

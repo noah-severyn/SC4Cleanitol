@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-using System.Reflection;
-using System.Text;
+﻿using System.Text;
 using csDBPF;
 
 namespace SC4Cleanitol {
