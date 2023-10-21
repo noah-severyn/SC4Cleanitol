@@ -5,33 +5,75 @@ using csDBPF;
 
 namespace SC4Cleanitol {
     public class CleanitolEngine {
+        private string _userPlugins;
         /// <summary>
         /// Location of the plugins folder found in the user's Documents folder.
         /// </summary>
-        public string UserPluginsDirectory { get; private set; }
+        public string UserPluginsDirectory {
+            get { return _userPlugins; }
+            set {
+                if (!Directory.Exists(value)) {
+                    _userPlugins = string.Empty;
+                } else {
+                    _userPlugins = value;
+                }
+            }
+        }
+
+        private string _systemPlugins;
         /// <summary>
         /// Location of the plugins folder found in the game install directory.
         /// </summary>
-        public string SystemPluginsDirectory { get; private set; }
+        public string SystemPluginsDirectory {
+            get { return _systemPlugins; }
+            set {
+                if (!Directory.Exists(value)) {
+                    _systemPlugins = string.Empty;
+                } else {
+                    _systemPlugins = value;
+                }
+            }
+        }
+
+        private string _baseOutput;
         /// <summary>
         /// Location files will be removed to and the output summary will be saved to.
         /// </summary>
-        public string CleanitolOutputBaseDirectory { get; set; }
+        public string BaseOutputDirectory {
+            get { return _baseOutput; }
+            set {
+                if (!Directory.Exists(value)) {
+                    _baseOutput = string.Empty;
+                } else {
+                    _baseOutput = value;
+                }
+            }
+        }
 
+        private string _scriptOutput;
         /// <summary>
-        /// Location the last script run moved files to. Equivalent to the <see cref="CleanitolOutputBaseDirectory"/> plus a date time stamp.
+        /// Location the last script run moved files to. Equivalent to the <see cref="BaseOutputDirectory"/> plus a date time stamp.
         /// </summary>
-        public string CleanitolOutputDirectory { get; private set; }
+        public string ScriptOutputDirectory { 
+            get { return _scriptOutput; }
+            private set { _scriptOutput = value; } 
+        }
 
+        private string _scriptPath;
+        /// <summary>
+        /// Path to the cleanitol script to run.
+        /// </summary>
+        public string ScriptPath {
+            get { return _scriptPath; }
+            set {
+                if (!File.Exists(value)) {
+                    _scriptPath = string.Empty;
+                } else {
+                    _scriptPath = value;
+                }
+            }
+        }
 
-        /// <summary>
-        /// Full path to the cleanitol script.
-        /// </summary>
-        public string ScriptPath { get; private set; }
-        /// <summary>
-        /// List of script rules. Updated when <see cref="RunScript"/> is called.
-        /// </summary>
-        public List<string> ScriptRules { get; private set; }
 
 
         /// <summary>
@@ -63,73 +105,47 @@ namespace SC4Cleanitol {
         /// </summary>
         public List<string> FilesToRemove { get; private set; }
 
+
+        private List<string> _scriptRules;
         private int highestPctReached;
 
 
-        //presume that user and system plugin folders exist.
+
         /// <summary>
         /// Instantiate a Cleanitol instance which holds the functions and logic to operate on a user's plugins folder.
         /// </summary>
-        /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder)</param>
-        /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder)</param>
-        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
-        /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations are not valid or do not exist</exception>
-        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory) {
-            UserPluginsDirectory = userPluginsDirectory;
-            SystemPluginsDirectory = systemPluginsDirectory;
-            CleanitolOutputBaseDirectory = outputDirectory;
-            CleanitolOutputDirectory = CleanitolOutputBaseDirectory;
+        /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder).</param>
+        /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder).</param>
+        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path).</param>
+        /// <param name="scriptPath">Path to the cleanitol script to run.</param>
+        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory, string scriptPath) {
+            if (!Directory.Exists(userPluginsDirectory)) {
+                _userPlugins = string.Empty;
+            } else {
+                _userPlugins = userPluginsDirectory;
+            }
+            if (!Directory.Exists(systemPluginsDirectory)) {
+                _systemPlugins = string.Empty;
+            } else {
+                _systemPlugins = systemPluginsDirectory;
+            }
+            if (!Directory.Exists(outputDirectory)) {
+                _baseOutput = string.Empty;
+            } else {
+                _baseOutput = outputDirectory;
+            }
+            _scriptOutput = _baseOutput;
+            if (!File.Exists(scriptPath)) {
+                _scriptPath = string.Empty;
+            } else {
+                _scriptPath = scriptPath;
+            }
 
-            ScriptPath = string.Empty;
-            ScriptRules = new List<string>();
+            _scriptRules = new List<string>();
             ListOfFiles = new List<string>();
             ListOfFileNames = new List<string>();
             ListOfTGIs = new List<string>();
             FilesToRemove = new List<string>();
-        }
-
-        /// <summary>
-        /// Instantiate a Cleanitol instance which holds the functions and logic to operate on a user's plugins folder.
-        /// </summary>
-        /// <param name="userPluginsDirectory">Path to the user plugins folder (in the Documents folder)</param>
-        /// <param name="systemPluginsDirectory">Path to the system plugins folder (in the game install folder)</param>
-        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process (recommended to set to <c>\Documents\SimCity 4\BSC_Cleanitol\</c>  unless there is a specific desire to alter the path)</param>
-        /// <param name="scriptPath">Path to the cleanitol script to run</param>
-        /// <exception cref="DirectoryNotFoundException">Thrown if any of the provided folder locations do not exist</exception>
-        /// <exception cref="FileNotFoundException">Thrown if the provided script cannot be found</exception>
-        public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory, string scriptPath) : this(userPluginsDirectory, systemPluginsDirectory, outputDirectory) {
-            if (!File.Exists(scriptPath)) {
-                throw new FileNotFoundException();
-            } else {
-                ScriptPath = scriptPath;
-            }
-            
-        }
-
-        /// <summary>
-        /// Set or change the cleanitol script to run.
-        /// </summary>
-        /// <param name="scriptPath">Path to the cleanitol script to run</param>
-        /// /// <exception cref="FileNotFoundException">Thrown if the provided script cannot be found</exception>
-        public void SetScriptPath(string scriptPath) {
-            if (!File.Exists(scriptPath)) {
-                throw new FileNotFoundException();
-            } else {
-                ScriptPath = scriptPath;
-            }
-        }
-
-        /// <summary>
-        /// Change the output folder where files will be moved to after the cleaning process.
-        /// </summary>
-        /// <param name="outputDirectory">Path to the folder where files will be moved to after the cleaning process</param>
-        /// <exception cref="DirectoryNotFoundException">Thrown if the provided folder location does not exist</exception>
-        public void ChangeOutputDirectory(string outputDirectory) {
-            if (!Directory.Exists(outputDirectory)) {
-                throw new DirectoryNotFoundException();
-            } else {
-                CleanitolOutputBaseDirectory = outputDirectory;
-            }
         }
 
 
@@ -152,7 +168,7 @@ namespace SC4Cleanitol {
             List<List<GenericRun>> runs = new List<List<GenericRun>>();
 
             //Fill File List
-            ScriptRules = File.ReadAllLines(ScriptPath).ToList();
+            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
             ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories);
             if (includeSystemPlugins) {
                 ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
@@ -190,8 +206,8 @@ namespace SC4Cleanitol {
             runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) } );
             runs.Add(new List<GenericRun> { new GenericRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono) } );
             runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
-            for (int idx = 0; idx < ScriptRules.Count; idx++) {
-                runs.Add(EvaluateRule(ScriptRules[idx], verboseOutput)); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
+            for (int idx = 0; idx < _scriptRules.Count; idx++) {
+                runs.Add(EvaluateRule(_scriptRules[idx], verboseOutput)); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
             }
             runs.Insert(3, new List<GenericRun> { new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
             runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono) });
@@ -199,13 +215,6 @@ namespace SC4Cleanitol {
             runs.Insert(6, new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
 
             return runs;
-        }
-
-
-
-
-        private void UpdateTGIDatabase() {
-
         }
 
 
@@ -220,7 +229,6 @@ namespace SC4Cleanitol {
         /// <param name="verboseOutput">Show verbose output or not</param>
         /// <returns></returns>
         public List<GenericRun> EvaluateRule(string ruleText, bool verboseOutput = true) {
-            ScriptRule.RuleType result = ScriptRule.ParseRuleType(ruleText);
             switch (ScriptRule.ParseRuleType(ruleText)) {
                 case ScriptRule.RuleType.Removal:
                     return EvaluateRemovalRule(ruleText, verboseOutput);
@@ -309,7 +317,7 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                runs.Add(new GenericRun("\r\n"));
+                //runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
             } else if (isConditionalFound && isItemFound && verboseOutput) {
                 runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
@@ -323,14 +331,14 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Move the files requested for removal to <see cref="CleanitolOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
+        /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
         /// <param name="templateText">HTML template text.</param>
         public void BackupFiles(string templateText) {
             if (FilesToRemove.Count == 0) {
                 return;
             }
-            string outputDir = Path.Combine(CleanitolOutputBaseDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
+            string outputDir = Path.Combine(_baseOutput, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             StringBuilder batchFile = new StringBuilder();
             Directory.CreateDirectory(outputDir);
 
@@ -359,7 +367,7 @@ namespace SC4Cleanitol {
             templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
 
-            CleanitolOutputDirectory = outputDir;
+            ScriptOutputDirectory = outputDir;
         }
 
 
@@ -373,7 +381,7 @@ namespace SC4Cleanitol {
                 list.AppendLine(tgi);
             }
 
-            File.WriteAllText(Path.Combine(CleanitolOutputDirectory, "ScannedTGIs.csv"), list.ToString());
+            File.WriteAllText(Path.Combine(ScriptOutputDirectory, "ScannedTGIs.csv"), list.ToString());
         }
     }
 }
