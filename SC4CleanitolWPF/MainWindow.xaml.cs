@@ -100,16 +100,16 @@ namespace SC4CleanitolWPF {
                 MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+
+            StatusLabel.Text = "Scanning Files ...";
             if (UpdateTGIdb) {
-                StatusLabel.Text = "Scanning Files ...";
                 FileProgressLabel.Visibility = Visibility.Visible;
                 TGICountLabel.Visibility = Visibility.Visible;
                 ExportButton.Visibility = Visibility.Visible;
                 Separator0.Visibility = Visibility.Visible;
                 Separator1.Visibility = Visibility.Visible;
                 Separator2.Visibility = Visibility.Visible;
-            } else {
-                StatusLabel.Text = "Creating Report ...";
+            } else if (cleanitol is not null && cleanitol.ListOfTGIs.Count == 0) {
                 FileProgressLabel.Visibility = Visibility.Hidden;
                 TGICountLabel.Visibility = Visibility.Hidden;
                 ExportButton.Visibility = Visibility.Hidden;
@@ -117,11 +117,22 @@ namespace SC4CleanitolWPF {
                 Separator1.Visibility = Visibility.Hidden;
                 Separator2.Visibility = Visibility.Hidden;
                 FileProgressBar.IsIndeterminate = true;
+            } else {
+
             }
             StatusBar.Visibility = Visibility.Visible;
-            cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory, ScriptPathTextBox.Text);
 
 
+            if (cleanitol is null) {
+                cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory, ScriptPathTextBox.Text);
+            } else {
+                cleanitol.UserPluginsDirectory = Options.Default.UserPluginsDirectory;
+                cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
+                cleanitol.BaseOutputDirectory = Options.Default.CleanitolOutputDirectory;
+                cleanitol.ScriptPath = ScriptPathTextBox.Text;
+
+            }
+            
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progresScannedFiles = new Progress<int>(scannedFiles => { 
                 FileProgressBar.Value = scannedFiles; 
@@ -137,7 +148,7 @@ namespace SC4CleanitolWPF {
             foreach (List<GenericRun> line in runList) {
                 foreach (GenericRun run in line) {
                     if (run.Type is RunType.Hyperlink) {
-                        Hyperlink link = new Hyperlink(new Run(run.Text + "\r\n"));
+                        Hyperlink link = new Hyperlink(new Run(run.Text));
                         link.NavigateUri = new Uri(run.URL);
                         link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                         Log.Inlines.Add(link);
@@ -217,14 +228,14 @@ namespace SC4CleanitolWPF {
             Hyperlink link;
             if (cleanitol.FilesToRemove.Count > 0) {
                 Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
-                link = new Hyperlink(new Run(cleanitol.CleanitolOutputDirectory + "\r\n")) {
-                    NavigateUri = new Uri(cleanitol.CleanitolOutputDirectory)
+                link = new Hyperlink(new Run(cleanitol.ScriptOutputDirectory + "\r\n")) {
+                    NavigateUri = new Uri(cleanitol.ScriptOutputDirectory)
                 };
                 link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                 Log.Inlines.Add(link);
             }
             link = new Hyperlink(ConvertRun(new GenericRun("View Summary",RunType.BlueMono))) {
-                NavigateUri = new Uri(Path.Combine(cleanitol.CleanitolOutputDirectory, "CleanupSummary.html"))
+                NavigateUri = new Uri(Path.Combine(cleanitol.ScriptOutputDirectory, "CleanupSummary.html"))
             };
             link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
             Log.Inlines.Add(link);
