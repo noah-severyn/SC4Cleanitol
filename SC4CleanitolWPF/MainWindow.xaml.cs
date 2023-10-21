@@ -2,37 +2,43 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Navigation;
 using Microsoft.Win32;
 using SC4Cleanitol;
 using Options = SC4CleanitolWPF.Properties.Settings;
-using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 
 namespace SC4CleanitolWPF {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window {
-
-        private readonly Paragraph Log;
-        private readonly FlowDocument Doc;
+    public partial class MainWindow : Window {    
+        /// <summary>
+        /// Whether to update the TGI index by rescanning the plugins folder.
+        /// </summary>
+        /// <remarks>
+        /// Will result in a longer execution time while the index is created.
+        /// </remarks>
         public bool UpdateTGIdb { get; set; } = true;
+        /// <summary>
+        /// Whether to show all output to the screen or just actionable outputs.
+        /// </summary>
         public bool VerboseOutput { get; set; } = false;
 
-        public readonly Version releaseVersion = new Version(0, 2);
-        public readonly string releaseDate = "Oct 2023";
+        internal readonly Version releaseVersion = new Version(0, 2);
+        internal readonly string releaseDate = "Oct 2023"; 
+        private readonly Paragraph log;
+        private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
 
+        /// <summary>
+        /// Initialize the MainWindow Window.
+        /// </summary>
         public MainWindow() {
-            Doc = new FlowDocument();
-            Log = new Paragraph();
+            doc = new FlowDocument();
+            log = new Paragraph();
             //Doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
 
             InitializeComponent();
@@ -62,7 +68,7 @@ namespace SC4CleanitolWPF {
 
             Options.Default.Save();
 
-            
+            cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory, string.Empty);
             this.Title = "SC4 Cleanitol 2023 - " + releaseVersion.ToString();
 
         }
@@ -74,7 +80,7 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ChooseScript_Click(object sender, RoutedEventArgs e) {
-            Log.Inlines.Clear();
+            log.Inlines.Clear();
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true) {
                 ScriptPathTextBox.Text = dialog.FileName;
@@ -91,7 +97,7 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private async void RunScript_Click(object sender, RoutedEventArgs e) {
-            Log.Inlines.Clear();
+            log.Inlines.Clear();
             if (!Directory.Exists(Options.Default.UserPluginsDirectory)) {
                 MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -116,22 +122,17 @@ namespace SC4CleanitolWPF {
                 Separator0.Visibility = Visibility.Hidden;
                 Separator1.Visibility = Visibility.Hidden;
                 Separator2.Visibility = Visibility.Hidden;
-                FileProgressBar.IsIndeterminate = true;
+                
             } else {
-
+                FileProgressBar.IsIndeterminate = true;
             }
             StatusBar.Visibility = Visibility.Visible;
 
 
-            if (cleanitol is null) {
-                cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.CleanitolOutputDirectory, ScriptPathTextBox.Text);
-            } else {
-                cleanitol.UserPluginsDirectory = Options.Default.UserPluginsDirectory;
-                cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
-                cleanitol.BaseOutputDirectory = Options.Default.CleanitolOutputDirectory;
-                cleanitol.ScriptPath = ScriptPathTextBox.Text;
-
-            }
+            cleanitol.UserPluginsDirectory = Options.Default.UserPluginsDirectory;
+            cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
+            cleanitol.BaseOutputDirectory = Options.Default.CleanitolOutputDirectory;
+            cleanitol.ScriptPath = ScriptPathTextBox.Text;
             
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progresScannedFiles = new Progress<int>(scannedFiles => { 
@@ -148,19 +149,20 @@ namespace SC4CleanitolWPF {
             foreach (List<GenericRun> line in runList) {
                 foreach (GenericRun run in line) {
                     if (run.Type is RunType.Hyperlink) {
-                        Hyperlink link = new Hyperlink(new Run(run.Text));
-                        link.NavigateUri = new Uri(run.URL);
+                        Hyperlink link = new Hyperlink(new Run(run.Text)) {
+                            NavigateUri = new Uri(run.URL)
+                        };
                         link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-                        Log.Inlines.Add(link);
-                        Log.Inlines.Add(new Run("\r\n"));
+                        log.Inlines.Add(link);
+                        log.Inlines.Add(new Run("\r\n"));
                     } else {
-                        Log.Inlines.Add(ConvertRun(run));
+                        log.Inlines.Add(ConvertRun(run));
                     }
                 }
             }
 
-            Doc.Blocks.Add(Log);
-            ScriptOutput.Document = Doc;
+            doc.Blocks.Add(log);
+            ScriptOutput.Document = doc;
             UpdateTGIdb = false;
             UpdateTGICheckbox.IsChecked = false;
             StatusLabel.Text = "Scan Complete";
@@ -208,8 +210,9 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
-            var sinfo = new ProcessStartInfo(e.Uri.AbsoluteUri);
-            sinfo.UseShellExecute = true;
+            var sinfo = new ProcessStartInfo(e.Uri.AbsoluteUri) {
+                UseShellExecute = true
+            };
             Process.Start(sinfo);
             e.Handled = true;
         }
@@ -223,24 +226,24 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
             cleanitol.BackupFiles(Properties.Resources.SummaryTemplate);
-            Log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
+            log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
 
             Hyperlink link;
             if (cleanitol.FilesToRemove.Count > 0) {
-                Log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+                log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
                 link = new Hyperlink(new Run(cleanitol.ScriptOutputDirectory + "\r\n")) {
                     NavigateUri = new Uri(cleanitol.ScriptOutputDirectory)
                 };
                 link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-                Log.Inlines.Add(link);
+                log.Inlines.Add(link);
             }
             link = new Hyperlink(ConvertRun(new GenericRun("View Summary",RunType.BlueMono))) {
                 NavigateUri = new Uri(Path.Combine(cleanitol.ScriptOutputDirectory, "CleanupSummary.html"))
             };
             link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-            Log.Inlines.Add(link);
+            log.Inlines.Add(link);
 
-            Doc.Blocks.Add(Log);
+            doc.Blocks.Add(log);
             BackupFiles.IsEnabled = false;
         }
         /// <summary>
