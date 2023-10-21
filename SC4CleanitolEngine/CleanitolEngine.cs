@@ -240,8 +240,10 @@ namespace SC4Cleanitol {
                     return new List<GenericRun> { new GenericRun("\r\n" + ruleText.Substring(2) + "\r\n", RunType.BlackHeading) };
 
                 case ScriptRule.RuleType.ScriptComment:
-                default:
                     return new List<GenericRun>();
+
+                default:
+                    return new List<GenericRun> { new GenericRun(ruleText + "\r\n", RunType.GreenStd) };
 
             }
         }
@@ -277,7 +279,7 @@ namespace SC4Cleanitol {
             List<GenericRun> runs = new List<GenericRun>();
 
             if (rule.IsUnchecked) {
-                runs.Add(new GenericRun("[Unchecked dependency]:", RunType.BlueMono));
+                runs.Add(new GenericRun("[Unchecked dependency]:", RunType.BlueStd));
                 runs.Add(new GenericRun(" " + rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(". Download from: ", RunType.BlackStd));
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));

@@ -109,7 +109,7 @@ namespace SC4CleanitolWPF {
                 Separator1.Visibility = Visibility.Visible;
                 Separator2.Visibility = Visibility.Visible;
             } else {
-                StatusLabel.Text = "Running Script ...";
+                StatusLabel.Text = "Creating Report ...";
                 FileProgressLabel.Visibility = Visibility.Hidden;
                 TGICountLabel.Visibility = Visibility.Hidden;
                 ExportButton.Visibility = Visibility.Hidden;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace SC4Cleanitol {
@@ -6,7 +7,7 @@ namespace SC4Cleanitol {
     /// Classes, enums, and functions related to parsing script rules. A rule is a single line read from the script.
     /// </summary>
     internal class ScriptRule {
-        private static readonly string[] dbpfExtensions = { ".dat", ".sc4Lot", ".sc4desc", ".sc4Model" };
+        private static readonly string[] dbpfExtensions = { ".dat", ".sc4Lot", ".sc4desc", ".sc4Model", ".dll" };
 
         /// <summary>
         /// A script rule targeted at locating required files or TGIs.
@@ -51,14 +52,20 @@ namespace SC4Cleanitol {
             /// <param name="ruleText">Raw text for this rule</param>
             public DependencyRule(string ruleText) {
                 int semicolonLocn = ruleText.IndexOf(';');
+                int conditionalLocn = ruleText.IndexOf("??");
 
-                //Special condition for some very legacy cleanitol files which incorrectly use '-' as the delimiter
-                if (semicolonLocn == -1) {
-                    semicolonLocn = ruleText.IndexOf(" - ");
+                //Support "unchecked" dependencies for certain legacy cleanitol files that use these as cascading dependencies. If searchItem does not contain any of the valid file extensions AND is not a TGI (contains '0x' 3 times).
+                int cutoff;
+                if (conditionalLocn == -1) {
+                    cutoff = semicolonLocn;
+                } else {
+                    cutoff = conditionalLocn;
+                }
+                if (!dbpfExtensions.Any(x => ruleText.Substring(0, semicolonLocn).EndsWith(x)) && Regex.Matches(ruleText.Substring(0, cutoff), "0x").Count != 3) {
                     IsUnchecked = true;
                 }
 
-                int conditionalLocn = ruleText.IndexOf("??");
+                
                 if (conditionalLocn == -1) {
                     SearchItem = ruleText.Substring(0, semicolonLocn).Trim();
                     ConditionalItem = string.Empty;
@@ -163,14 +170,12 @@ namespace SC4Cleanitol {
                 return RuleType.Dependency;
             }
 
-            //Removal or legacy dependency message
-            
-            //if (dbpfExtensions.Any(ext => rule.Trim().EndsWith(ext, StringComparison.CurrentCultureIgnoreCase))) {
+            //Support "unchecked" dependencies for certain legacy cleanitol files that use these as cascading dependencies.
+            if (rule.IndexOf(';') > 0) {
+                return RuleType.Dependency;
+            } else {
                 return RuleType.Removal;
-            //} else {
-                //return RuleType.UserComment;
-            //}
-            
+            }
         }
     }
 }
