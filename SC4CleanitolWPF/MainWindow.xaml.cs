@@ -27,7 +27,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool VerboseOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 2);
+        internal readonly Version releaseVersion = new Version(0, 3);
         internal readonly string releaseDate = "Oct 2023"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
