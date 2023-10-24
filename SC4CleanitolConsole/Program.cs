@@ -35,6 +35,7 @@ public class Program {
 
         string command;
         CleanitolEngine cleanitol = new CleanitolEngine(string.Empty, string.Empty, string.Empty, string.Empty);
+        Console.WriteLine("Welcome to SC4Cleanitol interactive!");
         do {
             // Take user input
             Console.Write("SC4Cleanitol > ");
@@ -52,19 +53,19 @@ public class Program {
             // Perform action based on the command the user inputted
             switch (command) {
                 case "run":
-                    RunScript("", "", "", "",true, true);
+                    RunScript(ref cleanitol, arguments[0], arguments[1], arguments[2] ?? string.Empty, arguments[3] is not null, arguments[4] is not null);
                     break;
                 case "backup":
-                    Backup("");
+                    Backup(ref cleanitol, arguments[0]);
                     break;
                 case "export":
-                    Export();
+                    Export(ref cleanitol);
                     break;
                 case "about":
                     About();
                     break;
                 case "help":
-                    ShowHelp("");
+                    ShowHelp(arguments.ElementAt(1));
                     break;
                 case "exit":
                     break;
@@ -72,18 +73,6 @@ public class Program {
             Console.WriteLine();
 
         } while (command != "exit"); // Loop forever while the user doesn't enter 'quit'
-
-
-        //rootCommand.SetHandler(RunScript, 
-        //    (System.CommandLine.Binding.IValueDescriptor<string>) userPluginsArg, 
-        //    (System.CommandLine.Binding.IValueDescriptor<string>) scriptPathArg, 
-        //    (System.CommandLine.Binding.IValueDescriptor<string>) systemPluginsOpt, 
-        //    (System.CommandLine.Binding.IValueDescriptor<string>) outputOpt, 
-        //    (System.CommandLine.Binding.IValueDescriptor<bool>) updateTGIsOpt, 
-        //    (System.CommandLine.Binding.IValueDescriptor<bool>) verboseOpt
-        //);
-
-        
     }
 
 
@@ -94,13 +83,44 @@ public class Program {
         switch (command) {
             case "": {
                     desc = "SC4Cleanitol is a modern implementation of the original program of the same name to remove out of date and non-game files from plugins and can tell you which dependencies you have/don't have for a given mod.";
-                    usage = "command[options]";
+                    usage = "command [options]";
                     options.Add("run", "Run a Cleanitol script.");
                     options.Add("backup", "Move designated files to the output location.");
                     options.Add("export", "Export TGI index to CSV file in the Cleanitol output folder.");
                     options.Add("about", "View program information and check for updates.");
                     options.Add("help", "Show help instructions for a command.");
                     options.Add("exit", "Exit the SC4Cleanitol program.");
+                    break;
+                }
+            case "run": {
+                    desc = "Run a cleanitol script.";
+                    usage = "run user-plugins script-path [options]";
+                    options.Add("user-plugins <FOLDERPATH>", "Folder path to the user plugins folder in My Documents.");
+                    options.Add("script-path <FOLDERPATH>", "Cleanitol script to run.");
+                    options.Add("--system-plugins <FOLDERPATH>", "Optional. Folder path to system plugins folder in the game install directory. Specify this option to include the contents of this folder in the scan.");
+                    options.Add("--verbose", "Specify to show the outcome of every rule in the script; default is only the important messages");
+                    options.Add("--update-tgis", "Update/refresh the internal index of TGIs. Will increase script execution time, so it is recomended to use this option only when necessary.");
+                    break;
+                }
+            case "backup": {
+                    desc = "Move designated files to the output location.";
+                    usage = "backup output-directory";
+                    options.Add("output-directory", "Cleanitol output directory. Files are removed from plugins to this location. ");
+                    break;
+                }
+            case "export": {
+                    desc = "Export TGI index to CSV file in the Cleanitol output folder.";
+                    usage = "export";
+                    break;
+                }
+            case "about": {
+                    desc = "View program information and check for updates.";
+                    usage = "about";
+                    break;
+                }
+            case "help": {
+                    desc = "Show help instructions for a command.";
+                    usage = "help command";
                     break;
                 }
             default: {
@@ -122,7 +142,7 @@ public class Program {
         Console.WriteLine();
         Console.WriteLine("Commands:");
         foreach (string key in options.Keys) {
-            Console.WriteLine("    " + key + new string(' ', 20 - key.Length) + options.GetValueOrDefault(key));
+            Console.WriteLine("    " + key + new string(' ', 40 - key.Length) + options.GetValueOrDefault(key));
         }
     }
 
@@ -131,40 +151,30 @@ public class Program {
     //}
 
 
-    private static void RunScript(string userPlugins, string systemPlugins, string scriptPath, string cleanitolOutput, bool updateTGIs, bool verbose ) {
-        Console.WriteLine("RunScript");
-        Console.WriteLine("user-plugins: " + userPlugins);
-        Console.WriteLine("system-plugins: " + systemPlugins);
-        Console.WriteLine("script-path: " + scriptPath);
-        Console.WriteLine("cleanitol-output: " + cleanitolOutput);
-        Console.WriteLine("update-tgis: " + updateTGIs);
-        Console.WriteLine("verbose: " + verbose);
-
+    private static void RunScript(ref CleanitolEngine cleanitol, string userPlugins, string scriptPath, string systemPlugins = "", bool updateTGIs = false, bool verbose = false) {
         var progressTotalFiles = new Progress<int>(totalFiles => { });
         var progresScannedFiles = new Progress<int>(scannedFiles => { });
         var progressTotalTGIs = new Progress<int>(totalTGIs => { });
 
 
-        CleanitolEngine cleanitol = new CleanitolEngine(userPlugins, systemPlugins, cleanitolOutput, scriptPath);
+        cleanitol.UserPluginsDirectory = userPlugins;
+        cleanitol.ScriptPath = scriptPath;
         List<List<GenericRun>> runList = cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, updateTGIs, scanSystemPlugins, verbose);
 
-        StringBuilder message = new StringBuilder();
         foreach (List<GenericRun> line in runList) {
             foreach (GenericRun run in line) {
-                //message.Append(ConvertRun(run));
+                ConvertRun(run);
             }
-            Console.Write(message.ToString());
-            message.Clear();
         }
     }
 
-    private static void Backup(string backupPath) {
+    private static void Backup(ref CleanitolEngine cleanitol, string backupPath) {
         Console.WriteLine("Backup");
         Console.WriteLine("backup-path: " + backupPath);
     }
 
 
-    private static void Export() {
+    private static void Export(ref CleanitolEngine cleanitol) {
         Console.WriteLine("Export");
     }
 
@@ -178,26 +188,6 @@ public class Program {
         Console.Write("https://github.com/noah-severyn/SC4Cleanitol/releases/latest\r\n");
         Console.ResetColor();
     }
-
-
-    //private static void RunScript() { 
-    //    Console.WriteLine("RunScript");
-    //    Console.WriteLine("Plugins: " + userPluginsFolder);
-    //    Console.WriteLine("Script: " + scriptPath);
-
-    //    outputFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4\\BSC_Cleanitol");
-    //    CleanitolEngine cleanitol = new CleanitolEngine(userPluginsFolder, systemPluginsFolder, outputFolder, scriptPath);
-    //    List<List<GenericRun>> runList = cleanitol.RunScript(updateTGIdb, scanSystemPlugins, verbose);
-
-    //    StringBuilder message = new StringBuilder();
-    //    foreach (List<GenericRun> line in runList) {
-    //        foreach (GenericRun run in line) {
-    //            message.Append(ConvertRun(run));
-    //        }
-    //        Console.Write(message.ToString());
-    //        message.Clear();
-    //    }
-    //}
 
 
     //private static void ValidateInputs(string[] args) {
