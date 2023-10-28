@@ -167,10 +167,17 @@ namespace SC4Cleanitol {
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
-            ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories);
-            if (includeSystemPlugins) {
-                ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
+            try {
+                ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories);
+                if (includeSystemPlugins) {
+                    ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
+                }
             }
+            catch (IOException) {
+
+                return runs;
+            }
+            
             totalFiles.Report(ListOfFiles.Count());
             ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
 
@@ -205,7 +212,7 @@ namespace SC4Cleanitol {
             runs.Add(new List<GenericRun> { new GenericRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono) } );
             runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
             for (int idx = 0; idx < _scriptRules.Count; idx++) {
-                runs.Add(EvaluateRule(_scriptRules[idx], verboseOutput)); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
+                runs.Add(EvaluateRule(_scriptRules[idx].Trim(), verboseOutput)); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
             }
             runs.Insert(3, new List<GenericRun> { new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
             runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono) });
@@ -226,7 +233,7 @@ namespace SC4Cleanitol {
         /// <param name="ruleText">Rule to evaluate</param>
         /// <param name="verboseOutput">Show verbose output or not</param>
         /// <returns></returns>
-        public List<GenericRun> EvaluateRule(string ruleText, bool verboseOutput = true) {
+        private List<GenericRun> EvaluateRule(string ruleText, bool verboseOutput = true) {
             switch (ScriptRule.ParseRuleType(ruleText)) {
                 case ScriptRule.RuleType.Removal:
                     return EvaluateRemovalRule(ruleText, verboseOutput);
@@ -380,6 +387,22 @@ namespace SC4Cleanitol {
             }
 
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, "ScannedTGIs.csv"), list.ToString());
+        }
+
+
+        /// <summary>
+        /// Create a new Cleanitol file containing all files in the chosen folder and its subfolders.
+        /// </summary>
+        /// <param name="folderPath">Folder containing files to add to the script</param>
+        /// <param name="scriptPath">Full path of Cleanitol file to create</param>
+        public static void CreateCleanitolList(string folderPath, string scriptPath) {
+            List<string> fileNames = new List<string>();
+            DirectoryInfo di = new DirectoryInfo(folderPath);
+            FileInfo[] files = di.GetFiles();
+            foreach (FileInfo file in files) {
+                fileNames.Add(file.Name + file.Extension);
+            }
+            File.WriteAllLines(scriptPath, fileNames);
         }
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using SC4Cleanitol;
 using Options = SC4CleanitolWPF.Properties.Settings;
 using System.Threading.Tasks;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace SC4CleanitolWPF {
     /// <summary>
@@ -128,7 +129,6 @@ namespace SC4CleanitolWPF {
             }
             StatusBar.Visibility = Visibility.Visible;
 
-
             cleanitol.UserPluginsDirectory = Options.Default.UserPluginsDirectory;
             cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
             cleanitol.BaseOutputDirectory = Options.Default.CleanitolOutputDirectory;
@@ -145,6 +145,10 @@ namespace SC4CleanitolWPF {
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
 
             List<List<GenericRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, UpdateTGIdb, false, VerboseOutput));
+            if (runList.Count == 0) {
+                MessageBox.Show("Error Reading Files", "An error ocurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
+
             
             foreach (List<GenericRun> line in runList) {
                 foreach (GenericRun run in line) {
@@ -246,14 +250,49 @@ namespace SC4CleanitolWPF {
             doc.Blocks.Add(log);
             BackupFiles.IsEnabled = false;
         }
+
         /// <summary>
-        /// Exit the application
+        /// Create a new Cleanitol script in the cleanitol output directory with all of the file names contained with a chosen folder and its subfolders.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Quit_Click(object sender, RoutedEventArgs e) {
-            Application.Current.Shutdown();
+        private void CreateCleanitol_Click(object sender, RoutedEventArgs e) {
+            string? folderpath;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog {
+                Title = "Choose Folder",
+                InitialDirectory = cleanitol.UserPluginsDirectory,
+                IsFolderPicker = true
+            };
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                folderpath = dialog.FileName;
+            } else {
+                return;
+            }
+
+            string? scriptname;
+            CommonSaveFileDialog dialog2 = new CommonSaveFileDialog {
+                Title = "Save As",
+                InitialDirectory = cleanitol.BaseOutputDirectory,
+                
+                AlwaysAppendDefaultExtension = true,
+                DefaultExtension = ".txt",
+                
+            };
+            dialog2.Filters.Add(new CommonFileDialogFilter("Text files", ".txt"));
+            if (dialog2.ShowDialog() == CommonFileDialogResult.Ok) {
+                scriptname = dialog2.FileName;
+            } else {
+                return;
+            }
+
+            if (folderpath is not null &&  scriptname is not null) {
+                CleanitolEngine.CreateCleanitolList(folderpath, scriptname);
+                MessageBox.Show("Script created successfully.", "", MessageBoxButton.OK);
+            }
+
+
         }
+
         /// <summary>
         /// Hide the status bar.
         /// </summary>
@@ -262,6 +301,7 @@ namespace SC4CleanitolWPF {
         private void OkButton_Click(object sender, RoutedEventArgs e) {
             StatusBar.Visibility = Visibility.Collapsed;
         }
+
         /// <summary>
         /// Show the settings window, and pre-populate it with the current settings.
         /// </summary>
@@ -271,6 +311,7 @@ namespace SC4CleanitolWPF {
             Preferences p = new Preferences();
             p.Show();
         }
+
         /// <summary>
         /// Eport the list of TGIs to a CSV file.
         /// </summary>
