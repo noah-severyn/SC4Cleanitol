@@ -324,11 +324,14 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
                 //runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
-            } else if (isConditionalFound && isItemFound && verboseOutput) {
-                runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                runs.Add(new GenericRun(" was located.\r\n", RunType.BlackStd));
+            } else if (isConditionalFound && isItemFound) {
                 CountDepsFound++;
+                if (verboseOutput) {
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was located.\r\n", RunType.BlackStd));
+                }
             }
+            
 
             CountDepsScanned++;
             return runs;

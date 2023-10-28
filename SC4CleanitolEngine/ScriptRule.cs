@@ -76,7 +76,7 @@ namespace SC4Cleanitol {
 
                 IsSearchItemTGI = SearchItem.Substring(0, 2) == "0x";
                 int httpLocn = ruleText.IndexOf("http");
-                if (httpLocn - semicolonLocn + 1 < 2) {
+                if (httpLocn - semicolonLocn + 1 > 4) {
                     SourceName = ruleText.Substring(semicolonLocn + 1, httpLocn - semicolonLocn - 2).Trim();
                 } else {
                     SourceName = SearchItem;
