@@ -401,7 +401,7 @@ namespace SC4Cleanitol {
         public static void CreateCleanitolList(string folderPath, string scriptPath) {
             List<string> fileNames = new List<string>();
             DirectoryInfo di = new DirectoryInfo(folderPath);
-            FileInfo[] files = di.GetFiles();
+            FileInfo[] files = di.GetFiles("*", SearchOption.AllDirectories);
             foreach (FileInfo file in files) {
                 fileNames.Add(file.Name + file.Extension);
             }
