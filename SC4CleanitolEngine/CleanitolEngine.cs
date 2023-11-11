@@ -403,7 +403,7 @@ namespace SC4Cleanitol {
             DirectoryInfo di = new DirectoryInfo(folderPath);
             FileInfo[] files = di.GetFiles("*", SearchOption.AllDirectories);
             foreach (FileInfo file in files) {
-                fileNames.Add(file.Name + file.Extension);
+                fileNames.Add(file.Name);
             }
             File.WriteAllLines(scriptPath, fileNames);
         }
