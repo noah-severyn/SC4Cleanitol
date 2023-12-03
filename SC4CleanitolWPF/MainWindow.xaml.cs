@@ -28,7 +28,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool VerboseOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 4, 1);
+        internal readonly Version releaseVersion = new Version(0, 4, 2);
         internal readonly string releaseDate = "Nov 2023"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
@@ -152,13 +152,13 @@ namespace SC4CleanitolWPF {
             
             foreach (List<GenericRun> line in runList) {
                 foreach (GenericRun run in line) {
-                    if (run.Type is RunType.Hyperlink) {
+                    if (run.Type is RunType.Hyperlink || run.Type is RunType.HyperlinkMono) {
                         Hyperlink link = new Hyperlink(new Run(run.Text)) {
                             NavigateUri = new Uri(run.URL)
                         };
                         link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                         log.Inlines.Add(link);
-                        log.Inlines.Add(new Run("\r\n"));
+                        //log.Inlines.Add(new Run("\r\n"));
                     } else {
                         log.Inlines.Add(ConvertRun(run));
                     }

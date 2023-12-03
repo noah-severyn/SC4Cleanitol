@@ -106,6 +106,7 @@ namespace SC4Cleanitol {
 
         private List<string> _scriptRules;
         private int highestPctReached;
+        private string _logPath;
 
 
 
@@ -144,6 +145,8 @@ namespace SC4Cleanitol {
             ListOfFileNames = new List<string>();
             ListOfTGIs = new List<string>();
             FilesToRemove = new List<string>();
+
+            _logPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
         }
 
 
@@ -164,6 +167,8 @@ namespace SC4Cleanitol {
             CountDepsScanned = 0;
             FilesToRemove.Clear();
             List<List<GenericRun>> runs = new List<List<GenericRun>>();
+            List<GenericRun> fileErrors = new List<GenericRun>();
+            using StreamWriter sw = new StreamWriter(_logPath, false);
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
@@ -191,11 +196,31 @@ namespace SC4Cleanitol {
                     filesScanned++;
                     progressFiles.Report(filesScanned);
 
-                    if (DBPFUtil.IsValidDBPF(filepath)) {
-                        DBPFFile dbpf = new DBPFFile(filepath);
-                        ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
-                        progressTGIs.Report(ListOfTGIs.Count);
+                    //TODO - MAKE SURE THIS WORKS FOR REMOVAL FUNCTIONALITY TOO
+                    try {
+                        if (filepath == "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\CS$$1_3x3_Test Tax_72ebcfa2.SC4Lot") {
+                            throw new UnauthorizedAccessException();
+                        } else if (filepath == "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\Network Addon Mod\\7 Bridges\\NetworkAddonMod_Bridge_Blank_models.dat") {
+                            throw new IOException();
+                        }
+                        if (DBPFUtil.IsValidDBPF(filepath)) {
+                            DBPFFile dbpf = new DBPFFile(filepath);
+                            ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
+                            progressTGIs.Report(ListOfTGIs.Count);
+                        }
+                    } catch (Exception ex) {
+                        fileErrors.Add(new GenericRun("Error: ", RunType.RedMono));
+                        fileErrors.Add(new GenericRun($"{filepath} was skipped.\r\n", RunType.RedStd));
+                            
+                        sw.WriteLine("=============== Log Start ===============");
+                        sw.WriteLine("Time: " + DateTime.Now);
+                        sw.WriteLine("Script: " + ScriptPath);
+                        sw.WriteLine("File: " + filepath);
+                        sw.WriteLine($"Error: {ex.GetType()}: {ex.Message}");
+                        sw.WriteLine("Trace: \r\n" + ex.StackTrace);
+                        sw.WriteLine("================ Log End ================");
                     }
+                    
 
                     int pctComplete = filesScanned / totalfiles * 100;
                     if (pctComplete > highestPctReached) {
@@ -210,17 +235,27 @@ namespace SC4Cleanitol {
             //Evaluate script and report results
             runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) } );
             runs.Add(new List<GenericRun> { new GenericRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono) } );
-            runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
+            runs.Add(new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) } );
             for (int idx = 0; idx < _scriptRules.Count; idx++) {
                 runs.Add(EvaluateRule(_scriptRules[idx].Trim(), verboseOutput)); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
             }
+            runs.Add(new List<GenericRun> { new GenericRun("\r\n\r\n")});
             runs.Insert(3, new List<GenericRun> { new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
             runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono) });
             runs.Insert(5, new List<GenericRun> { new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono) });
             runs.Insert(6, new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
 
+            if (fileErrors.Count > 0) {
+                fileErrors.Add(new GenericRun("Consult the ", RunType.RedMono));
+                fileErrors.Add(new GenericRun("error log", RunType.Hyperlink, _logPath));
+                fileErrors.Add(new GenericRun(" located in the output directory for detailed troubleshooting information.\r\n\r\n", RunType.RedMono));
+                runs.Add(fileErrors);
+            }
+
             return runs;
         }
+
+        
 
 
 
@@ -296,6 +331,7 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun(" " + rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(". Download from: ", RunType.BlackStd));
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                runs.Add(new GenericRun("\r\n"));
                 return runs;
             }
 
@@ -322,7 +358,7 @@ namespace SC4Cleanitol {
                 runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                //runs.Add(new GenericRun("\r\n"));
+                runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
             } else if (isConditionalFound && isItemFound) {
                 CountDepsFound++;
