@@ -13,9 +13,6 @@ using System.Windows.Navigation;
 
 namespace SC4CleanitolWPF {
     internal static class RunStyles {
-
-
-
         /// <summary>
         /// Blue porportionally spaced text.
         /// </summary>
@@ -88,6 +85,15 @@ namespace SC4CleanitolWPF {
             Run r = new Run(text) {
                 FontSize = 18,
                 TextDecorations = TextDecorations.Underline
+            };
+            return r;
+        }
+        /// <summary>
+        /// Hyperlink mono spaced text.
+        /// </summary>
+        internal static Run HyperlinkMono(string text) {
+            Run r = new Run(text) {
+                FontFamily = new FontFamily("Consolas, Courier New")
             };
             return r;
         }

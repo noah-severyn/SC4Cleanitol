@@ -75,6 +75,10 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Hyperlink text with the default hyperlink formattting.
         /// </summary>
-        Hyperlink
+        Hyperlink,
+        /// <summary>
+        /// Hyperlink text with mono spaced text.
+        /// </summary>
+        HyperlinkMono
     }
 }
