@@ -135,5 +135,12 @@
 				Width="80"
 				Margin="400,0,0,0"
 				Click="Settings_Click">Settings</Button>
+		<Button x:Name="CheckTGIs"
+				Grid.Row="2"
+				Height="24"
+				Width="80"
+				Margin="151,12,569,12"
+				Click="CheckTGIs_Click"
+				Content="Check TGIs" />
 	</Grid>
 </Window>

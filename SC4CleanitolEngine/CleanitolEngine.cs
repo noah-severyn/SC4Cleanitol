@@ -103,10 +103,11 @@ namespace SC4Cleanitol {
         /// </summary>
         public List<string> FilesToRemove { get; private set; }
 
+        public string LogPath { get; private set; }
 
         private List<string> _scriptRules;
         private int highestPctReached;
-        private string _logPath;
+        
 
 
 
@@ -146,7 +147,10 @@ namespace SC4Cleanitol {
             ListOfTGIs = new List<string>();
             FilesToRemove = new List<string>();
 
-            _logPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
+            LogPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
+            if (!Directory.Exists(BaseOutputDirectory)) {
+                Directory.CreateDirectory(BaseOutputDirectory);
+            }
         }
 
 
@@ -168,7 +172,7 @@ namespace SC4Cleanitol {
             FilesToRemove.Clear();
             List<List<GenericRun>> runs = new List<List<GenericRun>>();
             List<GenericRun> fileErrors = new List<GenericRun>();
-            using StreamWriter sw = new StreamWriter(_logPath, false);
+            using StreamWriter sw = new StreamWriter(LogPath, false);
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
@@ -198,11 +202,6 @@ namespace SC4Cleanitol {
 
                     //TODO - MAKE SURE THIS WORKS FOR REMOVAL FUNCTIONALITY TOO
                     try {
-                        if (filepath == "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\CS$$1_3x3_Test Tax_72ebcfa2.SC4Lot") {
-                            throw new UnauthorizedAccessException();
-                        } else if (filepath == "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\Network Addon Mod\\7 Bridges\\NetworkAddonMod_Bridge_Blank_models.dat") {
-                            throw new IOException();
-                        }
                         if (DBPFUtil.IsValidDBPF(filepath)) {
                             DBPFFile dbpf = new DBPFFile(filepath);
                             ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
@@ -247,7 +246,7 @@ namespace SC4Cleanitol {
 
             if (fileErrors.Count > 0) {
                 fileErrors.Add(new GenericRun("Consult the ", RunType.RedMono));
-                fileErrors.Add(new GenericRun("error log", RunType.Hyperlink, _logPath));
+                fileErrors.Add(new GenericRun("error log", RunType.Hyperlink, LogPath));
                 fileErrors.Add(new GenericRun(" located in the output directory for detailed troubleshooting information.\r\n\r\n", RunType.RedMono));
                 runs.Add(fileErrors);
             }

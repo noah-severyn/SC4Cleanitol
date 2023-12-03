@@ -10,6 +10,7 @@ using SC4Cleanitol;
 using Options = SC4CleanitolWPF.Properties.Settings;
 using System.Threading.Tasks;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Linq;
 
 namespace SC4CleanitolWPF {
     /// <summary>
@@ -153,12 +154,24 @@ namespace SC4CleanitolWPF {
             foreach (List<GenericRun> line in runList) {
                 foreach (GenericRun run in line) {
                     if (run.Type is RunType.Hyperlink || run.Type is RunType.HyperlinkMono) {
-                        Hyperlink link = new Hyperlink(new Run(run.Text)) {
-                            NavigateUri = new Uri(run.URL)
-                        };
-                        link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-                        log.Inlines.Add(link);
-                        //log.Inlines.Add(new Run("\r\n"));
+                        try {
+                            Hyperlink link = new Hyperlink(new Run(run.Text)) {
+                                NavigateUri = new Uri(run.URL)
+                            };
+                            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                            log.Inlines.Add(link);
+                        }
+                        catch (Exception ex) {
+                            using StreamWriter sw = new StreamWriter(cleanitol.LogPath, true);
+                            sw.WriteLine("=============== Log Start ===============");
+                            sw.WriteLine("Time: " + DateTime.Now);
+                            sw.WriteLine("Script: " + cleanitol.ScriptPath);
+                            sw.WriteLine("Link: " + run.Text);
+                            sw.WriteLine("URI: " + run.URL);
+                            sw.WriteLine($"Error: {ex.GetType()}: {ex.Message}");
+                            sw.WriteLine("Trace: \r\n" + ex.StackTrace);
+                            sw.WriteLine("================ Log End ================");
+                        }
                     } else {
                         log.Inlines.Add(ConvertRun(run));
                     }
@@ -320,6 +333,17 @@ namespace SC4CleanitolWPF {
         private void ExportButton_Click(object sender, RoutedEventArgs e) {
             cleanitol.ExportTGIs();
             MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
+        }
+
+
+
+        private void CheckTGIs_Click(object sender, RoutedEventArgs e) {
+            string filepath = Path.Combine(cleanitol.BaseOutputDirectory, "SC4Cleanitol_Check_TGIs");
+            List<string> tgis = File.ReadAllLines(filepath).ToList<string>();
+            List<bool> evaluation = new List<bool>();
+            foreach (string item in tgis) {
+
+            }
         }
     }
 }
