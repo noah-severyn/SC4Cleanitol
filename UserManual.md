@@ -13,7 +13,7 @@ This new version is designed to be backwards compatible with old Cleanitol scrip
 Visit the [releases](https://github.com/noah-severyn/SC4Cleanitol/releases) page or go straight to the [latest release](https://github.com/noah-severyn/SC4Cleanitol/releases/latest).
 
 ## Requirements
-* **Windows XP with Service Pack 2 or higher**
+* **Windows 10 or higher**
 * **.NET7 runtime version > 7.0.0**
   * To determine which version is installed, open Command Prompt and type `dotnet --list-runtimes``. If the version is less than 7.0.0 installed, download the most recent version [here](https://dotnet.microsoft.com/en-us/download). Alternatively, if you run the executable without the correct .NET runtime, you will receive an error message. Follow the prompts to download the correct version.
 
