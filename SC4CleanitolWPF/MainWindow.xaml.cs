@@ -29,8 +29,8 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool VerboseOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 4, 2);
-        internal readonly string releaseDate = "Nov 2023"; 
+        internal readonly Version releaseVersion = new Version(0, 5);
+        internal readonly string releaseDate = "Dec 2023"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
@@ -77,7 +77,7 @@ namespace SC4CleanitolWPF {
 
 
         /// <summary>
-        /// Opens a file dialog to choose the cleanitol script.
+        /// Opens a file dialog to choose the Cleanitol script.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -136,7 +136,7 @@ namespace SC4CleanitolWPF {
             cleanitol.ScriptPath = ScriptPathTextBox.Text;
             
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
-            var progresScannedFiles = new Progress<int>(scannedFiles => { 
+            var progressScannedFiles = new Progress<int>(scannedFiles => { 
                 FileProgressBar.Value = scannedFiles; 
                 FileProgressLabel.Text = scannedFiles + " / " + FileProgressBar.Maximum + " files";
                 if (scannedFiles == FileProgressBar.Maximum) {
@@ -145,9 +145,9 @@ namespace SC4CleanitolWPF {
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
 
-            List<List<GenericRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, UpdateTGIdb, false, VerboseOutput));
+            List<List<GenericRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, VerboseOutput));
             if (runList.Count == 0) {
-                MessageBox.Show("Error Reading Files", "An error ocurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
 
             
@@ -214,6 +214,7 @@ namespace SC4CleanitolWPF {
                 case RunType.BlackHeading:
                     return RunStyles.BlackHeading(genericRun.Text);
                 case RunType.Hyperlink:
+                case RunType.HyperlinkMono:
                 default:
                     return new Run();
             }
@@ -265,7 +266,7 @@ namespace SC4CleanitolWPF {
         }
 
         /// <summary>
-        /// Create a new Cleanitol script in the cleanitol output directory with all of the file names contained with a chosen folder and its subfolders.
+        /// Create a new Cleanitol script in the Cleanitol output directory with all of the file names contained with a chosen folder and its subfolders.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -326,24 +327,13 @@ namespace SC4CleanitolWPF {
         }
 
         /// <summary>
-        /// Eport the list of TGIs to a CSV file.
+        /// Export the list of TGIs to a CSV file.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ExportButton_Click(object sender, RoutedEventArgs e) {
             cleanitol.ExportTGIs();
             MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
-        }
-
-
-
-        private void CheckTGIs_Click(object sender, RoutedEventArgs e) {
-            string filepath = Path.Combine(cleanitol.BaseOutputDirectory, "SC4Cleanitol_Check_TGIs");
-            List<string> tgis = File.ReadAllLines(filepath).ToList<string>();
-            List<bool> evaluation = new List<bool>();
-            foreach (string item in tgis) {
-
-            }
         }
     }
 }

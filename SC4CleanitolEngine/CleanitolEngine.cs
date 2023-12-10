@@ -59,7 +59,7 @@ namespace SC4Cleanitol {
 
         private string _scriptPath;
         /// <summary>
-        /// Path to the cleanitol script to run.
+        /// Path to the Cleanitol script to run.
         /// </summary>
         public string ScriptPath {
             get { return _scriptPath; }
@@ -75,7 +75,7 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Cound of dependencies scanned.
+        /// Count of dependencies scanned.
         /// </summary>
         public int CountDepsScanned { get; private set; }
         /// <summary>
@@ -97,7 +97,8 @@ namespace SC4Cleanitol {
         /// <summary>
         /// All TGIs scanned by the script in a comma separated format: <c>0x00000000, 0x00000000, 0x00000000</c>.
         /// </summary>
-        public List<string> ListOfTGIs { get; private set; }
+        //public List<string> ListOfTGIs { get; private set; }
+        public List<TGI> ListOfTGIs { get; private set; }
         /// <summary>
         /// Files found to be removed from the script.
         /// </summary>
@@ -144,7 +145,8 @@ namespace SC4Cleanitol {
             _scriptRules = new List<string>();
             ListOfFiles = new List<string>();
             ListOfFileNames = new List<string>();
-            ListOfTGIs = new List<string>();
+            //ListOfTGIs = new List<string>();
+            ListOfTGIs = new List<TGI>();
             FilesToRemove = new List<string>();
 
             LogPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
@@ -164,7 +166,7 @@ namespace SC4Cleanitol {
         /// <param name="updateTGIdatabase">Specify to rebuild the internal index of TGIs.</param>
         /// <param name="includeSystemPlugins">Specify to include the system plugins folder in the TGI scan or only the user plugins (recommended).</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
-        /// <returns>A series of messages detailing the result of each script rule. The outer list respresents one line (rule), and the inner list holds one or more runs which are combined to form the message.</returns>
+        /// <returns>A series of messages detailing the result of each script rule. The outer list represents one line (rule), and the inner list holds one or more runs which are combined to form the message.</returns>
         public List<List<GenericRun>> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
@@ -204,7 +206,7 @@ namespace SC4Cleanitol {
                     try {
                         if (DBPFUtil.IsValidDBPF(filepath)) {
                             DBPFFile dbpf = new DBPFFile(filepath);
-                            ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
+                            ListOfTGIs.AddRange(dbpf.GetTGIs());
                             progressTGIs.Report(ListOfTGIs.Count);
                         }
                     } catch (Exception ex) {
@@ -226,6 +228,7 @@ namespace SC4Cleanitol {
                         highestPctReached = pctComplete;
                     }
                 }
+                ListOfTGIs.Sort();
             }
 
             //TODO - write TGI list to DB for local storage?
@@ -262,7 +265,7 @@ namespace SC4Cleanitol {
         /// Evaluate a rule and return the outcome.
         /// </summary>
         /// <remarks>
-        /// This function can be used to run individual rules if you do not want to create a script file. Otherwise the <see cref="RunScript"/>  function is recommended to process rules from a script file. Ensure the rule is syntactically correct or unpredectible results can occur.
+        /// This function can be used to run individual rules if you do not want to create a script file. Otherwise the <see cref="RunScript"/>  function is recommended to process rules from a script file. Ensure the rule is syntactically correct or unpredictable results can occur.
         /// </remarks>
         /// <param name="ruleText">Rule to evaluate</param>
         /// <param name="verboseOutput">Show verbose output or not</param>
@@ -334,10 +337,10 @@ namespace SC4Cleanitol {
                 return runs;
             }
 
-            bool isConditionalFound = true;
+            bool isConditionalFound = false;
             if (rule.ConditionalItem != "") {
                 if (rule.IsConditionalItemTGI) {
-                    isConditionalFound = ListOfTGIs.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
+                    isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
                 } else {
                     isConditionalFound = ListOfFiles.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
                 }
@@ -346,7 +349,7 @@ namespace SC4Cleanitol {
             bool isItemFound = false;
             if (isConditionalFound) {
                 if (rule.IsSearchItemTGI) {
-                    isItemFound = ListOfTGIs.AsParallel().Any(r => r.Contains(rule.SearchItem));
+                    isItemFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
                 } else {
                     isItemFound = ListOfFiles.AsParallel().Any(r => r.Contains(rule.SearchItem));
                 }
@@ -363,10 +366,17 @@ namespace SC4Cleanitol {
                 CountDepsFound++;
                 if (verboseOutput) {
                     runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was located.\r\n", RunType.BlackStd));
+                    runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
+                }
+            } else {
+                if (verboseOutput) {
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was skipped because ", RunType.BlackStd));
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was not found.\r\n", RunType.BlackStd));
                 }
             }
-            
+
 
             CountDepsScanned++;
             return runs;
@@ -402,7 +412,7 @@ namespace SC4Cleanitol {
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
-            //Write HTML Tempalte summary
+            //Write HTML Template summary
             templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
@@ -420,8 +430,8 @@ namespace SC4Cleanitol {
         /// </summary>
         public void ExportTGIs() {
             StringBuilder list = new StringBuilder("Type,Group,Instance");
-            foreach (string tgi in ListOfFiles) {
-                list.AppendLine(tgi);
+            foreach (TGI tgi in ListOfTGIs) {
+                list.AppendLine(tgi.ToString());
             }
 
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, "ScannedTGIs.csv"), list.ToString());
