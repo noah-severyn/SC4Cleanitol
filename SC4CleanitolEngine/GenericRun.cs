@@ -41,7 +41,7 @@ namespace SC4Cleanitol {
     /// </summary>
     public enum RunType {
         /// <summary>
-        /// Blue porportionally spaced text.
+        /// Blue proportionally spaced text.
         /// </summary>
         BlueStd,
         /// <summary>
@@ -49,7 +49,7 @@ namespace SC4Cleanitol {
         /// </summary>
         BlueMono,
         /// <summary>
-        /// Red porportionally spaced text.
+        /// Red proportionally spaced text.
         /// </summary>
         RedStd,
         /// <summary>
@@ -57,7 +57,7 @@ namespace SC4Cleanitol {
         /// </summary>
         RedMono,
         /// <summary>
-        /// Green porportionally spaced text.
+        /// Green proportionally spaced text.
         /// </summary>
         GreenStd,
         /// <summary>
@@ -65,15 +65,15 @@ namespace SC4Cleanitol {
         /// </summary>
         BlackMono,
         /// <summary>
-        /// Black porportionally spaced text.
+        /// Black proportionally spaced text.
         /// </summary>
         BlackStd,
         /// <summary>
-        /// Black large, underlined, porportionally spaced text.
+        /// Black large, underlined, proportionally spaced text.
         /// </summary>
         BlackHeading,
         /// <summary>
-        /// Hyperlink text with the default hyperlink formattting.
+        /// Hyperlink text with the default hyperlink formatting.
         /// </summary>
         Hyperlink,
         /// <summary>
