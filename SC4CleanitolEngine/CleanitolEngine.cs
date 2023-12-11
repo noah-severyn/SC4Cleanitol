@@ -145,12 +145,11 @@ namespace SC4Cleanitol {
             _scriptRules = new List<string>();
             ListOfFiles = new List<string>();
             ListOfFileNames = new List<string>();
-            //ListOfTGIs = new List<string>();
             ListOfTGIs = new List<TGI>();
             FilesToRemove = new List<string>();
 
             LogPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
-            if (!Directory.Exists(BaseOutputDirectory)) {
+            if (BaseOutputDirectory != string.Empty && !Directory.Exists(BaseOutputDirectory)) {
                 Directory.CreateDirectory(BaseOutputDirectory);
             }
         }
@@ -243,8 +242,8 @@ namespace SC4Cleanitol {
             }
             runs.Add(new List<GenericRun> { new GenericRun("\r\n\r\n")});
             runs.Insert(3, new List<GenericRun> { new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
-            runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono) });
-            runs.Insert(5, new List<GenericRun> { new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono) });
+            runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono)});
+            runs.Insert(5, new List<GenericRun> { new GenericRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono) });
             runs.Insert(6, new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
 
             if (fileErrors.Count > 0) {
@@ -340,7 +339,7 @@ namespace SC4Cleanitol {
             bool isConditionalFound = false;
             if (rule.ConditionalItem != "") {
                 if (rule.IsConditionalItemTGI) {
-                    isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
+                    isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.ConditionalItem)) >= 0;
                 } else {
                     isConditionalFound = ListOfFiles.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
                 }
@@ -355,26 +354,31 @@ namespace SC4Cleanitol {
                 }
             }
 
-            if (isConditionalFound && !isItemFound) {
+            if (isConditionalFound && isItemFound) {
+                CountDepsFound++;
+                if (verboseOutput) {
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
+                }
+            } else if (isConditionalFound && !isItemFound) {
                 runs.Add(new GenericRun("Missing: ", RunType.RedMono));
                 runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
                 runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
-            } else if (isConditionalFound && isItemFound) {
-                CountDepsFound++;
+            } else if (!isConditionalFound) {
                 if (verboseOutput) {
                     runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
+                    runs.Add(new GenericRun(" was skipped as ", RunType.BlackStd));
+                    runs.Add(new GenericRun(rule.ConditionalItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was not found. Item: ", RunType.BlackStd));
+                    runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                    runs.Add(new GenericRun("\r\n"));
+
                 }
             } else {
-                if (verboseOutput) {
-                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was skipped because ", RunType.BlackStd));
-                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was not found.\r\n", RunType.BlackStd));
-                }
+                
             }
 
 
