@@ -5,9 +5,9 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:SC4CleanitolWPF"
 		mc:Ignorable="d"
-		Height="500"
+		Height="600"
 		MinHeight="257"
-		Width="800"
+		Width="900"
 		MinWidth="614">
 	<Grid>
 		<Grid.RowDefinitions>
@@ -97,11 +97,11 @@
 		<!--Row 2-->
 		<CheckBox x:Name="VerboseOutputCheckbox"
 				  Grid.Row="3"
-				  Content="Verbose Output"
+				  Content="Detailed Output"
 				  HorizontalAlignment="Left"
 				  Margin="14,5,0,0"
 				  VerticalAlignment="Top"
-				  IsChecked="{Binding  VerboseOutput}" />
+				  IsChecked="{Binding  DetailedOutput}" />
 		<CheckBox x:Name="UpdateTGICheckbox"
 				  Grid.Row="3"
 				  Content="Update TGI Database"

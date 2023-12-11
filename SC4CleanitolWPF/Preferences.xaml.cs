@@ -15,7 +15,7 @@ namespace SC4CleanitolWPF {
             InitializeComponent();
             UserPluginsDirectory.Text = Properties.Settings.Default.UserPluginsDirectory;
             SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
-            CleanitolOutputDirectory.Text = Properties.Settings.Default.CleanitolOutputDirectory;
+            CleanitolOutputDirectory.Text = Properties.Settings.Default.BaseOutputDirectory;
             ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
             LanguageChoice.SelectedItem = Properties.Settings.Default.Language;
 
@@ -46,7 +46,7 @@ namespace SC4CleanitolWPF {
         }
         private void CleanitolOutputChooseFolder_Click(object sender, RoutedEventArgs e) {
             CommonOpenFileDialog dialog = new CommonOpenFileDialog {
-                InitialDirectory = Properties.Settings.Default.CleanitolOutputDirectory,
+                InitialDirectory = Properties.Settings.Default.BaseOutputDirectory,
                 IsFolderPicker = true
             };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
@@ -61,7 +61,7 @@ namespace SC4CleanitolWPF {
             if (ScanSystemDirectoryCheckbox.IsChecked is not null) {
                 Properties.Settings.Default.ScanSystemPlugins = (bool) ScanSystemDirectoryCheckbox.IsChecked;
             }
-            Properties.Settings.Default.CleanitolOutputDirectory = CleanitolOutputDirectory.Text;
+            Properties.Settings.Default.BaseOutputDirectory = CleanitolOutputDirectory.Text;
             //Properties.Settings.Default.Language = LanguageChoice.SelectedItem.ToString();
             //TODO - fix the language setting.
             Properties.Settings.Default.Save();

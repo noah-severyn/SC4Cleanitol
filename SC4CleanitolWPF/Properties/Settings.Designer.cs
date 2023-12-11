@@ -49,7 +49,7 @@ namespace SC4CleanitolWPF.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string SystemPluginsDirectory {
             get {
                 return ((string)(this["SystemPluginsDirectory"]));
@@ -74,12 +74,12 @@ namespace SC4CleanitolWPF.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string CleanitolOutputDirectory {
+        public string BaseOutputDirectory {
             get {
-                return ((string)(this["CleanitolOutputDirectory"]));
+                return ((string)(this["BaseOutputDirectory"]));
             }
             set {
-                this["CleanitolOutputDirectory"] = value;
+                this["BaseOutputDirectory"] = value;
             }
         }
     }

@@ -9,12 +9,12 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="SystemPluginsDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Program Files (x86)\Steam\steamapps\common\SimCity 4 Deluxe\Plugins</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ScanSystemPlugins" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="CleanitolOutputDirectory" Type="System.String" Scope="User">
+    <Setting Name="BaseOutputDirectory" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
   </Settings>
