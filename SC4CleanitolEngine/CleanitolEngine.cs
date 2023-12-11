@@ -59,7 +59,7 @@ namespace SC4Cleanitol {
 
         private string _scriptPath;
         /// <summary>
-        /// Path to the cleanitol script to run.
+        /// Path to the Cleanitol script to run.
         /// </summary>
         public string ScriptPath {
             get { return _scriptPath; }
@@ -75,7 +75,7 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Cound of dependencies scanned.
+        /// Count of dependencies scanned.
         /// </summary>
         public int CountDepsScanned { get; private set; }
         /// <summary>
@@ -97,16 +97,18 @@ namespace SC4Cleanitol {
         /// <summary>
         /// All TGIs scanned by the script in a comma separated format: <c>0x00000000, 0x00000000, 0x00000000</c>.
         /// </summary>
-        public List<string> ListOfTGIs { get; private set; }
+        //public List<string> ListOfTGIs { get; private set; }
+        public List<TGI> ListOfTGIs { get; private set; }
         /// <summary>
         /// Files found to be removed from the script.
         /// </summary>
         public List<string> FilesToRemove { get; private set; }
 
+        public string LogPath { get; private set; }
 
         private List<string> _scriptRules;
         private int highestPctReached;
-        private string _logPath;
+        
 
 
 
@@ -143,10 +145,13 @@ namespace SC4Cleanitol {
             _scriptRules = new List<string>();
             ListOfFiles = new List<string>();
             ListOfFileNames = new List<string>();
-            ListOfTGIs = new List<string>();
+            ListOfTGIs = new List<TGI>();
             FilesToRemove = new List<string>();
 
-            _logPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
+            LogPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
+            if (BaseOutputDirectory != string.Empty && !Directory.Exists(BaseOutputDirectory)) {
+                Directory.CreateDirectory(BaseOutputDirectory);
+            }
         }
 
 
@@ -160,7 +165,7 @@ namespace SC4Cleanitol {
         /// <param name="updateTGIdatabase">Specify to rebuild the internal index of TGIs.</param>
         /// <param name="includeSystemPlugins">Specify to include the system plugins folder in the TGI scan or only the user plugins (recommended).</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
-        /// <returns>A series of messages detailing the result of each script rule. The outer list respresents one line (rule), and the inner list holds one or more runs which are combined to form the message.</returns>
+        /// <returns>A series of messages detailing the result of each script rule. The outer list represents one line (rule), and the inner list holds one or more runs which are combined to form the message.</returns>
         public List<List<GenericRun>> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
@@ -168,7 +173,7 @@ namespace SC4Cleanitol {
             FilesToRemove.Clear();
             List<List<GenericRun>> runs = new List<List<GenericRun>>();
             List<GenericRun> fileErrors = new List<GenericRun>();
-            using StreamWriter sw = new StreamWriter(_logPath, false);
+            using StreamWriter sw = new StreamWriter(LogPath, false);
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
@@ -198,14 +203,9 @@ namespace SC4Cleanitol {
 
                     //TODO - MAKE SURE THIS WORKS FOR REMOVAL FUNCTIONALITY TOO
                     try {
-                        if (filepath == "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\CS$$1_3x3_Test Tax_72ebcfa2.SC4Lot") {
-                            throw new UnauthorizedAccessException();
-                        } else if (filepath == "C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\\Network Addon Mod\\7 Bridges\\NetworkAddonMod_Bridge_Blank_models.dat") {
-                            throw new IOException();
-                        }
                         if (DBPFUtil.IsValidDBPF(filepath)) {
                             DBPFFile dbpf = new DBPFFile(filepath);
-                            ListOfTGIs.AddRange(dbpf.GetTGIs().AsParallel().Select(tgi => tgi.ToStringShort()));
+                            ListOfTGIs.AddRange(dbpf.GetTGIs());
                             progressTGIs.Report(ListOfTGIs.Count);
                         }
                     } catch (Exception ex) {
@@ -227,6 +227,7 @@ namespace SC4Cleanitol {
                         highestPctReached = pctComplete;
                     }
                 }
+                ListOfTGIs.Sort();
             }
 
             //TODO - write TGI list to DB for local storage?
@@ -241,13 +242,13 @@ namespace SC4Cleanitol {
             }
             runs.Add(new List<GenericRun> { new GenericRun("\r\n\r\n")});
             runs.Insert(3, new List<GenericRun> { new GenericRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
-            runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found.\r\n", RunType.BlueMono) });
-            runs.Insert(5, new List<GenericRun> { new GenericRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono) });
+            runs.Insert(4, new List<GenericRun> { new GenericRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono)});
+            runs.Insert(5, new List<GenericRun> { new GenericRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono) });
             runs.Insert(6, new List<GenericRun> { new GenericRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
 
             if (fileErrors.Count > 0) {
                 fileErrors.Add(new GenericRun("Consult the ", RunType.RedMono));
-                fileErrors.Add(new GenericRun("error log", RunType.Hyperlink, _logPath));
+                fileErrors.Add(new GenericRun("error log", RunType.Hyperlink, LogPath));
                 fileErrors.Add(new GenericRun(" located in the output directory for detailed troubleshooting information.\r\n\r\n", RunType.RedMono));
                 runs.Add(fileErrors);
             }
@@ -263,7 +264,7 @@ namespace SC4Cleanitol {
         /// Evaluate a rule and return the outcome.
         /// </summary>
         /// <remarks>
-        /// This function can be used to run individual rules if you do not want to create a script file. Otherwise the <see cref="RunScript"/>  function is recommended to process rules from a script file. Ensure the rule is syntactically correct or unpredectible results can occur.
+        /// This function can be used to run individual rules if you do not want to create a script file. Otherwise the <see cref="RunScript"/>  function is recommended to process rules from a script file. Ensure the rule is syntactically correct or unpredictable results can occur.
         /// </remarks>
         /// <param name="ruleText">Rule to evaluate</param>
         /// <param name="verboseOutput">Show verbose output or not</param>
@@ -335,10 +336,10 @@ namespace SC4Cleanitol {
                 return runs;
             }
 
-            bool isConditionalFound = true;
+            bool isConditionalFound = false;
             if (rule.ConditionalItem != "") {
                 if (rule.IsConditionalItemTGI) {
-                    isConditionalFound = ListOfTGIs.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
+                    isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.ConditionalItem)) >= 0;
                 } else {
                     isConditionalFound = ListOfFiles.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
                 }
@@ -347,27 +348,39 @@ namespace SC4Cleanitol {
             bool isItemFound = false;
             if (isConditionalFound) {
                 if (rule.IsSearchItemTGI) {
-                    isItemFound = ListOfTGIs.AsParallel().Any(r => r.Contains(rule.SearchItem));
+                    isItemFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
                 } else {
                     isItemFound = ListOfFiles.AsParallel().Any(r => r.Contains(rule.SearchItem));
                 }
             }
 
-            if (isConditionalFound && !isItemFound) {
+            if (isConditionalFound && isItemFound) {
+                CountDepsFound++;
+                if (verboseOutput) {
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
+                }
+            } else if (isConditionalFound && !isItemFound) {
                 runs.Add(new GenericRun("Missing: ", RunType.RedMono));
                 runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
                 runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
                 runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
                 runs.Add(new GenericRun("\r\n"));
                 CountDepsMissing++;
-            } else if (isConditionalFound && isItemFound) {
-                CountDepsFound++;
+            } else if (!isConditionalFound) {
                 if (verboseOutput) {
                     runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was located.\r\n", RunType.BlackStd));
+                    runs.Add(new GenericRun(" was skipped as ", RunType.BlackStd));
+                    runs.Add(new GenericRun(rule.ConditionalItem, RunType.BlueStd));
+                    runs.Add(new GenericRun(" was not found. Item: ", RunType.BlackStd));
+                    runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                    runs.Add(new GenericRun("\r\n"));
+
                 }
+            } else {
+                
             }
-            
+
 
             CountDepsScanned++;
             return runs;
@@ -403,7 +416,7 @@ namespace SC4Cleanitol {
             }
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
-            //Write HTML Tempalte summary
+            //Write HTML Template summary
             templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
@@ -421,8 +434,8 @@ namespace SC4Cleanitol {
         /// </summary>
         public void ExportTGIs() {
             StringBuilder list = new StringBuilder("Type,Group,Instance");
-            foreach (string tgi in ListOfFiles) {
-                list.AppendLine(tgi);
+            foreach (TGI tgi in ListOfTGIs) {
+                list.AppendLine(tgi.ToString());
             }
 
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, "ScannedTGIs.csv"), list.ToString());

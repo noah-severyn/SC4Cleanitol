@@ -14,7 +14,7 @@ using System.Windows.Navigation;
 namespace SC4CleanitolWPF {
     internal static class RunStyles {
         /// <summary>
-        /// Blue porportionally spaced text.
+        /// Blue proportionally spaced text.
         /// </summary>
         internal static Run BlueStd(string text) {
             Run r = new Run(text) {
@@ -34,7 +34,7 @@ namespace SC4CleanitolWPF {
             return r;
         }
         /// <summary>
-        /// Red porportionally spaced text.
+        /// Red proportionally spaced text.
         /// </summary>
         internal static Run RedStd(string text) {
             Run r = new Run(text) {
@@ -54,7 +54,7 @@ namespace SC4CleanitolWPF {
             return r;
         }
         /// <summary>
-        /// Green porportionally spaced text.
+        /// Green proportionally spaced text.
         /// </summary>
         internal static Run GreenStd(string text) {
             Run r = new Run(text) {
@@ -72,14 +72,14 @@ namespace SC4CleanitolWPF {
             return r;
         }
         /// <summary>
-        /// Black porportionally spaced text.
+        /// Black proportionally spaced text.
         /// </summary>
         internal static Run BlackStd(string text) {
             Run r = new Run(text);
             return r;
         }
         /// <summary>
-        /// Black large sized, underlined, porportionally spaced text.
+        /// Black large sized, underlined, proportionally spaced text.
         /// </summary>
         internal static Run BlackHeading(string text) {
             Run r = new Run(text) {

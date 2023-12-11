@@ -33,7 +33,7 @@ If you enable the option to update TGIs, you have an option to **Export TGIs**, 
 
 ![Application Screenshot](/SC4CleanitolWPF/images/concise.png)
 
-First, select a script to run, then run the script. The results of the script are shown in the output window. If there are files marked for removal after running the script, pressing the **Move files** button will move the designated files to a desginated location outside of the plugins folder. Each time files are moved a new directory will be created here with the date/time the script is run. Also included in each directory is an HTML file summarizing the actions taken and an `undo.bat` file which will copy these files back into their original location in the Plugins folder if executed. To execute the undo script, double click the file.
+First, select a script to run, then run the script. The results of the script are shown in the output window. If there are files marked for removal after running the script, pressing the **Move files** button will move the designated files to a designated location outside of the plugins folder. Each time files are moved a new directory will be created here with the date/time the script is run. Also included in each directory is an HTML file summarizing the actions taken and an `undo.bat` file which will copy these files back into their original location in the Plugins folder if executed. To execute the undo script, double click the file.
 
 ### Script Execution Options
 * **Verbose Output** - Toggle to show the outcome of every rule in the script (verbose is checked), or only the important messages (verbose is unchecked).
@@ -43,7 +43,7 @@ First, select a script to run, then run the script. The results of the script ar
 * **User Plugins** - Adjust to the plugins directory in your user directory
 * **System Plugins** - Adjust to the plugins directory in the game install directory
   * **Scan system Plugins folder too** - Select this option to include the system plugins directory when scanning for TGIs. It is generally recommended that most plugins be installed in the user plugins folder, but certain mods *may* be installed in the systems plugin directory instead.
-  * **Cleanitol Output** - Adjust the location that the program will move files to. The default location is adjacent to the user plugins directory in `My Documents\Simcity 4\BSC_Cleanitol\...`.
+  * **Cleanitol Output** - Adjust the location that the program will move files to. The default location is adjacent to the user plugins directory in `My Documents\SimCity 4\BSC_Cleanitol\...`.
 
 ---
 
@@ -65,7 +65,7 @@ Begin the line with a semicolon `;` to create a script comment. These comments w
 ### 2. User Comments
 Begin the line with a right angle bracket `>`. These comments will be shown to the user in the output window. Use these comments for any message you wish to show to the user. ***This is a new feature.***
 ```
->This is a user coment. This comment will be shown to users in the script output window.
+>This is a user comment. This comment will be shown to users in the script output window.
 ```
 
 ### 3. User Comment Headings
@@ -111,14 +111,12 @@ In addition to standard dependency rules, you can also specify conditional depen
 
 To create a conditional dependency, specify two filenames or TGIs, separated by two question marks `??`. The first item will trigger as a dependency only if the second item is present in plugins.
 ```
+Item A ?? Item B; Name
+```
+
+In other words, `Item A` is a dependency only if `Item B` is found. In the below example, the model file is only required if the descriptor file is present in plugins.
+```
 jes_AcmeBoilerFactory-0x5ad0e817_0x5283112c_0x30000.SC4Model ?? IRM W2W jes_AcmeBoilerFactory1-0x6534284a-0xbf3fbe81-0xe1278c85_x4.sc4desc; The Acme Boiler Factory https://www.sc4devotion.com/csxlex/lex_filedesc.php?lotGET=66
 ```
-In the above example, the model file is only required if the descriptor file is present in plugins.
 
-TGIs and filenames *can* be intermixed. The following combinations are supported:
-| Dependency | Condition | Supported |
-| :---: | :---: | :---: |
-| Filename | Filename | ✔ |
-| Filename | TGI | ✔ |
-| TGI | Filename | ✔ |
-| TGI | TGI | ✔ |
+TGIs and filenames can be intermixed within a given rule. All combinations of filenames and TGIs as the conditional item and the dependency item are supported.

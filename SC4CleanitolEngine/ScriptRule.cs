@@ -84,24 +84,12 @@ namespace SC4Cleanitol {
                 
                 SourceURL = ruleText.Substring(httpLocn).Trim();
 
-                CleanTGIFormat();
-            }
-
-            /// <summary>
-            /// The script can allow for any separator between TGI numbers, but csDBPF uses comma space ", ". Automatically reformat the script format behind the scenes to allow for equality comparison.
-            /// </summary>
-            private void CleanTGIFormat() {
-                int second0x;
-                string separator;
+                // The script can allow for any separator between TGI numbers, but csDBPF uses comma space ", ". Automatically reformat the script format behind the scenes to allow for equality comparison.
                 if (IsSearchItemTGI) {
-                    second0x = SearchItem.IndexOf("0x", 10);
-                    separator = SearchItem.Substring(10, second0x - 10);
-                    SearchItem = SearchItem.Replace(separator, ", ");
+                    SearchItem = csDBPF.DBPFTGI.CleanTGIFormat(SearchItem);
                 }
                 if (IsConditionalItemTGI) {
-                    second0x = ConditionalItem.IndexOf("0x", 10);
-                    separator = ConditionalItem.Substring(10, second0x - 10);
-                    ConditionalItem = ConditionalItem.Replace(separator, ", ");
+                    ConditionalItem = csDBPF.DBPFTGI.CleanTGIFormat(ConditionalItem);
                 }
             }
         }
@@ -175,5 +163,8 @@ namespace SC4Cleanitol {
                 return RuleType.Removal;
             }
         }
+
+
+        
     }
 }
