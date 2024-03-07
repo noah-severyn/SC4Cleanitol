@@ -12,6 +12,11 @@ namespace SC4Cleanitol {
         /// </summary>
         public struct DependencyRule {
             /// <summary>
+            /// Whether this rule is a conditional dependency rule or a standard dependency rule.
+            /// </summary>
+            public bool IsConditionalRule { get; set; }
+
+            /// <summary>
             /// Filename or TGI to search for.
             /// </summary>
             public string SearchItem { get; set; }
@@ -51,6 +56,7 @@ namespace SC4Cleanitol {
             public DependencyRule(string ruleText) {
                 int semicolonLocn = ruleText.IndexOf(';');
                 int conditionalLocn = ruleText.IndexOf("??");
+                IsConditionalRule = conditionalLocn != -1;
 
                 //Support "unchecked" dependencies for certain legacy cleanitol files that use these as cascading dependencies. If searchItem does not contain any of the valid file extensions AND is not a TGI (contains '0x' 3 times).
                 int cutoff;
@@ -64,14 +70,14 @@ namespace SC4Cleanitol {
                 }
 
                 
-                if (conditionalLocn == -1) {
-                    SearchItem = ruleText.Substring(0, semicolonLocn).Trim();
-                    ConditionalItem = string.Empty;
-                    IsConditionalItemTGI = false;
-                } else {
+                if (IsConditionalRule) {
                     SearchItem = ruleText.Substring(0, conditionalLocn).Trim();
                     ConditionalItem = ruleText.Substring(conditionalLocn + 2, semicolonLocn - conditionalLocn - 2).Trim();
                     IsConditionalItemTGI = ConditionalItem.Substring(0, 2) == "0x";
+                } else {
+                    SearchItem = ruleText.Substring(0, semicolonLocn).Trim();
+                    ConditionalItem = string.Empty;
+                    IsConditionalItemTGI = false;
                 }
 
                 IsSearchItemTGI = SearchItem.Substring(0, 2) == "0x";

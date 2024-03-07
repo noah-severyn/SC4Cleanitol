@@ -337,7 +337,7 @@ namespace SC4Cleanitol {
             }
 
             bool isConditionalFound = false;
-            if (rule.ConditionalItem != "") {
+            if (rule.IsConditionalRule) {
                 if (rule.IsConditionalItemTGI) {
                     isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.ConditionalItem)) >= 0;
                 } else {
@@ -346,7 +346,7 @@ namespace SC4Cleanitol {
             }
 
             bool isItemFound = false;
-            if (isConditionalFound) {
+            if (isConditionalFound || !rule.IsConditionalRule) {
                 if (rule.IsSearchItemTGI) {
                     isItemFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
                 } else {
@@ -354,34 +354,50 @@ namespace SC4Cleanitol {
                 }
             }
 
-            if (isConditionalFound && isItemFound) {
-                CountDepsFound++;
-                if (verboseOutput) {
-                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
-                }
-            } else if (isConditionalFound && !isItemFound) {
-                runs.Add(new GenericRun("Missing: ", RunType.RedMono));
-                runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
-                runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
-                runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                runs.Add(new GenericRun("\r\n"));
-                CountDepsMissing++;
-            } else if (!isConditionalFound) {
-                if (verboseOutput) {
-                    runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was skipped as ", RunType.BlackStd));
-                    runs.Add(new GenericRun(rule.ConditionalItem, RunType.BlueStd));
-                    runs.Add(new GenericRun(" was not found. Item: ", RunType.BlackStd));
+
+
+
+            if (!rule.IsConditionalRule) {
+                if (isItemFound) {
+                    CountDepsFound++;
+                    if (verboseOutput) {
+                        runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                        runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
+                    }
+                } else {
+                    runs.Add(new GenericRun("Missing: ", RunType.RedMono));
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
+                    runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
                     runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
                     runs.Add(new GenericRun("\r\n"));
-
+                    CountDepsMissing++;
                 }
             } else {
-                
+                if (isConditionalFound && isItemFound) {
+                    CountDepsFound++;
+                    if (verboseOutput) {
+                        runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                        runs.Add(new GenericRun(" was found.\r\n", RunType.BlackStd));
+                    }
+                } else if (isConditionalFound && !isItemFound) {
+                    runs.Add(new GenericRun("Missing: ", RunType.RedMono));
+                    runs.Add(new GenericRun(rule.SearchItem, RunType.RedStd));
+                    runs.Add(new GenericRun(" is missing. Download from: ", RunType.BlackStd));
+                    runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                    runs.Add(new GenericRun("\r\n"));
+                    CountDepsMissing++;
+                } else if (!isConditionalFound) {
+                    if (verboseOutput) {
+                        runs.Add(new GenericRun(rule.SearchItem, RunType.BlueStd));
+                        runs.Add(new GenericRun(" was skipped as ", RunType.BlackStd));
+                        runs.Add(new GenericRun(rule.ConditionalItem, RunType.BlueStd));
+                        runs.Add(new GenericRun(" was not found. Item: ", RunType.BlackStd));
+                        runs.Add(new GenericRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                        runs.Add(new GenericRun("\r\n"));
+
+                    }
+                }
             }
-
-
             CountDepsScanned++;
             return runs;
         }

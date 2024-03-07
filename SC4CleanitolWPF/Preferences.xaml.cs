@@ -62,8 +62,6 @@ namespace SC4CleanitolWPF {
                 Properties.Settings.Default.ScanSystemPlugins = (bool) ScanSystemDirectoryCheckbox.IsChecked;
             }
             Properties.Settings.Default.BaseOutputDirectory = CleanitolOutputDirectory.Text;
-            //Properties.Settings.Default.Language = LanguageChoice.SelectedItem.ToString();
-            //TODO - fix the language setting.
             Properties.Settings.Default.Save();
         }
 
