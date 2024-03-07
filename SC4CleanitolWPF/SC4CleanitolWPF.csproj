@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\carbon--clean.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="csDBPF">
       <HintPath>..\..\csDBPF\csDBPF\csDBPF\obj\Debug\net7.0\csDBPF.dll</HintPath>
     </Reference>
@@ -21,6 +25,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SC4CleanitolEngine\SC4CleanitolEngine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\carbon--clean.png" />
   </ItemGroup>
 
   <ItemGroup>

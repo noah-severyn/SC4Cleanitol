@@ -8,7 +8,8 @@
 		Height="600"
 		MinHeight="257"
 		Width="900"
-		MinWidth="614">
+		MinWidth="614"
+		Icon="Resources/carbon--clean.png">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="48" />
