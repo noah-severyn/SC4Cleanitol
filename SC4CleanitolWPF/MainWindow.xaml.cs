@@ -29,7 +29,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 6);
+        internal readonly Version releaseVersion = new Version(0, 7);
         internal readonly string releaseDate = "Mar 2024"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
@@ -327,7 +327,7 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private void Settings_Click(object sender, RoutedEventArgs e) {
             Preferences p = new Preferences();
-            p.Show();
+            p.ShowDialog();
         }
 
         /// <summary>

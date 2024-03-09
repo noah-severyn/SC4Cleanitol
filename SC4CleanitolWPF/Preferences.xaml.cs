@@ -17,7 +17,6 @@ namespace SC4CleanitolWPF {
             SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
             CleanitolOutputDirectory.Text = Properties.Settings.Default.BaseOutputDirectory;
             ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
-            LanguageChoice.SelectedItem = Properties.Settings.Default.Language;
 
             Window window = Application.Current.MainWindow;
             if (window is not null) {
@@ -88,11 +87,6 @@ namespace SC4CleanitolWPF {
             var sinfo = new ProcessStartInfo(target);
             sinfo.UseShellExecute = true;
             Process.Start(sinfo);
-        }
-
-        private void Window_Deactivated(object sender, EventArgs e) {
-            Window window = (Window) sender;
-            window.Topmost = true;
         }
     }
 }
