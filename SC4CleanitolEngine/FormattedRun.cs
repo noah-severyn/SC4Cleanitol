@@ -1,13 +1,11 @@
-﻿
-
-namespace SC4Cleanitol {
+﻿namespace SC4Cleanitol {
     /// <summary>
     /// Abstract description of a run of richly formatted text describing the text and the style it should be formatted as.
     /// </summary>
     /// <remarks>
     /// Platform-specific implementations should convert this to the appropriate run type for the UI element, e.g. <c>System.Windows.Documents.Run</c> (WPF) or <c>Microsoft.UI.Xaml.Documents.Run</c> (WinUI).
     /// </remarks>
-    public readonly struct GenericRun {
+    public readonly struct FormattedRun {
         /// <summary>
         /// Text to display.
         /// </summary>
@@ -25,7 +23,7 @@ namespace SC4Cleanitol {
         /// <param name="text">Text to display</param>
         /// <param name="type">Format type</param>
         /// <param name="url">URL if the type is Hyperlink. Default is blank string</param>
-        public GenericRun(string text, RunType type = RunType.BlackStd, string url = "") {
+        public FormattedRun(string text, RunType type = RunType.BlackStd, string url = "") {
             Type = type;
             Text = text;
             if (type is RunType.Hyperlink) {

@@ -145,14 +145,14 @@ namespace SC4CleanitolWPF {
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
 
-            List<List<GenericRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, DetailedOutput));
+            List<List<FormattedRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, DetailedOutput));
             if (runList.Count == 0) {
                 MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
 
             
-            foreach (List<GenericRun> line in runList) {
-                foreach (GenericRun run in line) {
+            foreach (List<FormattedRun> line in runList) {
+                foreach (FormattedRun run in line) {
                     if (run.Type is RunType.Hyperlink || run.Type is RunType.HyperlinkMono) {
                         try {
                             Hyperlink link = new Hyperlink(new Run(run.Text)) {
@@ -196,11 +196,11 @@ namespace SC4CleanitolWPF {
 
 
         /// <summary>
-        /// Converts a <see cref="GenericRun"/> to a specific run style based on its <see cref="GenericRun.Type"/> property.
+        /// Converts a <see cref="FormattedRun"/> to a specific run style based on its <see cref="FormattedRun.Type"/> property.
         /// </summary>
         /// <param name="genericRun">Run to convert</param>
         /// <returns></returns>
-        private static Run ConvertRun(GenericRun genericRun) {
+        private static Run ConvertRun(FormattedRun genericRun) {
             switch (genericRun.Type) {
                 case RunType.BlueStd:
                     return RunStyles.BlueStd(genericRun.Text);
@@ -249,18 +249,18 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
             cleanitol.BackupFiles(Properties.Resources.SummaryTemplate);
-            log.Inlines.Add(ConvertRun(new GenericRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
+            log.Inlines.Add(ConvertRun(new FormattedRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
 
             Hyperlink link;
             if (cleanitol.FilesToRemove.Count > 0) {
-                log.Inlines.Add(ConvertRun(new GenericRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+                log.Inlines.Add(ConvertRun(new FormattedRun($"{cleanitol.FilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
                 link = new Hyperlink(new Run(cleanitol.ScriptOutputDirectory + "\r\n")) {
                     NavigateUri = new Uri(cleanitol.ScriptOutputDirectory)
                 };
                 link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                 log.Inlines.Add(link);
             }
-            link = new Hyperlink(ConvertRun(new GenericRun("View Summary",RunType.BlueMono))) {
+            link = new Hyperlink(ConvertRun(new FormattedRun("View Summary",RunType.BlueMono))) {
                 NavigateUri = new Uri(Path.Combine(cleanitol.ScriptOutputDirectory, "CleanupSummary.html"))
             };
             link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
