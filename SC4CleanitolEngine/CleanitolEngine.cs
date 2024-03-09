@@ -107,8 +107,8 @@ namespace SC4Cleanitol {
         public string LogPath { get; private set; }
 
         private List<string> _scriptRules;
-        private int highestPctReached;
-        
+        private int _highestPctReached;
+        private List<FormattedRun> _runs;
 
 
 
@@ -143,6 +143,7 @@ namespace SC4Cleanitol {
             }
 
             _scriptRules = new List<string>();
+            _runs = new List<FormattedRun>();
             ListOfFiles = new List<string>();
             ListOfFileNames = new List<string>();
             ListOfTGIs = new List<TGI>();
@@ -165,15 +166,15 @@ namespace SC4Cleanitol {
         /// <param name="updateTGIdatabase">Specify to rebuild the internal index of TGIs.</param>
         /// <param name="includeSystemPlugins">Specify to include the system plugins folder in the TGI scan or only the user plugins (recommended).</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
-        /// <returns>A series of messages detailing the result of each script rule. The outer list represents one line (rule), and the inner list holds one or more runs which are combined to form the message.</returns>
-        public List<List<FormattedRun>> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
+        /// <returns>A series of formatted messages detailing the result of each script rule.</returns>
+        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
             CountDepsScanned = 0;
             FilesToRemove.Clear();
             ListOfFiles.Clear();
             ListOfFileNames = Enumerable.Empty<string>();
-            List<List<FormattedRun>> runs = new List<List<FormattedRun>>();
+            _runs.Clear();
             List<FormattedRun> fileErrors = new List<FormattedRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
 
@@ -191,7 +192,7 @@ namespace SC4Cleanitol {
                 ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
             }
             catch (IOException) {
-                return runs;
+                return _runs;
             }
             
             
@@ -227,49 +228,48 @@ namespace SC4Cleanitol {
                     
 
                     int pctComplete = filesScanned / totalfiles * 100;
-                    if (pctComplete > highestPctReached) {
-                        highestPctReached = pctComplete;
+                    if (pctComplete > _highestPctReached) {
+                        _highestPctReached = pctComplete;
                     }
                 }
                 ListOfTGIs.Sort();
             } else {
-                progressFiles.Report(ListOfFiles.Count);
             }
 
             //TODO - write TGI list to DB for local storage?
 
 
             //Evaluate script and report results
-            runs.Add(new List<FormattedRun> { new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) } );
-            runs.Add(new List<FormattedRun> { new FormattedRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono) } );
-            runs.Add(new List<FormattedRun> { new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) } );
+            _runs.Add(new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
+            _runs.Add(new FormattedRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono));
+            _runs.Add(new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
 
 
 
             //OPRIMIZE THIS. For every rule we're looping through every file or the TGI list every time - do it the other way around because 
 
             for (int idx = 0; idx < _scriptRules.Count; idx++) {
-                runs.Add(EvaluateRule(_scriptRules[idx].Trim(), verboseOutput)); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
+                EvaluateRule(_scriptRules[idx].Trim(), verboseOutput); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
             }
 
 
 
 
 
-            runs.Add(new List<FormattedRun> { new FormattedRun("\r\n\r\n")});
-            runs.Insert(3, new List<FormattedRun> { new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono) });
-            runs.Insert(4, new List<FormattedRun> { new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono)});
-            runs.Insert(5, new List<FormattedRun> { new FormattedRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono) });
-            runs.Insert(6, new List<FormattedRun> { new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono) });
+            _runs.Add(new FormattedRun("\r\n\r\n"));
+            _runs.Insert(3, new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono));
+            _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono));
+            _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono));
+            _runs.Insert(6, new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
 
             if (fileErrors.Count > 0) {
                 fileErrors.Add(new FormattedRun("Consult the ", RunType.RedMono));
                 fileErrors.Add(new FormattedRun("error log", RunType.Hyperlink, LogPath));
                 fileErrors.Add(new FormattedRun(" located in the output directory for detailed troubleshooting information.\r\n\r\n", RunType.RedMono));
-                runs.Add(fileErrors);
+                _runs.AddRange(fileErrors);
             }
 
-            return runs;
+            return _runs;
         }
 
         
@@ -285,42 +285,48 @@ namespace SC4Cleanitol {
         /// <param name="ruleText">Rule to evaluate</param>
         /// <param name="verboseOutput">Show verbose output or not</param>
         /// <returns>A list of runs describing the outcome of the rule</returns>
-        private List<FormattedRun> EvaluateRule(string ruleText, bool verboseOutput = true) {
+        private void EvaluateRule(string ruleText, bool verboseOutput = true) {
             switch (ScriptRule.ParseRuleType(ruleText)) {
                 case ScriptRule.RuleType.Removal:
-                    return EvaluateRemovalRule(ruleText, verboseOutput);
+                    EvaluateRemovalRule(ruleText, verboseOutput);
+                    return;
 
                 case ScriptRule.RuleType.ConditionalDependency:
                 case ScriptRule.RuleType.Dependency:
-                    return EvaluateDependencyRule(ruleText, verboseOutput);
+                    EvaluateDependencyRule(ruleText, verboseOutput);
+                    return;
 
                 case ScriptRule.RuleType.UserComment:
                     if (ruleText.StartsWith('>')) {
-                        return new List<FormattedRun> { new FormattedRun(ruleText.Substring(1) + "\r\n", RunType.GreenStd) };
+                        _runs.Add(new FormattedRun(ruleText.Substring(1) + "\r\n", RunType.GreenStd));
                     } else {
-                        return new List<FormattedRun> { new FormattedRun(ruleText + "\r\n", RunType.GreenStd) };
+                        _runs.Add(new FormattedRun(ruleText + "\r\n", RunType.GreenStd));
                     }
+                    return;
 
                 case ScriptRule.RuleType.UserCommentHeading:
-                    return new List<FormattedRun> { new FormattedRun("\r\n" + ruleText.Substring(2) + "\r\n", RunType.BlackHeading) };
+                    _runs.Add(new FormattedRun("\r\n" + ruleText.Substring(2) + "\r\n", RunType.BlackHeading));
+                    return;
 
                 case ScriptRule.RuleType.ScriptComment:
-                    return new List<FormattedRun>();
+                    return;
 
                 default:
-                    return new List<FormattedRun> { new FormattedRun(ruleText + "\r\n", RunType.GreenStd) };
+                    _runs.Add(new FormattedRun(ruleText + "\r\n", RunType.GreenStd));
+                    return;
 
             }
         }
 
 
 
-        private List<FormattedRun> EvaluateRemovalRule(string ruleText, bool verboseOutput) {
+        private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {
+            System.Text.RegularExpressions.Regex regEx = new System.Text.RegularExpressions.Regex("This");
             IEnumerable<string> matchingFiles = Directory.EnumerateFiles(UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
-            List<FormattedRun> runs = new List<FormattedRun>();
+            
             if (!matchingFiles.Any() && verboseOutput) {
-                runs.Add(new FormattedRun(ruleText, RunType.BlueStd));
-                runs.Add(new FormattedRun(" not present." + "\r\n", RunType.BlackStd));
+                _runs.Add(new FormattedRun(ruleText, RunType.BlueStd));
+                _runs.Add(new FormattedRun(" not present." + "\r\n", RunType.BlackStd));
             } else {
                 string filename;
                 foreach (string file in matchingFiles) {
@@ -329,27 +335,24 @@ namespace SC4Cleanitol {
                     if (filename == "Background3D0.png" || filename == "Background3D1.png" || filename == "Background3D2.png" || filename == "Background3D3.png" || filename == "Background3D4.png") {
                         break;
                     }
-                    runs.Add(new FormattedRun(ruleText, RunType.BlueStd));
-                    runs.Add(new FormattedRun(" (" + filename + ")", RunType.BlueMono));
-                    runs.Add(new FormattedRun(" found in ", RunType.BlackStd));
-                    runs.Add(new FormattedRun(Path.GetDirectoryName(file) + "\r\n", RunType.RedStd));
+                    _runs.Add(new FormattedRun(ruleText, RunType.BlueStd));
+                    _runs.Add(new FormattedRun(" (" + filename + ")", RunType.BlueMono));
+                    _runs.Add(new FormattedRun(" found in ", RunType.BlackStd));
+                    _runs.Add(new FormattedRun(Path.GetDirectoryName(file) + "\r\n", RunType.RedStd));
                     FilesToRemove.Add(file);
                 }
             }
-            return runs;
         }
 
-        private List<FormattedRun> EvaluateDependencyRule(string ruleText, bool verboseOutput) {
+        private void EvaluateDependencyRule(string ruleText, bool verboseOutput) {
             ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
-            List<FormattedRun> runs = new List<FormattedRun>();
 
             if (rule.IsUnchecked) {
-                runs.Add(new FormattedRun("[Unchecked dependency]:", RunType.BlueStd));
-                runs.Add(new FormattedRun(" " + rule.SearchItem, RunType.RedStd));
-                runs.Add(new FormattedRun(". Download from: ", RunType.BlackStd));
-                runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                runs.Add(new FormattedRun("\r\n"));
-                return runs;
+                _runs.Add(new FormattedRun("[Unchecked dependency]:", RunType.BlueStd));
+                _runs.Add(new FormattedRun(" " + rule.SearchItem, RunType.RedStd));
+                _runs.Add(new FormattedRun(". Download from: ", RunType.BlackStd));
+                _runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                _runs.Add(new FormattedRun("\r\n"));
             }
 
             bool isConditionalFound = false;
@@ -379,45 +382,44 @@ namespace SC4Cleanitol {
                 if (isItemFound) {
                     CountDepsFound++;
                     if (verboseOutput) {
-                        runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
-                        runs.Add(new FormattedRun(" was found.\r\n", RunType.BlackStd));
+                        _runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
+                        _runs.Add(new FormattedRun(" was found.\r\n", RunType.BlackStd));
                     }
                 } else {
-                    runs.Add(new FormattedRun("Missing: ", RunType.RedMono));
-                    runs.Add(new FormattedRun(rule.SearchItem, RunType.RedStd));
-                    runs.Add(new FormattedRun(" is missing. Download from: ", RunType.BlackStd));
-                    runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                    runs.Add(new FormattedRun("\r\n"));
+                    _runs.Add(new FormattedRun("Missing: ", RunType.RedMono));
+                    _runs.Add(new FormattedRun(rule.SearchItem, RunType.RedStd));
+                    _runs.Add(new FormattedRun(" is missing. Download from: ", RunType.BlackStd));
+                    _runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                    _runs.Add(new FormattedRun("\r\n"));
                     CountDepsMissing++;
                 }
             } else {
                 if (isConditionalFound && isItemFound) {
                     CountDepsFound++;
                     if (verboseOutput) {
-                        runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
-                        runs.Add(new FormattedRun(" was found.\r\n", RunType.BlackStd));
+                        _runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
+                        _runs.Add(new FormattedRun(" was found.\r\n", RunType.BlackStd));
                     }
                 } else if (isConditionalFound && !isItemFound) {
-                    runs.Add(new FormattedRun("Missing: ", RunType.RedMono));
-                    runs.Add(new FormattedRun(rule.SearchItem, RunType.RedStd));
-                    runs.Add(new FormattedRun(" is missing. Download from: ", RunType.BlackStd));
-                    runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                    runs.Add(new FormattedRun("\r\n"));
+                    _runs.Add(new FormattedRun("Missing: ", RunType.RedMono));
+                    _runs.Add(new FormattedRun(rule.SearchItem, RunType.RedStd));
+                    _runs.Add(new FormattedRun(" is missing. Download from: ", RunType.BlackStd));
+                    _runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                    _runs.Add(new FormattedRun("\r\n"));
                     CountDepsMissing++;
                 } else if (!isConditionalFound) {
                     if (verboseOutput) {
-                        runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
-                        runs.Add(new FormattedRun(" was skipped as ", RunType.BlackStd));
-                        runs.Add(new FormattedRun(rule.ConditionalItem, RunType.BlueStd));
-                        runs.Add(new FormattedRun(" was not found. Item: ", RunType.BlackStd));
-                        runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
-                        runs.Add(new FormattedRun("\r\n"));
+                        _runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
+                        _runs.Add(new FormattedRun(" was skipped as ", RunType.BlackStd));
+                        _runs.Add(new FormattedRun(rule.ConditionalItem, RunType.BlueStd));
+                        _runs.Add(new FormattedRun(" was not found. Item: ", RunType.BlackStd));
+                        _runs.Add(new FormattedRun(rule.SourceName == "" ? rule.SourceURL : rule.SourceName, RunType.Hyperlink, rule.SourceURL));
+                        _runs.Add(new FormattedRun("\r\n"));
 
                     }
                 }
             }
             CountDepsScanned++;
-            return runs;
         }
 
 

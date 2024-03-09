@@ -145,36 +145,34 @@ namespace SC4CleanitolWPF {
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
 
-            List<List<FormattedRun>> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, DetailedOutput));
+            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, DetailedOutput));
             if (runList.Count == 0) {
                 MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
 
             
-            foreach (List<FormattedRun> line in runList) {
-                foreach (FormattedRun run in line) {
-                    if (run.Type is RunType.Hyperlink || run.Type is RunType.HyperlinkMono) {
-                        try {
-                            Hyperlink link = new Hyperlink(new Run(run.Text)) {
-                                NavigateUri = new Uri(run.URL)
-                            };
-                            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-                            log.Inlines.Add(link);
-                        }
-                        catch (Exception ex) {
-                            using StreamWriter sw = new StreamWriter(cleanitol.LogPath, true);
-                            sw.WriteLine("=============== Log Start ===============");
-                            sw.WriteLine("Time: " + DateTime.Now);
-                            sw.WriteLine("Script: " + cleanitol.ScriptPath);
-                            sw.WriteLine("Link: " + run.Text);
-                            sw.WriteLine("URI: " + run.URL);
-                            sw.WriteLine($"Error: {ex.GetType()}: {ex.Message}");
-                            sw.WriteLine("Trace: \r\n" + ex.StackTrace);
-                            sw.WriteLine("================ Log End ================");
-                        }
-                    } else {
-                        log.Inlines.Add(ConvertRun(run));
+            foreach (FormattedRun run in runList) {
+                if (run.Type is RunType.Hyperlink || run.Type is RunType.HyperlinkMono) {
+                    try {
+                        Hyperlink link = new Hyperlink(new Run(run.Text)) {
+                            NavigateUri = new Uri(run.URL)
+                        };
+                        link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                        log.Inlines.Add(link);
                     }
+                    catch (Exception ex) {
+                        using StreamWriter sw = new StreamWriter(cleanitol.LogPath, true);
+                        sw.WriteLine("=============== Log Start ===============");
+                        sw.WriteLine("Time: " + DateTime.Now);
+                        sw.WriteLine("Script: " + cleanitol.ScriptPath);
+                        sw.WriteLine("Link: " + run.Text);
+                        sw.WriteLine("URI: " + run.URL);
+                        sw.WriteLine($"Error: {ex.GetType()}: {ex.Message}");
+                        sw.WriteLine("Trace: \r\n" + ex.StackTrace);
+                        sw.WriteLine("================ Log End ================");
+                    }
+                } else {
+                    log.Inlines.Add(ConvertRun(run));
                 }
             }
 
