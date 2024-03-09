@@ -97,7 +97,6 @@ namespace SC4Cleanitol {
         /// <summary>
         /// All TGIs scanned by the script in a comma separated format: <c>0x00000000, 0x00000000, 0x00000000</c>.
         /// </summary>
-        //public List<string> ListOfTGIs { get; private set; }
         public List<TGI> ListOfTGIs { get; private set; }
         /// <summary>
         /// Files found to be removed from the script.
@@ -171,9 +170,12 @@ namespace SC4Cleanitol {
             CountDepsMissing = 0;
             CountDepsScanned = 0;
             FilesToRemove.Clear();
+            ListOfFiles = Enumerable.Empty<string>();
+            ListOfFileNames = Enumerable.Empty<string>();
             List<List<GenericRun>> runs = new List<List<GenericRun>>();
             List<GenericRun> fileErrors = new List<GenericRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
+
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
@@ -182,15 +184,16 @@ namespace SC4Cleanitol {
                 if (includeSystemPlugins) {
                     ListOfFiles = ListOfFiles.Concat(Directory.EnumerateFiles(SystemPluginsDirectory));
                 }
+                ListOfFiles = ListOfFiles.OrderBy(s => s);
+
+                totalFiles.Report(ListOfFiles.Count());
+                ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
             }
             catch (IOException) {
-
                 return runs;
             }
             
-            totalFiles.Report(ListOfFiles.Count());
-            ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
-
+            
             //Fill TGI list if required
             if (updateTGIdatabase) {
                 int totalfiles = ListOfFiles.Count();
@@ -228,6 +231,8 @@ namespace SC4Cleanitol {
                     }
                 }
                 ListOfTGIs.Sort();
+            } else {
+                progressFiles.Report(ListOfFiles.Count());
             }
 
             //TODO - write TGI list to DB for local storage?
@@ -435,7 +440,7 @@ namespace SC4Cleanitol {
             //Write HTML Template summary
             templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
-            templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki"); //TODO - input path to help document
+            templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");
             templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", FilesToRemove));
             templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
@@ -453,8 +458,9 @@ namespace SC4Cleanitol {
             foreach (TGI tgi in ListOfTGIs) {
                 list.AppendLine(tgi.ToString());
             }
+            string filename = "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + ".csv";
 
-            File.WriteAllText(Path.Combine(ScriptOutputDirectory, "ScannedTGIs.csv"), list.ToString());
+            File.WriteAllText(Path.Combine(ScriptOutputDirectory, filename), list.ToString());
         }
 
 

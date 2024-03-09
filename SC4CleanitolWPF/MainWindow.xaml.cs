@@ -113,19 +113,15 @@ namespace SC4CleanitolWPF {
                 return;
             }
 
-            StatusLabel.Text = "Scanning Files ...";
+            StatusLabel.Text = "Scanning Files ..."; //TODO - update the status bar file count even if not updating tgis
             if (UpdateTGIdb) {
-                FileProgressLabel.Visibility = Visibility.Visible;
                 TGICountLabel.Visibility = Visibility.Visible;
-                ExportButton.Visibility = Visibility.Visible;
-                Separator0.Visibility = Visibility.Visible;
+                ExportTGIs.Visibility = Visibility.Visible;
                 Separator1.Visibility = Visibility.Visible;
                 Separator2.Visibility = Visibility.Visible;
             } else if (cleanitol is not null && cleanitol.ListOfTGIs.Count == 0) {
-                FileProgressLabel.Visibility = Visibility.Hidden;
                 TGICountLabel.Visibility = Visibility.Hidden;
-                ExportButton.Visibility = Visibility.Hidden;
-                Separator0.Visibility = Visibility.Hidden;
+                ExportTGIs.Visibility = Visibility.Hidden;
                 Separator1.Visibility = Visibility.Hidden;
                 Separator2.Visibility = Visibility.Hidden;
                 
@@ -186,10 +182,15 @@ namespace SC4CleanitolWPF {
             ScriptOutput.Document = doc;
             UpdateTGIdb = false;
             UpdateTGICheckbox.IsChecked = false;
-            StatusLabel.Text = "Scan Complete";
+            StatusLabel.Text = "Report Complete";
             FileProgressBar.IsIndeterminate = false;
             if (cleanitol.FilesToRemove.Count > 0) {
                 BackupFiles.IsEnabled = true;
+            }
+            if (cleanitol.ListOfTGIs.Count == 0) {
+                ExportTGIs.IsEnabled = false;
+            } else {
+                ExportTGIs.IsEnabled = true;
             }
         }
 
@@ -312,15 +313,6 @@ namespace SC4CleanitolWPF {
         }
 
         /// <summary>
-        /// Hide the status bar.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OkButton_Click(object sender, RoutedEventArgs e) {
-            StatusBar.Visibility = Visibility.Collapsed;
-        }
-
-        /// <summary>
         /// Show the settings window, and pre-populate it with the current settings.
         /// </summary>
         /// <param name="sender"></param>
@@ -335,7 +327,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ExportButton_Click(object sender, RoutedEventArgs e) {
+        private void ExportTGIs_Click(object sender, RoutedEventArgs e) {
             cleanitol.ExportTGIs();
             MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
         }
