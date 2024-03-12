@@ -234,6 +234,7 @@ namespace SC4Cleanitol {
                 }
                 ListOfTGIs.Sort();
             } else {
+                progressFiles.Report(ListOfFiles.Count);
             }
 
             //TODO - write TGI list to DB for local storage?
@@ -243,21 +244,11 @@ namespace SC4Cleanitol {
             _runs.Add(new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
             _runs.Add(new FormattedRun("    R E P O R T   S U M M A R Y    \r\n", RunType.BlackMono));
             _runs.Add(new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
-
-
-
-            //OPRIMIZE THIS. For every rule we're looping through every file or the TGI list every time - do it the other way around because 
-
             for (int idx = 0; idx < _scriptRules.Count; idx++) {
-                EvaluateRule(_scriptRules[idx].Trim(), verboseOutput); //TODO this is problematic when output to console because we are flattening out which runs belong to which rule
+                EvaluateRule(_scriptRules[idx].Trim(), verboseOutput);
             }
-
-
-
-
-
             _runs.Add(new FormattedRun("\r\n\r\n"));
-            _runs.Insert(3, new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMono));
+            _runs.Insert(3, new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMonoBold));
             _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono));
             _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono));
             _runs.Insert(6, new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
@@ -321,8 +312,10 @@ namespace SC4Cleanitol {
 
 
         private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {
-            System.Text.RegularExpressions.Regex regEx = new System.Text.RegularExpressions.Regex("This");
-            IEnumerable<string> matchingFiles = Directory.EnumerateFiles(UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
+            //Regex regEx = new Regex("", RegexOptions.IgnoreCase);
+            //IEnumerable<string> matchingFiles = Directory.EnumerateFiles(UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
+            ruleText = ruleText.Replace("*", string.Empty);
+            IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains(ruleText));
             
             if (!matchingFiles.Any() && verboseOutput) {
                 _runs.Add(new FormattedRun(ruleText, RunType.BlueStd));

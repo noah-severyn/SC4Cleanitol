@@ -66,24 +66,7 @@ namespace SC4CleanitolWPF {
 
 
         private void VersionCheckButton_Click(object sender, RoutedEventArgs e) {
-            //https://stackoverflow.com/questions/47576074/get-releases-github-api-v3
-            //const string API_URL = "https://api.github.com/repos/noah-severyn/SC4Cleanitol/releases/";
-            //HttpClient client = new HttpClient();
-            //HttpRequestMessage request = new HttpRequestMessage() {
-            //    RequestUri = new Uri("https://api.github.com/noah-severyn/SC4Cleanitol/releases/"),
-            //    Method = HttpMethod.Get
-            //};
-
-            //// Added user agent
-            //client.DefaultRequestHeaders.Add("User-Agent", "SC4Cleanitol");
-            //Uri uri = new Uri(API_URL);
-            //var releases = await client.SendAsync(request);
-            ////return releases;
-
-            //TODO - fix this to pull release and only open webpage if out of date
             string target = "https://github.com/noah-severyn/SC4Cleanitol/releases/latest";
-            //System.Diagnostics.Process.Start(target);
-
             var sinfo = new ProcessStartInfo(target);
             sinfo.UseShellExecute = true;
             Process.Start(sinfo);
