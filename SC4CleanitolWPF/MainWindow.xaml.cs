@@ -212,6 +212,8 @@ namespace SC4CleanitolWPF {
                     return RunStyles.GreenStd(genericRun.Text);
                 case RunType.BlackMono:
                     return RunStyles.BlackMono(genericRun.Text);
+                case RunType.BlackMonoBold:
+                    return RunStyles.BlackMonoBold(genericRun.Text);
                 case RunType.BlackStd:
                     return RunStyles.BlackStd(genericRun.Text);
                 case RunType.BlackHeading:

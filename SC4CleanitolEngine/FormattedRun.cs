@@ -63,6 +63,10 @@
         /// </summary>
         BlackMono,
         /// <summary>
+        /// Black mono spaced bold text.
+        /// </summary>
+        BlackMonoBold,
+        /// <summary>
         /// Black proportionally spaced text.
         /// </summary>
         BlackStd,

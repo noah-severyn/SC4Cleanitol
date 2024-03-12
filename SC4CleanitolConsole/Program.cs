@@ -159,12 +159,10 @@ public class Program {
 
         cleanitol.UserPluginsDirectory = userPlugins;
         cleanitol.ScriptPath = scriptPath;
-        List<List<FormattedRun>> runList = cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, updateTGIs, scanSystemPlugins, verbose);
+        List<FormattedRun> runList = cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, updateTGIs, scanSystemPlugins, verbose);
 
-        foreach (List<FormattedRun> line in runList) {
-            foreach (FormattedRun run in line) {
-                ConvertRun(run);
-            }
+        foreach (FormattedRun run in runList) {
+            ConvertRun(run);
         }
     }
 
