@@ -169,8 +169,5 @@ namespace SC4Cleanitol {
                 return RuleType.Removal;
             }
         }
-
-
-        
     }
 }

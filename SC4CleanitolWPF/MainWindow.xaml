@@ -58,40 +58,37 @@
 				   Margin="0,0,18,0">
 			<StatusBarItem>
 				<TextBlock x:Name="StatusLabel"
-						   Width="95"
+						   Width="100"
+						   Padding="5,0,0,0"
 						   Text="Scanning Files ..." />
 			</StatusBarItem>
 			<Separator  x:Name="Separator0"/>
 			<StatusBarItem>
 				<ProgressBar  x:Name="FileProgressBar"
-							  Width="100"
+							  Width="120"
 							  Height="15"
 							  Minimum="0" />
 			</StatusBarItem>
 			<StatusBarItem>
 				<TextBlock x:Name="FileProgressLabel"
-						   Text="#### / ####"
-						   Width="100"
+						   Text="#### / #### files"
+						   Width="110"
 						   TextAlignment="Center"/>
 			</StatusBarItem>
 			<Separator x:Name="Separator1"/>
 			<StatusBarItem>
 				<TextBlock x:Name="TGICountLabel"
 						   Text="# TGIs discovered"
-						   Width="140" />
+						   Width="150"
+						   TextAlignment="Center"/>
 			</StatusBarItem>
 			<Separator  x:Name="Separator2"/>
 			<StatusBarItem>
-				<Button x:Name="ExportButton"
+				<Button x:Name="ExportTGIs"
 						Content="Export TGIs"
 						Width="75"
-						Click="ExportButton_Click" />
-			</StatusBarItem>
-			<StatusBarItem>
-				<Button x:Name="OkButton"
-						Content="Ok"
-						Width="50"
-						Click="OkButton_Click" />
+						Margin="5,0,0,0"
+						Click="ExportTGIs_Click" />
 			</StatusBarItem>
 		</StatusBar>
 

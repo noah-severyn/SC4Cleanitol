@@ -6,10 +6,12 @@
 		xmlns:local="clr-namespace:SC4CleanitolWPF"
 		mc:Ignorable="d"
 		Title="Preferences"
-		Height="250"
-		Width="450"
-		Closing="Window_Closing"
-		Topmost="True">
+		Height="220"
+		MinHeight="220"
+		MaxHeight="220"
+		Width="550"
+		MinWidth="550"
+		Closing="Window_Closing">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30" />
@@ -30,9 +32,7 @@
 				 Grid.Row="0"
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap"
-				 TextAlignment="Right"
-				 FlowDirection="RightToLeft"/>
+				 TextWrapping="NoWrap"/>
 		<Button x:Name="UserChooseFolder"
 				Grid.Row="0"
 				Content=" ... "
@@ -53,9 +53,7 @@
 				 Grid.Row="1"
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap"
-				 TextAlignment="Right"
-				 FlowDirection="RightToLeft"/>
+				 TextWrapping="NoWrap"/>
 		<Button x:Name="SystemChooseFolder"
 				Grid.Row="1"
 				Content=" ... "
@@ -69,7 +67,7 @@
 				  Grid.Row="1"
 				  VerticalAlignment="Top" />
 
-		<!-- Grid Row 2 : User Plugins -->
+		<!-- Grid Row 2 : Cleanitol Output -->
 		<TextBlock x:Name="CleanitolOutputDirectoryLabel"
 				   Grid.Row="2"
 				   HorizontalAlignment="Left"
@@ -81,8 +79,7 @@
 				 Grid.Row="2"
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap"
-				 TextAlignment="Right" />
+				 TextWrapping="NoWrap" />
 		<Button x:Name="CleanitolOutputChooseFolder"
 				Grid.Row="2"
 				Content=" ... "
@@ -91,21 +88,6 @@
 				Click="CleanitolOutputChooseFolder_Click" />
 
 		<!-- Grid Row 3 : Language -->
-		<TextBlock x:Name="LanguageLabel"
-				   Grid.Row="3"
-				   HorizontalAlignment="Left"
-				   Margin="10,10,0,0"
-				   TextWrapping="Wrap"
-				   Text="Language"
-				   VerticalAlignment="Top" />
-		<ComboBox x:Name="LanguageChoice"
-				  Grid.Row="3"
-				  HorizontalAlignment="Left"
-				  Margin="105,10,0,0"
-				  VerticalAlignment="Top"
-				  Width="120">
-			<ComboBoxItem IsSelected="True">English</ComboBoxItem>
-		</ComboBox>
 		<TextBlock x:Name="VersionInfoLabel"
 				   Grid.Row="3"
 				   HorizontalAlignment="Right"

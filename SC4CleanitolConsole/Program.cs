@@ -159,12 +159,10 @@ public class Program {
 
         cleanitol.UserPluginsDirectory = userPlugins;
         cleanitol.ScriptPath = scriptPath;
-        List<List<GenericRun>> runList = cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, updateTGIs, scanSystemPlugins, verbose);
+        List<FormattedRun> runList = cleanitol.RunScript(progressTotalFiles, progresScannedFiles, progressTotalTGIs, updateTGIs, scanSystemPlugins, verbose);
 
-        foreach (List<GenericRun> line in runList) {
-            foreach (GenericRun run in line) {
-                ConvertRun(run);
-            }
+        foreach (FormattedRun run in runList) {
+            ConvertRun(run);
         }
     }
 
@@ -235,7 +233,7 @@ public class Program {
     //    }
     //}
 
-    private static void ConvertRun(GenericRun genericRun) {
+    private static void ConvertRun(FormattedRun genericRun) {
         switch (genericRun.Type) {
             case RunType.BlueStd:
             case RunType.BlueMono:

@@ -72,6 +72,16 @@ namespace SC4CleanitolWPF {
             return r;
         }
         /// <summary>
+        /// Black mono spaced text.
+        /// </summary>
+        internal static Run BlackMonoBold(string text) {
+            Run r = new Run(text) {
+                FontFamily = new FontFamily("Consolas, Courier New"),
+                FontWeight = FontWeights.Bold
+            };
+            return r;
+        }
+        /// <summary>
         /// Black proportionally spaced text.
         /// </summary>
         internal static Run BlackStd(string text) {
