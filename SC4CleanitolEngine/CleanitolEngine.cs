@@ -312,11 +312,10 @@ namespace SC4Cleanitol {
 
 
         private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {
-            //Regex regEx = new Regex("", RegexOptions.IgnoreCase);
-            //IEnumerable<string> matchingFiles = Directory.EnumerateFiles(UserPluginsDirectory, ruleText, SearchOption.AllDirectories);
             ruleText = ruleText.Replace("*", string.Empty);
-            IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains(ruleText));
-            
+            //IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains(ruleText));
+            IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains("\\" + ruleText));
+
             if (!matchingFiles.Any() && verboseOutput) {
                 _runs.Add(new FormattedRun(ruleText, RunType.BlueStd));
                 _runs.Add(new FormattedRun(" not present." + "\r\n", RunType.BlackStd));
