@@ -114,6 +114,7 @@ namespace SC4CleanitolWPF {
 
             StatusBar.Visibility = Visibility.Visible;
             StatusLabel.Text = "Scanning Files ..."; //TODO - update the status bar file count even if not updating tgis
+            FileProgressLabel.Text = "0 / ? files";
             if (UpdateTGIdb) {
                 TGICountLabel.Visibility = Visibility.Visible;
                 ExportTGIs.Visibility = Visibility.Visible;
@@ -134,6 +135,7 @@ namespace SC4CleanitolWPF {
             cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
             cleanitol.BaseOutputDirectory = Options.Default.BaseOutputDirectory;
             cleanitol.ScriptPath = ScriptPathTextBox.Text;
+            cleanitol.AdditionalFolders = Options.Default.AdditionalFolders.Cast<string>().ToList();
             
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progressScannedFiles = new Progress<int>(scannedFiles => { 
@@ -145,9 +147,9 @@ namespace SC4CleanitolWPF {
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
 
-            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, DetailedOutput));
+            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, Options.Default.ScanSystemPlugins, Options.Default.ScanAdditionalFolders, DetailedOutput));
             if (runList.Count == 0) {
-                MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one or more of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
 
             
@@ -232,7 +234,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
+        private void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
             var sinfo = new ProcessStartInfo(e.Uri.AbsoluteUri) {
                 UseShellExecute = true
             };

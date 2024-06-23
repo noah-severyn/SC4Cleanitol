@@ -73,6 +73,16 @@ namespace SC4Cleanitol {
             }
         }
 
+        private List<string> _additionalFolders;
+        /// <summary>
+        /// A list of additional folders to scan in addition to the current plugins folders.
+        /// </summary>
+        public List<string> AdditionalFolders {
+            get { return _additionalFolders; }
+            set { _additionalFolders = value; }
+        }
+
+
 
 
         /// <summary>
@@ -142,6 +152,7 @@ namespace SC4Cleanitol {
                 _scriptPath = scriptPath;
             }
 
+            _additionalFolders = new List<string>();
             _scriptRules = new List<string>();
             _runs = new List<FormattedRun>();
             ListOfFiles = new List<string>();
@@ -165,9 +176,10 @@ namespace SC4Cleanitol {
         /// <param name="progressTGIs">The progress tracker for the current progress of scanned TGIs.</param>
         /// <param name="updateTGIdatabase">Specify to rebuild the internal index of TGIs.</param>
         /// <param name="includeSystemPlugins">Specify to include the system plugins folder in the TGI scan or only the user plugins (recommended).</param>
+        /// <param name="includeExtraFolders">Specify to include the additional folders with the plugins folder in the scan.</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
         /// <returns>A series of formatted messages detailing the result of each script rule.</returns>
-        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
+        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool includeExtraFolders, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
             CountDepsScanned = 0;
@@ -182,11 +194,18 @@ namespace SC4Cleanitol {
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
             try {
-                ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories).ToList();
+                ListOfFiles = Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList();
                 if (includeSystemPlugins) {
-                    ListOfFiles.AddRange(Directory.EnumerateFiles(SystemPluginsDirectory).ToList());
+                    ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
                 }
-                ListOfFiles.Sort();
+                if (includeExtraFolders) {
+                    foreach (string folder in _additionalFolders) {
+                        if (Path.Exists(folder)) {
+                            ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
+                        }
+                    }
+                }
+                ListOfFiles.Sort(); //Critical because this makes the binary search perform many times better
 
                 totalFiles.Report(ListOfFiles.Count);
                 ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));

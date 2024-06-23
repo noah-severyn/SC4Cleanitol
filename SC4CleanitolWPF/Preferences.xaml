@@ -5,10 +5,10 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:SC4CleanitolWPF"
 		mc:Ignorable="d"
-		Title="Preferences"
-		Height="220"
-		MinHeight="220"
-		MaxHeight="220"
+		Title="Settings"
+		Height="420"
+		MinHeight="420"
+		MaxHeight="420"
 		Width="550"
 		MinWidth="550"
 		Closing="Window_Closing">
@@ -17,6 +17,7 @@
 			<RowDefinition Height="30" />
 			<RowDefinition Height="60" />
 			<RowDefinition Height="30" />
+			<RowDefinition Height="200" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
@@ -37,7 +38,7 @@
 				Grid.Row="0"
 				Content=" ... "
 				HorizontalAlignment="Right"
-				Margin="0,9,10,0"
+				Margin="0,10,10,0"
 				VerticalAlignment="Top"
 				Click="UserChooseFolder_Click" />
 
@@ -58,7 +59,7 @@
 				Grid.Row="1"
 				Content=" ... "
 				HorizontalAlignment="Right"
-				Margin="0,9,10,32"
+				Margin="0,10,10,32"
 				Click="SystemChooseFolder_Click" />
 		<CheckBox x:Name="ScanSystemDirectoryCheckbox"
 				  Content="Scan system Plugins folder too"
@@ -84,12 +85,46 @@
 				Grid.Row="2"
 				Content=" ... "
 				HorizontalAlignment="Right"
-				Margin="0,9,10,1"
+				Margin="0,10,10,1"
 				Click="CleanitolOutputChooseFolder_Click" />
 
-		<!-- Grid Row 3 : Language -->
+		<!-- Grid Row 3 : Additional Folders -->
+		<CheckBox x:Name="ScanAdditionalFoldersCheckbox"
+				  Content="Scan extra folders listed below, in addition to Plugins folders"
+				  HorizontalAlignment="Left"
+				  Margin="10,15,0,0"
+				  Grid.Row="3"
+				  VerticalAlignment="Top" />
+		<ListView x:Name="AdditionalFolders"
+				  Grid.Row="3"
+				  Margin="10,35,33,10"
+				  ItemsSource="{Binding Path=Properties.Settings.Default.AdditionalFolders}">
+					
+		</ListView>
+		<Button x:Name="AddAdditionalFolder"
+				Grid.Row="3"
+				Content=" + "
+				HorizontalAlignment="Right"
+				VerticalAlignment="Top"
+				Margin="0,35,10,1"
+				Height="20"
+				Width="18"
+				ToolTip="Add an additional folder to scan"
+				Click="AddAdditionalFolder_Click" />
+		<Button x:Name="RemoveAdditionalFolder"
+				Grid.Row="3"
+				Content=" - "
+				HorizontalAlignment="Right"
+				VerticalAlignment="Top"
+				Margin="0,65,10,1"
+				Height="20"
+				Width="18"
+				ToolTip="Remove selected folder"
+				Click="RemoveAdditionalFolder_Click" />
+
+		<!-- Grid Row 4 : Program Info -->
 		<TextBlock x:Name="VersionInfoLabel"
-				   Grid.Row="3"
+				   Grid.Row="4"
 				   HorizontalAlignment="Right"
 				   TextAlignment="Right"
 				   Margin="0,10,10,0"
@@ -99,7 +134,7 @@
 			Current Version: 0.1 (Jun 2023)
 		</TextBlock>
 		<Button x:Name="VersionCheckButton"
-				Grid.Row="3"
+				Grid.Row="4"
 				Content="Check for Updates"
 				HorizontalAlignment="Right"
 				Margin="0,31,10,0"
