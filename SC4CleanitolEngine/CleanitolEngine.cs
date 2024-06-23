@@ -445,6 +445,7 @@ namespace SC4Cleanitol {
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
             //Write HTML Template summary
+            templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(_scriptPath));
             templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");
@@ -460,7 +461,8 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Export the scanned TGIs to a CSV document in the assigned Cleanitol folder.
         /// </summary>
-        public void ExportTGIs() {
+        /// <returns>The path of the exported CSV file</returns>
+        public string ExportTGIs() {
             StringBuilder list = new StringBuilder("Type,Group,Instance,\r\n");
             foreach (TGI tgi in ListOfTGIs) {
                 list.AppendLine(tgi.ToString());
@@ -468,6 +470,7 @@ namespace SC4Cleanitol {
             string filename = "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd HH-mm") + ".csv";
 
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, filename), list.ToString());
+            return Path.Combine(ScriptOutputDirectory, filename);
         }
 
 

@@ -48,14 +48,15 @@
 					 IsReadOnly="True"
 					 IsDocumentEnabled="True"
 					 ScrollViewer.VerticalScrollBarVisibility="Auto"
-					 ScrollViewer.HorizontalScrollBarVisibility="Auto">
+					 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+					 Margin="0,0,0,25">
 		</RichTextBox>
 
 		<StatusBar x:Name="StatusBar"
 				   Grid.Row="1"
 				   Height="25"
 				   VerticalAlignment="Bottom"
-				   Margin="0,0,18,0">
+				   Margin="0,0,0,0">
 			<StatusBarItem>
 				<TextBlock x:Name="StatusLabel"
 						   Width="100"
@@ -99,6 +100,7 @@
 				  HorizontalAlignment="Left"
 				  Margin="14,5,0,0"
 				  VerticalAlignment="Top"
+				  ToolTip="Toggle between a detailed and summarized output"
 				  IsChecked="{Binding  DetailedOutput}" />
 		<CheckBox x:Name="UpdateTGICheckbox"
 				  Grid.Row="3"
@@ -106,12 +108,14 @@
 				  HorizontalAlignment="Left"
 				  Margin="14,25,0,0"
 				  VerticalAlignment="Top"
+				  ToolTip="Select to update the TGI index when a script is run"
 				  IsChecked="{Binding UpdateTGIdb}" />
 		<Button x:Name="RunScript"
 				Grid.Row="3"
 				Height="24"
 				Width="80"
 				Margin="-200,0,0,0"
+				ToolTip="Run Script"
 				Click="RunScript_Click">Run Script</Button>
 		<Button x:Name="BackupFiles"
 				Grid.Row="3"
@@ -119,13 +123,14 @@
 				Width="80"
 				HorizontalAlignment="Center"
 				VerticalAlignment="Center"
-				Click="BackupFiles_Click"
-				Content="Move Files" />
+				ToolTip="Remove files from Plugins"
+				Click="BackupFiles_Click"> Move Files</Button>
 		<Button Name="CreateCleanitol"
 				Grid.Row="3"
 				Height="24"
 				Width="80"
 				Margin="200,0,0,0"
+				ToolTip="Create a Cleanitol script from files in a folder"
 				Click="CreateCleanitol_Click">Create Script</Button>
 		<Button Name="Settings"
 				Grid.Row="3"
