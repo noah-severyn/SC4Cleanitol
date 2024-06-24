@@ -9,8 +9,8 @@
 		Height="420"
 		MinHeight="420"
 		MaxHeight="420"
-		Width="550"
-		MinWidth="550"
+		Width="570"
+		MinWidth="570"
 		Closing="Window_Closing">
 	<Grid>
 		<Grid.RowDefinitions>

@@ -283,7 +283,23 @@ namespace SC4Cleanitol {
         }
 
         
-
+        /// <summary>
+        /// Evaluate whether any of the rules in this script rely on TGI dependencies, either as the search item or as the condition.
+        /// </summary>
+        /// <returns>TRUE if any of the rules requires a TGI; FALSE if all rules involve file names</returns>
+        public bool ScriptHasTGIRules() {
+            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
+            string rule;
+            ScriptRule.RuleType rt;
+            for (int idx = 0; idx < _scriptRules.Count; idx++) {
+                rule = _scriptRules[idx].Trim();
+                rt = ScriptRule.ParseRuleType(rule);
+                if ((rt == ScriptRule.RuleType.ConditionalDependency || rt == ScriptRule.RuleType.Dependency) && IsTGIDependencyRule(rule)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
 
         /// <summary>
@@ -328,6 +344,11 @@ namespace SC4Cleanitol {
             }
         }
 
+
+        private bool IsTGIDependencyRule(string ruleText) {
+            ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
+            return rule.IsConditionalItemTGI || rule.IsSearchItemTGI;
+        }
 
 
         private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {

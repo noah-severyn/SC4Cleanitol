@@ -30,7 +30,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 7, 2);
+        internal readonly Version releaseVersion = new Version(0, 8, 0);
         internal readonly string releaseDate = "Jun 2024"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
@@ -146,6 +146,9 @@ namespace SC4CleanitolWPF {
                 }
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
+            if (cleanitol.ScriptHasTGIRules() && cleanitol.ListOfTGIs.Count == 0) {
+                UpdateTGIdb = true;
+            }
 
             List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, Options.Default.ScanSystemPlugins, Options.Default.ScanAdditionalFolders, DetailedOutput));
             if (runList.Count == 0) {
