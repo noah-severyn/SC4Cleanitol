@@ -31,7 +31,7 @@ namespace SC4CleanitolWPF {
         public bool DetailedOutput { get; set; } = false;
 
         internal readonly Version releaseVersion = new Version(0, 8, 0);
-        internal readonly string releaseDate = "Jun 2024"; 
+        internal readonly string releaseDate = "Jul 2024"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
@@ -135,6 +135,7 @@ namespace SC4CleanitolWPF {
             cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
             cleanitol.BaseOutputDirectory = Options.Default.BaseOutputDirectory;
             cleanitol.ScriptPath = ScriptPathTextBox.Text;
+
             cleanitol.AdditionalFolders = Options.Default.AdditionalFolders.Cast<string>().ToList();
             
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });

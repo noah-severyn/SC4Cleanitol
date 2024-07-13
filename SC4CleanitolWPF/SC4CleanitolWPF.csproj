@@ -60,7 +60,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Update="Resources\SummaryTemplate.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

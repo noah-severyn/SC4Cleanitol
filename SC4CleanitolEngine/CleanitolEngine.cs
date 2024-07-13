@@ -104,7 +104,7 @@ namespace SC4Cleanitol {
         /// <summary>
         /// File names trimmed from <see cref="ListOfFiles"/>.
         /// </summary>
-        public IEnumerable<string> ListOfFileNames { get; private set; }
+        public List<string> ListOfFileNames { get; private set; }
         /// <summary>
         /// All TGIs scanned by the script in a comma separated format: <c>0x00000000, 0x00000000, 0x00000000</c>.
         /// </summary>
@@ -118,6 +118,7 @@ namespace SC4Cleanitol {
 
         private List<string> _scriptRules;
         private int _highestPctReached;
+        private int _condDepsNotScanned;
         private List<FormattedRun> _runs;
 
 
@@ -185,11 +186,11 @@ namespace SC4Cleanitol {
             CountDepsScanned = 0;
             FilesToRemove.Clear();
             ListOfFiles.Clear();
-            ListOfFileNames = Enumerable.Empty<string>();
+            ListOfFileNames.Clear();
+            _condDepsNotScanned = 0;
             _runs.Clear();
             List<FormattedRun> fileErrors = new List<FormattedRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
-
 
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
@@ -205,10 +206,13 @@ namespace SC4Cleanitol {
                         }
                     }
                 }
-                ListOfFiles.Sort(); //Critical because this makes the binary search perform many times better
 
                 totalFiles.Report(ListOfFiles.Count);
-                ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
+
+                //Critical to sort because it makes the binary search perform many times quicker
+                ListOfFiles.Sort(); 
+                ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName)).ToList();
+                ListOfFileNames.Sort();
             }
             catch (IOException) {
                 return _runs;
@@ -268,8 +272,8 @@ namespace SC4Cleanitol {
             }
             _runs.Add(new FormattedRun("\r\n\r\n"));
             _runs.Insert(3, new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMonoBold));
-            _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono));
-            _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono));
+            _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (_condDepsNotScanned > 0 ? $" ({_condDepsNotScanned} dependencies not scanned due to their conditional rules not being met)" : "") +  "\r\n", RunType.BlueMono));
+            _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono));
             _runs.Insert(6, new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
 
             if (fileErrors.Count > 0) {
@@ -392,8 +396,7 @@ namespace SC4Cleanitol {
                 if (rule.IsConditionalItemTGI) {
                     isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.ConditionalItem)) >= 0;
                 } else {
-                    //isConditionalFound = ListOfFiles.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
-                    isConditionalFound = ListOfFiles.BinarySearch(rule.SearchItem) >= 0;
+                    isConditionalFound = ListOfFileNames.BinarySearch(rule.SearchItem) >= 0;
                 }
             }
 
@@ -402,8 +405,7 @@ namespace SC4Cleanitol {
                 if (rule.IsSearchItemTGI) {
                     isItemFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
                 } else {
-                    //isItemFound = ListOfFiles.AsParallel().Any(r => r.Contains(rule.SearchItem));
-                    isItemFound = ListOfFiles.BinarySearch(rule.SearchItem) >= 0;
+                    isItemFound = ListOfFileNames.BinarySearch(rule.SearchItem) >= 0;
                 }
             }
 
@@ -440,6 +442,7 @@ namespace SC4Cleanitol {
                     _runs.Add(new FormattedRun("\r\n"));
                     CountDepsMissing++;
                 } else if (!isConditionalFound) {
+                    _condDepsNotScanned ++;
                     if (verboseOutput) {
                         _runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
                         _runs.Add(new FormattedRun(" was skipped as ", RunType.BlackStd));
