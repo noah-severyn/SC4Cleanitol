@@ -11,6 +11,7 @@ using Options = SC4CleanitolWPF.Properties.Settings;
 using System.Threading.Tasks;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Linq;
+using System.Windows.Controls.Primitives;
 
 namespace SC4CleanitolWPF {
     /// <summary>
@@ -23,14 +24,14 @@ namespace SC4CleanitolWPF {
         /// <remarks>
         /// Will result in a longer execution time while the index is created.
         /// </remarks>
-        public bool UpdateTGIdb { get; set; } = true;
+        public bool UpdateTGIdb { get; set; } = false;
         /// <summary>
         /// Whether to show all output to the screen or just actionable outputs.
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 7, 1);
-        internal readonly string releaseDate = "May 2024"; 
+        internal readonly Version releaseVersion = new Version(0, 8, 0);
+        internal readonly string releaseDate = "Jul 2024"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
@@ -41,12 +42,10 @@ namespace SC4CleanitolWPF {
         public MainWindow() {
             doc = new FlowDocument();
             log = new Paragraph();
-            //Doc.PageWidth = 1900; //hacky way to disable text wrapping because RichTextBox *always* wraps
 
             InitializeComponent();
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
-            StatusBar.Visibility = Visibility.Collapsed;
             BackupFiles.IsEnabled = false;
             RunScript.IsEnabled = false;
 
@@ -69,9 +68,9 @@ namespace SC4CleanitolWPF {
             }
 
             Options.Default.Save();
-
+            StatusBar.Visibility = Visibility.Hidden;
             cleanitol = new CleanitolEngine(Options.Default.UserPluginsDirectory, Options.Default.SystemPluginsDirectory, Options.Default.BaseOutputDirectory, string.Empty);
-            this.Title = "SC4 Cleanitol 2023 - " + releaseVersion.ToString();
+            this.Title = "SC4 Cleanitol - " + releaseVersion.ToString();
 
         }
 
@@ -113,12 +112,15 @@ namespace SC4CleanitolWPF {
                 return;
             }
 
+            StatusBar.Visibility = Visibility.Visible;
             StatusLabel.Text = "Scanning Files ..."; //TODO - update the status bar file count even if not updating tgis
+            FileProgressLabel.Text = "0 / ? files";
             if (UpdateTGIdb) {
                 TGICountLabel.Visibility = Visibility.Visible;
                 ExportTGIs.Visibility = Visibility.Visible;
                 Separator1.Visibility = Visibility.Visible;
                 Separator2.Visibility = Visibility.Visible;
+                ExportTGIs.Visibility = Visibility.Visible;
             } else if (cleanitol is not null && cleanitol.ListOfTGIs.Count == 0) {
                 TGICountLabel.Visibility = Visibility.Hidden;
                 ExportTGIs.Visibility = Visibility.Hidden;
@@ -128,12 +130,13 @@ namespace SC4CleanitolWPF {
             } else {
                 FileProgressBar.IsIndeterminate = true;
             }
-            StatusBar.Visibility = Visibility.Visible;
 
             cleanitol.UserPluginsDirectory = Options.Default.UserPluginsDirectory;
             cleanitol.SystemPluginsDirectory = Options.Default.SystemPluginsDirectory;
             cleanitol.BaseOutputDirectory = Options.Default.BaseOutputDirectory;
             cleanitol.ScriptPath = ScriptPathTextBox.Text;
+
+            cleanitol.AdditionalFolders = Options.Default.AdditionalFolders.Cast<string>().ToList();
             
             var progressTotalFiles = new Progress<int>(totalFiles => { FileProgressBar.Maximum = totalFiles; });
             var progressScannedFiles = new Progress<int>(scannedFiles => { 
@@ -144,10 +147,13 @@ namespace SC4CleanitolWPF {
                 }
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
+            if (cleanitol.ScriptHasTGIRules() && cleanitol.ListOfTGIs.Count == 0) {
+                UpdateTGIdb = true;
+            }
 
-            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, false, DetailedOutput));
+            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, Options.Default.ScanSystemPlugins, Options.Default.ScanAdditionalFolders, DetailedOutput));
             if (runList.Count == 0) {
-                MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one or more of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
 
             
@@ -232,7 +238,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
+        private void OnRequestNavigate(object sender, RequestNavigateEventArgs e) {
             var sinfo = new ProcessStartInfo(e.Uri.AbsoluteUri) {
                 UseShellExecute = true
             };
@@ -260,14 +266,17 @@ namespace SC4CleanitolWPF {
                 link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                 log.Inlines.Add(link);
             }
-            link = new Hyperlink(ConvertRun(new FormattedRun("View Summary",RunType.BlueMono))) {
+            log.Inlines.Add(ConvertRun(new FormattedRun("To undo this action, run the 'undo.bat' script in this folder.\r\n", RunType.BlackStd)));
+            link = new Hyperlink(ConvertRun(new FormattedRun("View Summary Report",RunType.BlueMono))) {
                 NavigateUri = new Uri(Path.Combine(cleanitol.ScriptOutputDirectory, "CleanupSummary.html"))
             };
             link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
             log.Inlines.Add(link);
+            log.Inlines.Add(new Run("\r\n"));
 
             doc.Blocks.Add(log);
             BackupFiles.IsEnabled = false;
+            ScriptOutput.ScrollToEnd();
         }
 
         /// <summary>
@@ -328,8 +337,19 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ExportTGIs_Click(object sender, RoutedEventArgs e) {
-            cleanitol.ExportTGIs();
-            MessageBox.Show("Export Complete!", "Exporting TGIs", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK);
+            string exportFilePath = cleanitol.ExportTGIs();
+
+            log.Inlines.Add(ConvertRun(new FormattedRun("\r\nTGI Export\r\n", RunType.BlackHeading)));
+            log.Inlines.Add(ConvertRun(new FormattedRun($"Scanned TGIs exported to CSV. ", RunType.BlackStd)));
+            Hyperlink link = new Hyperlink(ConvertRun(new FormattedRun("Open Export File", RunType.BlueMono))) {
+                NavigateUri = new Uri(exportFilePath)
+            };
+            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+            log.Inlines.Add(link);
+            log.Inlines.Add(new Run("\r\n"));
+
+            doc.Blocks.Add(log);
+            ScriptOutput.ScrollToEnd();
         }
     }
 }

@@ -73,6 +73,16 @@ namespace SC4Cleanitol {
             }
         }
 
+        private List<string> _additionalFolders;
+        /// <summary>
+        /// A list of additional folders to scan in addition to the current plugins folders.
+        /// </summary>
+        public List<string> AdditionalFolders {
+            get { return _additionalFolders; }
+            set { _additionalFolders = value; }
+        }
+
+
 
 
         /// <summary>
@@ -94,7 +104,7 @@ namespace SC4Cleanitol {
         /// <summary>
         /// File names trimmed from <see cref="ListOfFiles"/>.
         /// </summary>
-        public IEnumerable<string> ListOfFileNames { get; private set; }
+        public List<string> ListOfFileNames { get; private set; }
         /// <summary>
         /// All TGIs scanned by the script in a comma separated format: <c>0x00000000, 0x00000000, 0x00000000</c>.
         /// </summary>
@@ -108,6 +118,7 @@ namespace SC4Cleanitol {
 
         private List<string> _scriptRules;
         private int _highestPctReached;
+        private int _condDepsNotScanned;
         private List<FormattedRun> _runs;
 
 
@@ -142,6 +153,7 @@ namespace SC4Cleanitol {
                 _scriptPath = scriptPath;
             }
 
+            _additionalFolders = new List<string>();
             _scriptRules = new List<string>();
             _runs = new List<FormattedRun>();
             ListOfFiles = new List<string>();
@@ -165,31 +177,42 @@ namespace SC4Cleanitol {
         /// <param name="progressTGIs">The progress tracker for the current progress of scanned TGIs.</param>
         /// <param name="updateTGIdatabase">Specify to rebuild the internal index of TGIs.</param>
         /// <param name="includeSystemPlugins">Specify to include the system plugins folder in the TGI scan or only the user plugins (recommended).</param>
+        /// <param name="includeExtraFolders">Specify to include the additional folders with the plugins folder in the scan.</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
         /// <returns>A series of formatted messages detailing the result of each script rule.</returns>
-        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool verboseOutput = true) {
+        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool includeExtraFolders, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
             CountDepsScanned = 0;
             FilesToRemove.Clear();
             ListOfFiles.Clear();
-            ListOfFileNames = Enumerable.Empty<string>();
+            ListOfFileNames.Clear();
+            _condDepsNotScanned = 0;
             _runs.Clear();
             List<FormattedRun> fileErrors = new List<FormattedRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
 
-
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
             try {
-                ListOfFiles = Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories).ToList();
+                ListOfFiles = Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList();
                 if (includeSystemPlugins) {
-                    ListOfFiles.AddRange(Directory.EnumerateFiles(SystemPluginsDirectory).ToList());
+                    ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
                 }
-                ListOfFiles.Sort();
+                if (includeExtraFolders) {
+                    foreach (string folder in _additionalFolders) {
+                        if (Path.Exists(folder)) {
+                            ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
+                        }
+                    }
+                }
 
                 totalFiles.Report(ListOfFiles.Count);
-                ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName));
+
+                //Critical to sort because it makes the binary search perform many times quicker
+                ListOfFiles.Sort(); 
+                ListOfFileNames = ListOfFiles.AsParallel().Select(fileName => Path.GetFileName(fileName)).ToList();
+                ListOfFileNames.Sort();
             }
             catch (IOException) {
                 return _runs;
@@ -249,8 +272,8 @@ namespace SC4Cleanitol {
             }
             _runs.Add(new FormattedRun("\r\n\r\n"));
             _runs.Insert(3, new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMonoBold));
-            _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (CountDepsFound != CountDepsScanned ? $" ({CountDepsScanned - CountDepsFound} dependencies not required due to conditional rules)" : "") +  "\r\n", RunType.BlueMono));
-            _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsFound} dependencies missing.\r\n", RunType.RedMono));
+            _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (_condDepsNotScanned > 0 ? $" ({_condDepsNotScanned} dependencies not scanned due to their conditional rules not being met)" : "") +  "\r\n", RunType.BlueMono));
+            _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono));
             _runs.Insert(6, new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
 
             if (fileErrors.Count > 0) {
@@ -264,7 +287,23 @@ namespace SC4Cleanitol {
         }
 
         
-
+        /// <summary>
+        /// Evaluate whether any of the rules in this script rely on TGI dependencies, either as the search item or as the condition.
+        /// </summary>
+        /// <returns>TRUE if any of the rules requires a TGI; FALSE if all rules involve file names</returns>
+        public bool ScriptHasTGIRules() {
+            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
+            string rule;
+            ScriptRule.RuleType rt;
+            for (int idx = 0; idx < _scriptRules.Count; idx++) {
+                rule = _scriptRules[idx].Trim();
+                rt = ScriptRule.ParseRuleType(rule);
+                if ((rt == ScriptRule.RuleType.ConditionalDependency || rt == ScriptRule.RuleType.Dependency) && IsTGIDependencyRule(rule)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
 
         /// <summary>
@@ -310,6 +349,11 @@ namespace SC4Cleanitol {
         }
 
 
+        private bool IsTGIDependencyRule(string ruleText) {
+            ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
+            return rule.IsConditionalItemTGI || rule.IsSearchItemTGI;
+        }
+
 
         private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {
             ruleText = ruleText.Replace("*", string.Empty);
@@ -352,8 +396,7 @@ namespace SC4Cleanitol {
                 if (rule.IsConditionalItemTGI) {
                     isConditionalFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.ConditionalItem)) >= 0;
                 } else {
-                    //isConditionalFound = ListOfFiles.AsParallel().Any(tgi => tgi.Contains(rule.ConditionalItem));
-                    isConditionalFound = ListOfFiles.BinarySearch(rule.SearchItem) >= 0;
+                    isConditionalFound = ListOfFileNames.BinarySearch(rule.SearchItem) >= 0;
                 }
             }
 
@@ -362,8 +405,7 @@ namespace SC4Cleanitol {
                 if (rule.IsSearchItemTGI) {
                     isItemFound = ListOfTGIs.BinarySearch(DBPFTGI.ParseTGIString(rule.SearchItem)) >= 0;
                 } else {
-                    //isItemFound = ListOfFiles.AsParallel().Any(r => r.Contains(rule.SearchItem));
-                    isItemFound = ListOfFiles.BinarySearch(rule.SearchItem) >= 0;
+                    isItemFound = ListOfFileNames.BinarySearch(rule.SearchItem) >= 0;
                 }
             }
 
@@ -400,6 +442,7 @@ namespace SC4Cleanitol {
                     _runs.Add(new FormattedRun("\r\n"));
                     CountDepsMissing++;
                 } else if (!isConditionalFound) {
+                    _condDepsNotScanned ++;
                     if (verboseOutput) {
                         _runs.Add(new FormattedRun(rule.SearchItem, RunType.BlueStd));
                         _runs.Add(new FormattedRun(" was skipped as ", RunType.BlackStd));
@@ -445,6 +488,7 @@ namespace SC4Cleanitol {
             File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
 
             //Write HTML Template summary
+            templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(_scriptPath));
             templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");
@@ -460,7 +504,8 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Export the scanned TGIs to a CSV document in the assigned Cleanitol folder.
         /// </summary>
-        public void ExportTGIs() {
+        /// <returns>The path of the exported CSV file</returns>
+        public string ExportTGIs() {
             StringBuilder list = new StringBuilder("Type,Group,Instance,\r\n");
             foreach (TGI tgi in ListOfTGIs) {
                 list.AppendLine(tgi.ToString());
@@ -468,6 +513,7 @@ namespace SC4Cleanitol {
             string filename = "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd HH-mm") + ".csv";
 
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, filename), list.ToString());
+            return Path.Combine(ScriptOutputDirectory, filename);
         }
 
 

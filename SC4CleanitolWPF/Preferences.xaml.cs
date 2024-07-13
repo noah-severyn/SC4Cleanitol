@@ -17,6 +17,14 @@ namespace SC4CleanitolWPF {
             SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
             CleanitolOutputDirectory.Text = Properties.Settings.Default.BaseOutputDirectory;
             ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
+            ScanAdditionalFoldersCheckbox.IsChecked = Properties.Settings.Default.ScanAdditionalFolders;
+            if (Properties.Settings.Default.AdditionalFolders is null) {
+                Properties.Settings.Default.AdditionalFolders = new System.Collections.Specialized.StringCollection();
+            }
+            
+            AdditionalFolders.ItemsSource = Properties.Settings.Default.AdditionalFolders;
+
+            //AdditionalFolders.DataContext = this;
 
             Window window = Application.Current.MainWindow;
             if (window is not null) {
@@ -31,6 +39,7 @@ namespace SC4CleanitolWPF {
                 IsFolderPicker = true
             };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                Properties.Settings.Default.UserPluginsDirectory = dialog.FileName;
                 UserPluginsDirectory.Text = dialog.FileName;
             }
         }
@@ -40,6 +49,7 @@ namespace SC4CleanitolWPF {
                 IsFolderPicker = true
             };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                Properties.Settings.Default.SystemPluginsDirectory = dialog.FileName;
                 SystemPluginsDirectory.Text = dialog.FileName;
             }
         }
@@ -49,18 +59,19 @@ namespace SC4CleanitolWPF {
                 IsFolderPicker = true
             };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                Properties.Settings.Default.BaseOutputDirectory = dialog.FileName;
                 CleanitolOutputDirectory.Text = dialog.FileName;
             }
         }
 
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            Properties.Settings.Default.UserPluginsDirectory = UserPluginsDirectory.Text;
-            Properties.Settings.Default.SystemPluginsDirectory = SystemPluginsDirectory.Text;
             if (ScanSystemDirectoryCheckbox.IsChecked is not null) {
                 Properties.Settings.Default.ScanSystemPlugins = (bool) ScanSystemDirectoryCheckbox.IsChecked;
             }
-            Properties.Settings.Default.BaseOutputDirectory = CleanitolOutputDirectory.Text;
+            if (ScanAdditionalFoldersCheckbox.IsChecked is not null) {
+                Properties.Settings.Default.ScanAdditionalFolders = (bool) ScanAdditionalFoldersCheckbox.IsChecked;
+            }
             Properties.Settings.Default.Save();
         }
 
@@ -70,6 +81,33 @@ namespace SC4CleanitolWPF {
             var sinfo = new ProcessStartInfo(target);
             sinfo.UseShellExecute = true;
             Process.Start(sinfo);
+        }
+
+        /// <summary>
+        /// Adds an additional folder to scan.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AddAdditionalFolder_Click(object sender, RoutedEventArgs e) {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog {
+                IsFolderPicker = true
+            };
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                Properties.Settings.Default.AdditionalFolders.Add(dialog.FileName);
+                AdditionalFolders.ItemsSource = Properties.Settings.Default.AdditionalFolders;
+                AdditionalFolders.Items.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Removes the selected additional folder from the list to scan.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoveAdditionalFolder_Click(object sender, RoutedEventArgs e) {
+            Properties.Settings.Default.AdditionalFolders.Remove((string) AdditionalFolders.SelectedItem);
+            AdditionalFolders.ItemsSource = Properties.Settings.Default.AdditionalFolders;
+            AdditionalFolders.Items.Refresh();
         }
     }
 }

@@ -40,10 +40,15 @@ First, select a script to run, then run the script. The results of the script ar
 * **Update TGI Database** - Scan all files in the plugins folder to create the list of all TGIs present. This will dramatically increase the time taken to execute the script, so unless you are running a mostly vanilla game with few plugins it is recommended to use this option occasionally or after many new plugins are added.
 
 ### Program Options
+
+![Settings Panel Screenshot](/SC4CleanitolWPF/images/settings.png)
+
+To change options, open the Settings panel.
 * **User Plugins** - Adjust to the plugins directory in your user directory
 * **System Plugins** - Adjust to the plugins directory in the game install directory
-  * **Scan system Plugins folder too** - Select this option to include the system plugins directory when scanning for TGIs. It is generally recommended that most plugins be installed in the user plugins folder, but certain mods *may* be installed in the systems plugin directory instead.
-  * **Cleanitol Output** - Adjust the location that the program will move files to. The default location is adjacent to the user plugins directory in `My Documents\SimCity 4\BSC_Cleanitol\...`.
+  * **Scan system Plugins folder too** - Select this option to include the system plugins directory when scanning for files and dependencies. It is generally recommended that most plugins be installed in the user plugins folder, but certain mods *may* be installed in the systems plugin directory instead.
+  * **Cleanitol Output** - Adjust the location that the program will move files to if a Cleanitol script finds files to remove. The default location is adjacent to the user plugins directory in `\My Documents\SimCity 4\BSC_Cleanitol\...`.
+  * **Scan extra folders** - If you have other folders outside of your Plugins folder you wish to scan the contents of, add them here. Use the plus (`+`) button to add a folder, and use the minus (`-`) button to remove the currently selected folder. This option can be useful if you frequently move files in and out of Plugins, or have multiple Plugins folders that you swap in and out. Toggle the checkbox to scan or skip these folders you added without removing them from the list.
 
 ---
 
@@ -105,6 +110,10 @@ If you specify a TGI dependency, each Type, Group, and Instance number must be p
 0x6534284a 0x0f55ca9c 0xb0f8ec8b; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
 0x6534284a, 0x0f55ca9c, 0xb0f8ec8b; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
 ```
+
+> [!WARNING]  
+> If you are writing a script and one of your dependency rules is showing as an `Unchecked Dependency`, that is an indication that something is wrong. Unchecked dependencies are a feature included to provide compatibility with very legacy Cleanitol scripts that had typos or used them for cascading dependencies. They should not be used in modern scripts. If you encounter one, please check the rule syntax, making sure the dependency has either a correct file extension, or is a correctly formatted TGI.
+
 
 ### 6. Conditional Dependency Rule
 In addition to standard dependency rules, you can also specify conditional dependency rules. These rules will trigger only if another file or TGI is present. These rules may be useful for more complex mods that allow users to choose certain components to use or install. With a correctly designed script these will result in a cleaner user experience as the user will not be prompted for missing dependencies for components the user did not install. ***This is a new feature.***
