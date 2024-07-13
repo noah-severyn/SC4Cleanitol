@@ -106,6 +106,10 @@ If you specify a TGI dependency, each Type, Group, and Instance number must be p
 0x6534284a, 0x0f55ca9c, 0xb0f8ec8b; http://sc4devotion.com/csxlex/lex_filedesc.php?lotGET=167
 ```
 
+#### Unchecked Dependencies
+If you are writing a script and one of your dependency rules is showing as an `Unchecked Dependency`, that is an indication that something is wrong. Unchecked dependencies are a feature included to provide compatibility with very legacy Cleanitol scripts that had typos or used them for cascading dependencies. They should not be used in modern scripts. If you encounter one, please check the rule syntax, making sure the dependency has either a correct file extension, or is a correctly formatted TGI.
+
+
 ### 6. Conditional Dependency Rule
 In addition to standard dependency rules, you can also specify conditional dependency rules. These rules will trigger only if another file or TGI is present. These rules may be useful for more complex mods that allow users to choose certain components to use or install. With a correctly designed script these will result in a cleaner user experience as the user will not be prompted for missing dependencies for components the user did not install. ***This is a new feature.***
 
