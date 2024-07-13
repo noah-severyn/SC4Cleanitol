@@ -5,7 +5,7 @@ namespace SC4Cleanitol {
     /// Classes, enums, and functions related to parsing script rules. A rule is a single line read from the script.
     /// </summary>
     internal class ScriptRule {
-        private static readonly string[] dbpfExtensions = { ".dat", ".sc4Lot", ".sc4desc", ".sc4Model", ".dll" };
+        private static readonly string[] dbpfExtensions = { ".dat", ".sc4lot", ".sc4desc", ".sc4model", ".dll" };
 
         /// <summary>
         /// A script rule targeted at locating required files or TGIs.
@@ -65,7 +65,7 @@ namespace SC4Cleanitol {
                 } else {
                     cutoff = conditionalLocn;
                 }
-                if (!dbpfExtensions.Any(x => ruleText.Substring(0, semicolonLocn).EndsWith(x)) && Regex.Matches(ruleText.Substring(0, cutoff), "0x").Count != 3) {
+                if (!dbpfExtensions.Any(x => ruleText.Substring(0, semicolonLocn).ToLower().EndsWith(x)) && Regex.Matches(ruleText.Substring(0, cutoff), "0x").Count != 3) {
                     IsUnchecked = true;
                 }
 
