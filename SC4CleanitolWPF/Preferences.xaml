@@ -6,9 +6,9 @@
 		xmlns:local="clr-namespace:SC4CleanitolWPF"
 		mc:Ignorable="d"
 		Title="Settings"
-		Height="420"
-		MinHeight="420"
-		MaxHeight="420"
+		Height="460"
+		MinHeight="460"
+		MaxHeight="460"
 		Width="570"
 		MinWidth="570"
 		Closing="Window_Closing">
@@ -17,7 +17,7 @@
 			<RowDefinition Height="30" />
 			<RowDefinition Height="60" />
 			<RowDefinition Height="30" />
-			<RowDefinition Height="200" />
+			<RowDefinition Height="240" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
@@ -33,7 +33,7 @@
 				 Grid.Row="0"
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap"/>
+				 TextWrapping="NoWrap" />
 		<Button x:Name="UserChooseFolder"
 				Grid.Row="0"
 				Content=" ... "
@@ -54,7 +54,7 @@
 				 Grid.Row="1"
 				 Margin="105,10,33,0"
 				 VerticalAlignment="Top"
-				 TextWrapping="NoWrap"/>
+				 TextWrapping="NoWrap" />
 		<Button x:Name="SystemChooseFolder"
 				Grid.Row="1"
 				Content=" ... "
@@ -89,24 +89,39 @@
 				Click="CleanitolOutputChooseFolder_Click" />
 
 		<!-- Grid Row 3 : Additional Folders -->
-		<CheckBox x:Name="ScanAdditionalFoldersCheckbox"
-				  Content="Scan extra folders listed below, in addition to Plugins folders"
-				  HorizontalAlignment="Left"
-				  Margin="10,15,0,0"
-				  Grid.Row="3"
-				  VerticalAlignment="Top" />
+		<RadioButton x:Name="ScanPluginsOnly"
+					 GroupName="ScanFolders"
+					 Content="Scan Plugins folders only"
+					 HorizontalAlignment="Left"
+					 Margin="10,15,0,0"
+					 Grid.Row="3"
+					 VerticalAlignment="Top" />
+		<RadioButton x:Name="ScanAdditionalFoldersIncludePlugins"
+					 GroupName="ScanFolders"
+					 Content="Scan extra folders listed below, including Plugins folders"
+					 HorizontalAlignment="Left"
+					 Margin="10,35,0,0"
+					 Grid.Row="3"
+					 VerticalAlignment="Top" />
+		<RadioButton x:Name="ScanAdditionalFoldersExcludePlugins"
+					 GroupName="ScanFolders"
+					 Content="Scan only extra folders listed below, excluding Plugins folders"
+					 HorizontalAlignment="Left"
+					 Margin="10,55,0,0"
+					 Grid.Row="3"
+					 VerticalAlignment="Top" />
 		<ListView x:Name="AdditionalFolders"
 				  Grid.Row="3"
-				  Margin="10,35,33,10"
+				  Margin="10,75,33,10"
 				  ItemsSource="{Binding Path=Properties.Settings.Default.AdditionalFolders}">
-					
+
 		</ListView>
 		<Button x:Name="AddAdditionalFolder"
 				Grid.Row="3"
 				Content=" + "
 				HorizontalAlignment="Right"
 				VerticalAlignment="Top"
-				Margin="0,35,10,1"
+				Margin="0,75,10,1"
 				Height="20"
 				Width="18"
 				ToolTip="Add an additional folder to scan"
@@ -116,7 +131,7 @@
 				Content=" - "
 				HorizontalAlignment="Right"
 				VerticalAlignment="Top"
-				Margin="0,65,10,1"
+				Margin="0,105,10,1"
 				Height="20"
 				Width="18"
 				ToolTip="Remove selected folder"

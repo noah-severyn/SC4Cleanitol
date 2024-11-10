@@ -17,7 +17,23 @@ namespace SC4CleanitolWPF {
             SystemPluginsDirectory.Text = Properties.Settings.Default.SystemPluginsDirectory;
             CleanitolOutputDirectory.Text = Properties.Settings.Default.BaseOutputDirectory;
             ScanSystemDirectoryCheckbox.IsChecked = Properties.Settings.Default.ScanSystemPlugins;
-            ScanAdditionalFoldersCheckbox.IsChecked = Properties.Settings.Default.ScanAdditionalFolders;
+            switch (Properties.Settings.Default.ScanAdditionalFolders) {
+                case 0:
+                    ScanPluginsOnly.IsChecked = true;
+                    ScanAdditionalFoldersIncludePlugins.IsChecked = false;
+                    ScanAdditionalFoldersExcludePlugins.IsChecked = false;
+                    break;
+                case 1:
+                    ScanPluginsOnly.IsChecked = false;
+                    ScanAdditionalFoldersIncludePlugins.IsChecked = true;
+                    ScanAdditionalFoldersExcludePlugins.IsChecked = false;
+                    break;
+                case 2:
+                    ScanPluginsOnly.IsChecked = false;
+                    ScanAdditionalFoldersIncludePlugins.IsChecked = false;
+                    ScanAdditionalFoldersExcludePlugins.IsChecked = true;
+                    break;
+            }
             if (Properties.Settings.Default.AdditionalFolders is null) {
                 Properties.Settings.Default.AdditionalFolders = new System.Collections.Specialized.StringCollection();
             }
@@ -69,8 +85,12 @@ namespace SC4CleanitolWPF {
             if (ScanSystemDirectoryCheckbox.IsChecked is not null) {
                 Properties.Settings.Default.ScanSystemPlugins = (bool) ScanSystemDirectoryCheckbox.IsChecked;
             }
-            if (ScanAdditionalFoldersCheckbox.IsChecked is not null) {
-                Properties.Settings.Default.ScanAdditionalFolders = (bool) ScanAdditionalFoldersCheckbox.IsChecked;
+            if (ScanPluginsOnly.IsChecked is not null && (bool) ScanPluginsOnly.IsChecked) {
+                Properties.Settings.Default.ScanAdditionalFolders = 0;
+            } else if (ScanAdditionalFoldersIncludePlugins.IsChecked is not null && (bool) ScanAdditionalFoldersIncludePlugins.IsChecked) {
+                Properties.Settings.Default.ScanAdditionalFolders = 1;
+            } else if (ScanAdditionalFoldersExcludePlugins.IsChecked is not null && (bool) ScanAdditionalFoldersExcludePlugins.IsChecked) {
+                Properties.Settings.Default.ScanAdditionalFolders = 2;
             }
             Properties.Settings.Default.Save();
         }

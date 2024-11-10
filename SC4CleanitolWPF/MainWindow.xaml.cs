@@ -30,8 +30,8 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 8, 0);
-        internal readonly string releaseDate = "Jul 2024"; 
+        internal readonly Version releaseVersion = new Version(0, 8, 1);
+        internal readonly string releaseDate = "Nov 2024"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
@@ -151,7 +151,7 @@ namespace SC4CleanitolWPF {
                 UpdateTGIdb = true;
             }
 
-            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, Options.Default.ScanSystemPlugins, Options.Default.ScanAdditionalFolders, DetailedOutput));
+            List<FormattedRun> runList = await Task.Run(() => cleanitol.RunScript(progressTotalFiles, progressScannedFiles, progressTotalTGIs, UpdateTGIdb, Options.Default.ScanSystemPlugins, (CleanitolEngine.FolderOptions) Options.Default.ScanAdditionalFolders, DetailedOutput));
             if (runList.Count == 0) {
                 MessageBox.Show("Error Reading Files", "An error occurred while accessing files. It is possible one or more of the files is open in another program.", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }

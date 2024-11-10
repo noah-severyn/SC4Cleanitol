@@ -4,6 +4,25 @@ using csDBPF;
 
 namespace SC4Cleanitol {
     public class CleanitolEngine {
+        /// <summary>
+        /// Specify which folders to scan.
+        /// </summary>
+        public enum FolderOptions : byte {
+            /// <summary>
+            /// Scan Plugins folder only, excluding additional folders.
+            /// </summary>
+            PluginsOnly = 0,
+            /// <summary>
+            /// Scan additional folders, including Plugins folders.
+            /// </summary>
+            AdditionalFoldersIncludingPlugins = 1,
+            /// <summary>
+            /// Scan additional folders, excluding Plugins folders.
+            /// </summary>
+            AdditionalFoldersExcludingPlugins = 2
+        }
+
+
         private string _userPlugins;
         /// <summary>
         /// Location of the plugins folder found in the user's Documents folder.
@@ -177,10 +196,10 @@ namespace SC4Cleanitol {
         /// <param name="progressTGIs">The progress tracker for the current progress of scanned TGIs.</param>
         /// <param name="updateTGIdatabase">Specify to rebuild the internal index of TGIs.</param>
         /// <param name="includeSystemPlugins">Specify to include the system plugins folder in the TGI scan or only the user plugins (recommended).</param>
-        /// <param name="includeExtraFolders">Specify to include the additional folders with the plugins folder in the scan.</param>
+        /// <param name="extraFoldersOption">Specify to include the additional folders with the plugins folder in the scan.</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
         /// <returns>A series of formatted messages detailing the result of each script rule.</returns>
-        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, bool includeExtraFolders, bool verboseOutput = true) {
+        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, FolderOptions extraFoldersOption, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
             CountDepsScanned = 0;
@@ -195,16 +214,31 @@ namespace SC4Cleanitol {
             //Fill File List
             _scriptRules = File.ReadAllLines(_scriptPath).ToList();
             try {
-                ListOfFiles = Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList();
-                if (includeSystemPlugins) {
-                    ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
-                }
-                if (includeExtraFolders) {
-                    foreach (string folder in _additionalFolders) {
-                        if (Path.Exists(folder)) {
-                            ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
+                switch (extraFoldersOption) {
+                    case FolderOptions.PluginsOnly: //Plugins Only
+                        ListOfFiles.AddRange(Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList());
+                        if (includeSystemPlugins) {
+                            ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
                         }
-                    }
+                        break;
+                    case FolderOptions.AdditionalFoldersIncludingPlugins:
+                        ListOfFiles.AddRange(Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList());
+                        if (includeSystemPlugins) {
+                            ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
+                        }
+                        foreach (string folder in _additionalFolders) {
+                            if (Path.Exists(folder)) {
+                                ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
+                            }
+                        }
+                        break;
+                    case FolderOptions.AdditionalFoldersExcludingPlugins:
+                        foreach (string folder in _additionalFolders) {
+                            if (Path.Exists(folder)) {
+                                ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
+                            }
+                        }
+                        break;
                 }
 
                 totalFiles.Report(ListOfFiles.Count);
