@@ -120,6 +120,10 @@ namespace SC4Cleanitol {
             /// </summary>
             UserCommentHeading,
             /// <summary>
+            /// A web url to import rules from. Must point to a <c>.txt</c> file.
+            /// </summary>
+            Import,
+            /// <summary>
             /// An item that should be removed from plugins.
             /// </summary>
             Removal,
@@ -154,9 +158,11 @@ namespace SC4Cleanitol {
                 return RuleType.UserComment;
             }
 
-            //Dependency + Conditional Dependency
+            //Import + Dependency + Conditional Dependency
             if (rule.Contains("http", StringComparison.OrdinalIgnoreCase)) {
-                if (rule.Contains("??")) {
+                if (rule.StartsWith("@")) {
+                    return RuleType.Import;
+                } else if (rule.Contains("??")) {
                     return RuleType.ConditionalDependency;
                 }
                 return RuleType.Dependency;

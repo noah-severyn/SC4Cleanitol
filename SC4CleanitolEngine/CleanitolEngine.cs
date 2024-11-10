@@ -210,9 +210,21 @@ namespace SC4Cleanitol {
             _runs.Clear();
             List<FormattedRun> fileErrors = new List<FormattedRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
+            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
+
+            //add in any rules from the remote script, if any
+            IEnumerable<string> imports = _scriptRules.AsParallel().Where(item => item.StartsWith("@http") && item.EndsWith(".txt"));
+            foreach (string import in imports) {
+                HttpClient client = new HttpClient();
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, import.Substring(1));
+                HttpResponseMessage response = client.Send(request);
+                StreamReader reader = new StreamReader(response.Content.ReadAsStream());
+                string content = reader.ReadToEnd();
+                _scriptRules.InsertRange(_scriptRules.IndexOf(import)+1, content.Split('\n'));
+            }
+
 
             //Fill File List
-            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
             try {
                 switch (extraFoldersOption) {
                     case FolderOptions.PluginsOnly: //Plugins Only
@@ -372,7 +384,8 @@ namespace SC4Cleanitol {
                     _runs.Add(new FormattedRun("\r\n" + ruleText.Substring(2) + "\r\n", RunType.BlackHeading));
                     return;
 
-                case ScriptRule.RuleType.ScriptComment:
+                case ScriptRule.RuleType.ScriptComment: 
+                case ScriptRule.RuleType.Import:
                     return;
 
                 default:
