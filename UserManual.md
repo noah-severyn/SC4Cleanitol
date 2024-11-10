@@ -59,7 +59,7 @@ This program was designed with full backwards compatibility for old Cleanitol sc
 Use the **Create Script** button on the main screen to automatically create a script with all files in a chosen folder. Choose the folder containing the files you want to add to the script (note that contents of all sub folders within the chosen folder **will** be included), and then choose the name and location of the output script to create.
 
 ## Writing a script
-The scripts are simple text files composed of one or more rules, with each rule on its own line. There are six types of rules.
+The scripts are simple text files composed of one or more rules, with each rule on its own line. There are seven types of rules.
 
 ### 1. Script Comments
 Begin the line with a semicolon `;` to create a script comment. These comments will not be shown to users in the output window and can be useful for personal notes documenting the script.
@@ -129,3 +129,12 @@ jes_AcmeBoilerFactory-0x5ad0e817_0x5283112c_0x30000.SC4Model ?? IRM W2W jes_Acme
 ```
 
 TGIs and filenames can be intermixed within a given rule. All combinations of filenames and TGIs as the conditional item and the dependency item are supported.
+
+
+### 7. Import Rule
+This rule does not execute any functions on its own; rather, it specifies that the program should fetch rules from a remote, web-hosted text file, and insert them into the script. ***This is a new feature.***
+
+To create an import rule, specify an http URL prefixed with the `@` symbol. The URL **must** end in `.txt`. All content in this file will be inserted into the script immediately after this URL.
+```
+@ https://raw.githubusercontent.com/noah-severyn/SC4Cleanitol/refs/heads/main/SC4CleanitolWPF/CleanupList.txt
+```
