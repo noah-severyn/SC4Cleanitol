@@ -30,7 +30,7 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(0, 9, 1);
+        internal readonly Version releaseVersion = new Version(1, 0, 0);
         internal readonly string releaseDate = "Dec 2024"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
@@ -47,7 +47,6 @@ namespace SC4CleanitolWPF {
             UpdateTGICheckbox.DataContext = this;
             VerboseOutputCheckbox.DataContext = this;
             BackupFiles.IsEnabled = false;
-            RunScript.IsEnabled = false;
 
             //Set Properties
             if (Options.Default.UserPluginsDirectory.Equals("")) {
@@ -85,7 +84,6 @@ namespace SC4CleanitolWPF {
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true) {
                 ScriptPathTextBox.Text = dialog.FileName;
-                RunScript.IsEnabled = true;
             } else {
                 return;
             }
@@ -99,16 +97,21 @@ namespace SC4CleanitolWPF {
         /// <param name="e"></param>
         private async void RunScript_Click(object sender, RoutedEventArgs e) {
             log.Inlines.Clear();
+            ScriptPathTextBox.Text = ScriptPathTextBox.Text.Replace("\"", string.Empty);
             if (!Directory.Exists(Options.Default.UserPluginsDirectory)) {
-                MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (!Directory.Exists(Options.Default.SystemPluginsDirectory)) {
-                MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (!Directory.Exists(Options.Default.BaseOutputDirectory)) {
-                MessageBox.Show("Cleanitol output directory not found. Verify the folder exists or set it in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Cleanitol output directory not found. Verify the folder exists or set it in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (ScriptPathTextBox.Text.Trim() == string.Empty || (!ScriptPathTextBox.Text.StartsWith("https://raw.githubusercontent.com") && !File.Exists(ScriptPathTextBox.Text))) {
+                MessageBox.Show("Script file not found. Verify the file exists or the URL is correct. Leave this field blank to run a TGI scan without any script.", "Script File Not Valid", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -147,7 +150,7 @@ namespace SC4CleanitolWPF {
                 }
             });
             var progressTotalTGIs = new Progress<int>(totalTGIs => { TGICountLabel.Text = totalTGIs.ToString("N0") + " TGIs discovered"; });
-            if (cleanitol.ScriptHasTGIRules() && cleanitol.ListOfTGIs.Count == 0) {
+            if (cleanitol.ListOfTGIs.Count == 0) {
                 UpdateTGIdb = true;
             }
 
@@ -350,6 +353,10 @@ namespace SC4CleanitolWPF {
 
             doc.Blocks.Add(log);
             ScriptOutput.ScrollToEnd();
+        }
+
+        private void ScriptPathTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            RunScript.IsEnabled = true;
         }
     }
 }

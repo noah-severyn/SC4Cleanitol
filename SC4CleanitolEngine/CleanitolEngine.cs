@@ -84,7 +84,7 @@ namespace SC4Cleanitol {
         public string ScriptPath {
             get { return _scriptPath; }
             set {
-                if (!File.Exists(value)) {
+                if (!File.Exists(value) && !value.StartsWith("https://raw.githubusercontent.com")) {
                     _scriptPath = string.Empty;
                 } else {
                     _scriptPath = value;
@@ -186,7 +186,7 @@ namespace SC4Cleanitol {
             }
         }
 
-
+        
 
         /// <summary>
         /// Execute the script and return the results of each rule.
@@ -210,17 +210,17 @@ namespace SC4Cleanitol {
             _runs.Clear();
             List<FormattedRun> fileErrors = new List<FormattedRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
-            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
+            if (_scriptPath.StartsWith("https://raw.githubusercontent.com")) {
+                _scriptRules.AddRange(ImportFromGithub(_scriptPath));
+            } else {
+                _scriptRules = File.ReadAllLines(_scriptPath).ToList();
+            }
+            
 
             //add in any rules from the remote script, if any
-            IEnumerable<string> imports = _scriptRules.AsParallel().Where(item => item.StartsWith("@http") && item.EndsWith(".txt"));
+            IEnumerable<string> imports = _scriptRules.AsParallel().Where(item => item.Replace(" ", string.Empty).StartsWith("@https://raw.githubusercontent.com"));
             foreach (string import in imports) {
-                HttpClient client = new HttpClient();
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, import.Substring(1));
-                HttpResponseMessage response = client.Send(request);
-                StreamReader reader = new StreamReader(response.Content.ReadAsStream());
-                string content = reader.ReadToEnd();
-                _scriptRules.InsertRange(_scriptRules.IndexOf(import)+1, content.Split('\n'));
+                _scriptRules.InsertRange(_scriptRules.IndexOf(import) + 1, ImportFromGithub(import.Replace(" ", string.Empty).Substring(1)));
             }
 
 
@@ -432,6 +432,7 @@ namespace SC4Cleanitol {
             }
         }
 
+
         private void EvaluateDependencyRule(string ruleText, bool verboseOutput) {
             ScriptRule.DependencyRule rule = new ScriptRule.DependencyRule(ruleText);
 
@@ -510,6 +511,17 @@ namespace SC4Cleanitol {
         }
 
 
+        private static string[] ImportFromGithub(string githubFilePath) {
+            HttpClient client = new HttpClient();
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, githubFilePath);
+            HttpResponseMessage response = client.Send(request);
+            StreamReader reader = new StreamReader(response.Content.ReadAsStream());
+            string content = reader.ReadToEnd();
+            return content.Split('\n');
+        }
+
+
+
         /// <summary>
         /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
@@ -567,6 +579,7 @@ namespace SC4Cleanitol {
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, filename), list.ToString());
             return Path.Combine(ScriptOutputDirectory, filename);
         }
+
 
 
         /// <summary>
