@@ -354,9 +354,5 @@ namespace SC4CleanitolWPF {
             doc.Blocks.Add(log);
             ScriptOutput.ScrollToEnd();
         }
-
-        private void ScriptPathTextBox_LostFocus(object sender, RoutedEventArgs e) {
-            RunScript.IsEnabled = true;
-        }
     }
 }

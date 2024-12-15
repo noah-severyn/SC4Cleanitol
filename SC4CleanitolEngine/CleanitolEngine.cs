@@ -586,7 +586,7 @@ namespace SC4Cleanitol {
             foreach (TGI tgi in ListOfTGIs) {
                 list.AppendLine(tgi.ToString());
             }
-            string filename = "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd HH-mm") + ".csv";
+            string filename = "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd HHmm") + ".csv";
 
             File.WriteAllText(Path.Combine(ScriptOutputDirectory, filename), list.ToString());
             return Path.Combine(ScriptOutputDirectory, filename);
