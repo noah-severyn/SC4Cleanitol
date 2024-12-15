@@ -363,6 +363,11 @@ namespace SC4Cleanitol {
         /// <returns>A list of runs describing the outcome of the rule</returns>
         private void EvaluateRule(string ruleText, bool verboseOutput = true) {
             switch (ScriptRule.ParseRuleType(ruleText)) {
+                case ScriptRule.RuleType.Invalid:
+                    _runs.Add(new FormattedRun(ruleText, RunType.RedMono));
+                    _runs.Add(new FormattedRun(" is an invalid rule. Check syntax." + "\r\n", RunType.RedStd));
+                    return;
+                
                 case ScriptRule.RuleType.Removal:
                     EvaluateRemovalRule(ruleText, verboseOutput);
                     return;

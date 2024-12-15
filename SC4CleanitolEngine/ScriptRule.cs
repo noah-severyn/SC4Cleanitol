@@ -135,6 +135,10 @@ namespace SC4Cleanitol {
             /// An item that is required for the mod, but only if another item is present.
             /// </summary>
             ConditionalDependency,
+            /// <summary>
+            /// A rule with invalid syntax.
+            /// </summary>
+            Invalid
         }
 
 
@@ -164,8 +168,9 @@ namespace SC4Cleanitol {
                     return RuleType.Import;
                 } else if (rule.Contains("??")) {
                     return RuleType.ConditionalDependency;
+                } else {
+                    return RuleType.Invalid;
                 }
-                return RuleType.Dependency;
             }
 
             //Support "unchecked" dependencies for certain legacy cleanitol files that use these as cascading dependencies.
