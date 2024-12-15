@@ -33,6 +33,11 @@ namespace SC4CleanitolWPF {
                     ScanAdditionalFoldersIncludePlugins.IsChecked = false;
                     ScanAdditionalFoldersExcludePlugins.IsChecked = true;
                     break;
+                default:
+                    ScanPluginsOnly.IsChecked = true;
+                    ScanAdditionalFoldersIncludePlugins.IsChecked = false;
+                    ScanAdditionalFoldersExcludePlugins.IsChecked = false;
+                    break;
             }
             if (Properties.Settings.Default.AdditionalFolders is null) {
                 Properties.Settings.Default.AdditionalFolders = new System.Collections.Specialized.StringCollection();

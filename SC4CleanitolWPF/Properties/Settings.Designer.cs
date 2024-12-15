@@ -96,6 +96,7 @@ namespace SC4CleanitolWPF.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public byte ScanAdditionalFolders {
             get {
                 return ((byte)(this["ScanAdditionalFolders"]));
