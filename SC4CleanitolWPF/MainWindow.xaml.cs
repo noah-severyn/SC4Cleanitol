@@ -99,19 +99,19 @@ namespace SC4CleanitolWPF {
             log.Inlines.Clear();
             ScriptPathTextBox.Text = ScriptPathTextBox.Text.Replace("\"", string.Empty);
             if (!Directory.Exists(Options.Default.UserPluginsDirectory)) {
-                MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("User plugins directory not found. Verify the folder exists in your Documents folder and it is correctly set in Settings.", "User plugins not found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (!Directory.Exists(Options.Default.SystemPluginsDirectory)) {
-                MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("System plugins directory not found. Verify the folder exists in the SC4 install folder and it is correctly set in Settings.", "System plugins not found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (!Directory.Exists(Options.Default.BaseOutputDirectory)) {
-                MessageBox.Show("Cleanitol output directory not found. Verify the folder exists or set it in Settings.", "System Plugins Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Cleanitol output directory not found. Verify the folder exists or set it in Settings.", "System plugins not found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (ScriptPathTextBox.Text.Trim() == string.Empty || (!ScriptPathTextBox.Text.StartsWith("https://raw.githubusercontent.com") && !File.Exists(ScriptPathTextBox.Text))) {
-                MessageBox.Show("Script file not found. Verify the file exists or the URL is correct. Leave this field blank to run a TGI scan without any script.", "Script File Not Valid", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Script file not found. Verify the file exists or the URL is correct. Leave this field blank to run a TGI scan without any script.", "Script file not valid", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

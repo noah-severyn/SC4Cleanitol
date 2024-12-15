@@ -511,13 +511,22 @@ namespace SC4Cleanitol {
         }
 
 
-        private static string[] ImportFromGithub(string githubFilePath) {
-            HttpClient client = new HttpClient();
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, githubFilePath);
-            HttpResponseMessage response = client.Send(request);
-            StreamReader reader = new StreamReader(response.Content.ReadAsStream());
-            string content = reader.ReadToEnd();
-            return content.Split('\n');
+        private string[] ImportFromGithub(string githubFilePath) {
+            try {
+                HttpClient client = new HttpClient();
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, githubFilePath);
+                HttpResponseMessage response = client.Send(request);
+                StreamReader reader = new StreamReader(response.Content.ReadAsStream());
+                string content = reader.ReadToEnd();
+                return content.Split('\n');
+            }
+            catch (Exception ex) {
+                _runs.Add(new FormattedRun($"Error: {ex.Message}\r\n", RunType.RedMono));
+                _runs.Add(new FormattedRun("Could not import rules from: ", RunType.RedStd));
+                _runs.Add(new FormattedRun(githubFilePath + "\r\n", RunType.RedMono));
+                return new string[0];
+            }
+            
         }
 
 
