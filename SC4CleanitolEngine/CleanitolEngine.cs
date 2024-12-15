@@ -409,7 +409,6 @@ namespace SC4Cleanitol {
 
         private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {
             ruleText = ruleText.Replace("*", string.Empty);
-            //IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains(ruleText));
             IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains("\\" + ruleText));
 
             if (!matchingFiles.Any() && verboseOutput) {
@@ -546,13 +545,17 @@ namespace SC4Cleanitol {
             //Write batch undo file
             foreach (string file in FilesToRemove) {
                 string fname = Path.GetFileName(file);
+                string archivePath = Path.Combine(outputDir, fname);
                 if (File.Exists(file)) {
                     try {
-                        File.Move(file, Path.Combine(outputDir, fname));
+                        if (!file.Contains("C:\\Windows")) {
+                            File.Move(file, archivePath);
+                        }
                     }
                     catch (IOException) {
-                        //To catch where there are files with the same name in different folders. Error moving them to the same location → delete additional files with the same name but still record their locations so they can be moved back.
-                        File.Delete(file);
+                        //Catches error when trying to overwrite a file that already exists in backup (multiple of the same file were in the user's plugins in different folders. Still record each location so they can be moved back correctly.
+                        File.Delete(archivePath);
+                        File.Move(file, archivePath);
                     } finally {
                         batchFile.AppendLine($"copy \"{fname}\" \"{file}\"");
                     }
