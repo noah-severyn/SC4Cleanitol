@@ -1,15 +1,12 @@
 {
   "profiles": {
-    "RequiredParamsOnly": {
+    "SC4CleanitolConsole": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\"\r\n\"C:\\source\\repos\\SC4Cleanitol\\SC4CleanitolWPF\\CleanupList.txt\""
+      "commandLineArgs": "-u \"C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\"\r\n-"
     },
-    "AllParams": {
+    "All Options": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\"\r\n\"C:\\source\\repos\\SC4Cleanitol\\SC4CleanitolWPF\\CleanupList.txt\"\r\n\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins\"\r\n\"true\"\r\n\"true\""
-    },
-    "NoParams": {
-      "commandName": "Project"
+      "commandLineArgs": "-u \"C:\\Users\\Administrator\\Documents\\SimCity 4\\Plugins\"\r\n-s \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\SimCity 4 Deluxe\\Plugins\"\r\n-o \"C:\\Users\\Administrator\\Documents\\SimCity 4\\BSC_Cleanitol\"\r\n-y\r\n-v\r\n-t\r\n-a 1\r\n-f \"C:\\Users\\Administrator\\OneDrive\\FINAL;C:\\Users\\Administrator\\OneDrive\\Documents\\SimCity 4\\Plugins\""
     }
   }
 }
