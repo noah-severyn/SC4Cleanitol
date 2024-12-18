@@ -8,24 +8,15 @@ public class Program {
     private static readonly Version releaseVersion = new Version(0, 2);
     private static readonly string releaseDate = "Dec 2024";
 
-
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="args"></param>
     public static void Main(string[] args) {
-        //args should be in this order: user-plugins, system-plugins, cleanitol-output, script-path
-        //optional args: 
 
-        
+        var parser = new CommandLine.Parser(with => with.HelpWriter = null);
 
-        
-        var result = Parser.Default.ParseArguments<Options>(args)
-            .WithParsed(Run)
+        var exitcode = parser.ParseArguments<RunOptions, CreateOptions>(args)
+            .WithParsed<RunOptions>(Run)
+            .WithParsed<CreateOptions>(Create)
             .WithNotParsed(HandleParseError);
-
-        CleanitolEngine cleanitol = new CleanitolEngine(result.Value.UserPlugins, result.Value.SystemPlugins, result.Value.CleanitolOutput, result.Value.ScriptPath);
+        Console.WriteLine("");
     }
 
 
@@ -37,13 +28,34 @@ public class Program {
 
         if (errs.IsHelp()) {
             Console.WriteLine("Help Request");
+            //DisplayHelp(parserResult, errs)
             return;
         }
         Console.WriteLine("Parser Fail");
     }
+    //static void DisplayHelp<T>(ParserResult<T> result) {
+    //    var helpText = HelpText.AutoBuild(result, h =>
+    //    {
+    //        h.AdditionalNewLineAfterOption = false;
+    //        h.Heading = "Myapp 2.0.0-beta"; //change header
+    //        h.Copyright = "Copyright (c) 2019 Global.com"; //change copyright text
+    //        return HelpText.DefaultParsingErrorsHandler(result, h);
+    //    }, e => e);
+    //    Console.WriteLine(helpText);
+    //}
 
-    private static void Run(Options opts) {
-        Console.WriteLine("Parser success");
+    private static void Run(RunOptions opts) {
+        Console.WriteLine("Parser success - Run");
+
+        CleanitolEngine cleanitol = new CleanitolEngine(opts.UserPlugins, opts.SystemPlugins, opts.CleanitolOutput, opts.ScriptPath);
+    }
+
+
+    /// <summary>
+    /// Create a new Cleanitol file containing all files in the chosen folder and its subfolders.
+    /// </summary>
+    private static void Create(CreateOptions opts) {
+        CleanitolEngine.CreateCleanitolList(opts.FolderPath, opts.ScriptPath);
     }
 
 
