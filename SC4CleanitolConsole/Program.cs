@@ -5,8 +5,8 @@ using SC4CleanitolConsole;
 
 public class Program {
 
-    private static readonly Version releaseVersion = new Version(0, 2);
-    private static readonly string releaseDate = "Dec 2024";
+    internal static readonly Version releaseVersion = new Version(0, 2);
+    internal static readonly string releaseDate = "Dec 2024";
 
     public static void Main(string[] args) {
 
@@ -48,6 +48,18 @@ public class Program {
         Console.WriteLine("Parser success - Run");
 
         CleanitolEngine cleanitol = new CleanitolEngine(opts.UserPlugins, opts.SystemPlugins, opts.CleanitolOutput, opts.ScriptPath);
+    }
+
+    private static void Backup() {
+        //first needs to check the existance of the backups database
+        //if it doesn't exist show an error that `run` needs to be executed first
+    }
+
+
+
+    private static void Export() {
+        //first needs to check the existance of the tgi database
+        //if it doesn't exist show an error that `run` needs to be executed first
     }
 
 

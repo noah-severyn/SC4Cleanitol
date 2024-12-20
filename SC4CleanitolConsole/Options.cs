@@ -36,17 +36,26 @@ namespace SC4CleanitolConsole {
         [Option('v', "verbose", Default = false, HelpText = "Whether to show all output to the screen or just actionable outputs.")]
         public bool DetailedOutput { get; set; }
     }
-    
+
+
+    [Verb("backup", HelpText = "Move the files requested for removal to <see cref=\"ScriptOutputDirectory\"/> and create the `undo.bat` and `CleanupSummary.html` files. ")]
+    internal class BackupOptions {
+
+    }
+
+
+    [Verb("export", HelpText = "Export the scanned TGIs to a SQLite database in the assigned Cleanitol folder.")]
+    internal class ExportOptions { 
+
+    }
 
 
     [Verb("create", HelpText = "Create a new Cleanitol file containing all files in the chosen folder and its subfolders.")]
     internal class CreateOptions {
-
         [Option('f', "input-folder", Required = true, HelpText = "Folder containing files to add to the script.")]
         public string FolderPath { get; set; }
 
         [Option('o', "output-file", Required = true, HelpText = "Path of the Cleanitol script to create.")]
         public string ScriptPath { get; set; }
-
     }
 }
