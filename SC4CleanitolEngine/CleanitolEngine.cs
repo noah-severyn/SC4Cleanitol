@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using csDBPF;
+using SC4CleanitolEngine;
+using SQLite;
 
 namespace SC4Cleanitol {
     public class CleanitolEngine {
@@ -20,6 +22,14 @@ namespace SC4Cleanitol {
             /// Scan additional folders, excluding Plugins folders.
             /// </summary>
             AdditionalFoldersExcludingPlugins = 2
+        }
+
+        /// <summary>
+        /// TGI export type.
+        /// </summary>
+        public enum ExportType {
+            CSV,
+            SQLite
         }
 
 
@@ -139,7 +149,7 @@ namespace SC4Cleanitol {
         private int _highestPctReached;
         private int _condDepsNotScanned;
         private List<FormattedRun> _runs;
-
+        private bool _isWindowsOS;
 
 
         /// <summary>
@@ -172,6 +182,7 @@ namespace SC4Cleanitol {
                 _scriptPath = scriptPath;
             }
 
+            _isWindowsOS = System.Runtime.InteropServices.RuntimeInformation.OSDescription.IndexOf("Windows") != -1;
             _additionalFolders = new List<string>();
             _scriptRules = new List<string>();
             _runs = new List<FormattedRun>();
@@ -531,7 +542,7 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and and create <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
+        /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and create the <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
         /// </summary>
         /// <param name="templateText">HTML template text.</param>
         public void BackupFiles(string templateText) {
@@ -557,7 +568,7 @@ namespace SC4Cleanitol {
                         File.Delete(archivePath);
                         File.Move(file, archivePath);
                     } finally {
-                        batchFile.AppendLine($"copy \"{fname}\" \"{file}\"");
+                        batchFile.AppendLine((_isWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
                     }
                 }
             }
@@ -580,16 +591,41 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Export the scanned TGIs to a CSV document in the assigned Cleanitol folder.
         /// </summary>
-        /// <returns>The path of the exported CSV file</returns>
-        public string ExportTGIs() {
-            StringBuilder list = new StringBuilder("Type,Group,Instance,\r\n");
-            foreach (TGI tgi in ListOfTGIs) {
-                list.AppendLine(tgi.ToString());
+        /// <param name="exportType">Export file type</param>
+        /// <returns>The path of the created export file</returns>
+        public string ExportTGIs(ExportType exportType) {
+            string filename = Path.Combine(ScriptOutputDirectory, "ScannedTGIs");
+            try {
+                if (File.Exists(filename)) {
+                    File.Delete(filename);
+                }
             }
-            string filename = "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd HHmm") + ".csv";
+            catch (Exception ex) {
+                _runs.Add(new FormattedRun($"Error: {ex.Message}\r\n", RunType.RedMono));
+                _runs.Add(new FormattedRun("Could not delete the TGI database at: ", RunType.RedStd));
+                _runs.Add(new FormattedRun(filename + "\r\n", RunType.RedMono));
+            }
+            
 
-            File.WriteAllText(Path.Combine(ScriptOutputDirectory, filename), list.ToString());
-            return Path.Combine(ScriptOutputDirectory, filename);
+            if (exportType == ExportType.CSV) {
+                filename = filename + ".csv";
+                StringBuilder list = new StringBuilder("Type,Group,Instance,\r\n");
+                foreach (TGI tgi in ListOfTGIs) {
+                    list.AppendLine(tgi.ToString());
+                }
+                File.WriteAllText(filename, list.ToString());
+                return Path.Combine(ScriptOutputDirectory, filename);
+            } 
+            else {
+                filename = filename + ".db";
+                SQLiteConnection db = DatabaseBuilder.CreateTGIdb(filename);
+                List<TGIItem> tgiItems = new List<TGIItem>();
+                foreach (TGI tgi in ListOfTGIs) {
+                    tgiItems.Add(new TGIItem(tgi));
+                }
+                db.InsertAll(tgiItems);
+            }
+            return filename;
         }
 
 
