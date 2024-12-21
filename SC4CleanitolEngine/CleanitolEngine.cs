@@ -534,7 +534,7 @@ namespace SC4Cleanitol {
                 _runs.Add(new FormattedRun($"Error: {ex.Message}\r\n", RunType.RedMono));
                 _runs.Add(new FormattedRun("Could not import rules from: ", RunType.RedStd));
                 _runs.Add(new FormattedRun(githubFilePath + "\r\n", RunType.RedMono));
-                return new string[0];
+                return Array.Empty<string>();
             }
             
         }
@@ -542,18 +542,21 @@ namespace SC4Cleanitol {
 
 
         /// <summary>
-        /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and create the <c>undo.bat</c> and <c>CleanupSummary.html</c> files. 
+        /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and create the html summary document and undo batch script. 
         /// </summary>
-        /// <param name="templateText">HTML template text.</param>
+        /// <param name="templateText">HTML template text</param>
         public void BackupFiles(string templateText) {
             if (FilesToRemove.Count == 0) {
                 return;
             }
             string outputDir = Path.Combine(_baseOutput, DateTime.Now.ToString("yyyyMMdd HHmmss"));
-            StringBuilder batchFile = new StringBuilder();
+            string batchPath = Path.Combine(outputDir, "undo");
+            SQLiteConnection db = DatabaseBuilder.CreateBackupdb(batchPath + ".db");
             Directory.CreateDirectory(outputDir);
 
+
             //Write batch undo file
+            StringBuilder batchContents = new StringBuilder();
             foreach (string file in FilesToRemove) {
                 string fname = Path.GetFileName(file);
                 string archivePath = Path.Combine(outputDir, fname);
@@ -568,11 +571,17 @@ namespace SC4Cleanitol {
                         File.Delete(archivePath);
                         File.Move(file, archivePath);
                     } finally {
-                        batchFile.AppendLine((_isWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
+                        batchContents.AppendLine((_isWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
+                        db.Insert(new BackupItem(fname, file));
                     }
                 }
             }
-            File.WriteAllText(Path.Combine(outputDir, "undo.bat"), batchFile.ToString());
+            if (_isWindowsOS) {
+                File.WriteAllText(batchPath + ".bat", batchContents.ToString());
+            } else {
+                File.WriteAllText(batchPath + ".sh", "#!/bin/bash\n" + batchContents.ToString());
+            }
+
 
             //Write HTML Template summary
             templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(_scriptPath));
@@ -591,13 +600,18 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Export the scanned TGIs to a CSV document in the assigned Cleanitol folder.
         /// </summary>
-        /// <param name="exportType">Export file type</param>
-        /// <returns>The path of the created export file</returns>
-        public string ExportTGIs(ExportType exportType) {
-            string filename = Path.Combine(ScriptOutputDirectory, "ScannedTGIs");
+        /// <param name="exportFolder">Folder path to create the export file in.</param>
+        /// <param name="exportType">Export file type. Determines export file's extension.</param>
+        /// <param name="tgisToExport">List of TGIs to export</param>
+        /// <returns>The path of the created export file.</returns>
+        public string ExportTGIs(string exportFolder, ExportType exportType, List<TGI> tgisToExport) {
+            string filename = Path.Combine(exportFolder, "ScannedTGIs", exportType == ExportType.CSV ? ".csv" : ".db");
             try {
-                if (File.Exists(filename)) {
-                    File.Delete(filename);
+                if (File.Exists(exportFolder + ".csv")) {
+                    File.Delete(exportFolder + ".csv");
+                }
+                if (File.Exists(exportFolder + ".db")) {
+                    File.Delete(exportFolder + ".db");
                 }
             }
             catch (Exception ex) {
@@ -608,19 +622,16 @@ namespace SC4Cleanitol {
             
 
             if (exportType == ExportType.CSV) {
-                filename = filename + ".csv";
                 StringBuilder list = new StringBuilder("Type,Group,Instance,\r\n");
-                foreach (TGI tgi in ListOfTGIs) {
+                foreach (TGI tgi in tgisToExport) {
                     list.AppendLine(tgi.ToString());
                 }
                 File.WriteAllText(filename, list.ToString());
-                return Path.Combine(ScriptOutputDirectory, filename);
             } 
             else {
-                filename = filename + ".db";
                 SQLiteConnection db = DatabaseBuilder.CreateTGIdb(filename);
                 List<TGIItem> tgiItems = new List<TGIItem>();
-                foreach (TGI tgi in ListOfTGIs) {
+                foreach (TGI tgi in tgisToExport) {
                     tgiItems.Add(new TGIItem(tgi));
                 }
                 db.InsertAll(tgiItems);

@@ -4,6 +4,12 @@ using SQLite;
 namespace SC4CleanitolEngine {
     internal static class DatabaseBuilder {
 
+
+        /// <summary>
+        /// Initialize and create the TGI database.
+        /// </summary>
+        /// <param name="dbpath"></param>
+        /// <returns></returns>
         public static SQLiteConnection CreateTGIdb(string dbpath) {
             //Open a new StreamWriter to create a file then immediately close - writing is handled by the SQLite functions
             File.CreateText(dbpath).Dispose();
@@ -13,6 +19,13 @@ namespace SC4CleanitolEngine {
         }
 
 
+        public static SQLiteConnection CreateBackupdb(string dbpath) {
+            //Open a new StreamWriter to create a file then immediately close - writing is handled by the SQLite functions
+            File.CreateText(dbpath).Dispose();
+            SQLiteConnection db = new SQLiteConnection(dbpath);
+            db.CreateTable<BackupItem>();
+            return db;
+        }
 
     }
 
@@ -52,12 +65,17 @@ namespace SC4CleanitolEngine {
         [Column("Id")]
         public uint Id { get; set; }
         [Column("From")]
-        public required string From { get; set; }
+        public string From { get; set; }
         [Column("To")]
-        public required string To { get; set; }
+        public string To { get; set; }
 
         public override string ToString() {
             return $"{Id}: {From}  →  {To}";
+        }
+
+        public BackupItem(string from, string to) {
+            From = from;
+            To = to;
         }
     }
 }
