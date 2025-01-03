@@ -149,7 +149,7 @@ namespace SC4Cleanitol {
         private int _highestPctReached;
         private int _condDepsNotScanned;
         private List<FormattedRun> _runs;
-        private bool _isWindowsOS;
+        private readonly bool _isWindowsOS;
 
 
         /// <summary>
@@ -544,12 +544,17 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and create the html summary document and undo batch script. 
         /// </summary>
+        /// <param name="filesToRemove">List of files to remove</param>
+        /// <param name="outputDirectory">Files will be moved into a subfolder of this parent folder named according to the time this operation was run.</param>
         /// <param name="templateText">HTML template text</param>
-        public void BackupFiles(string templateText) {
-            if (FilesToRemove.Count == 0) {
-                return;
+        /// <param name="isWindowsOS">Whether the current operating system is Windows (or Unix based Mac or Linux). Important for creating the batch undo file for the correct OS</param>
+        /// <param name="scriptPath">Path of the script used to create the backup list. Used in the HTML output file</param>
+        /// <returns>The name of the output directory, which is the <paramref name="outputDirectory"/> plus the current timestamp.</returns>
+        public static string? BackupFiles(List<string> filesToRemove, string outputDirectory, string templateText, bool isWindowsOS, string scriptPath = "") {
+            if (filesToRemove.Count == 0) {
+                return null;
             }
-            string outputDir = Path.Combine(_baseOutput, DateTime.Now.ToString("yyyyMMdd HHmmss"));
+            string outputDir = Path.Combine(outputDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             string batchPath = Path.Combine(outputDir, "undo");
             SQLiteConnection db = DatabaseBuilder.CreateBackupdb(batchPath + ".db");
             Directory.CreateDirectory(outputDir);
@@ -557,7 +562,7 @@ namespace SC4Cleanitol {
 
             //Write batch undo file
             StringBuilder batchContents = new StringBuilder();
-            foreach (string file in FilesToRemove) {
+            foreach (string file in filesToRemove) {
                 string fname = Path.GetFileName(file);
                 string archivePath = Path.Combine(outputDir, fname);
                 if (File.Exists(file)) {
@@ -571,12 +576,12 @@ namespace SC4Cleanitol {
                         File.Delete(archivePath);
                         File.Move(file, archivePath);
                     } finally {
-                        batchContents.AppendLine((_isWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
+                        batchContents.AppendLine((isWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
                         db.Insert(new BackupItem(fname, file));
                     }
                 }
             }
-            if (_isWindowsOS) {
+            if (isWindowsOS) {
                 File.WriteAllText(batchPath + ".bat", batchContents.ToString());
             } else {
                 File.WriteAllText(batchPath + ".sh", "#!/bin/bash\n" + batchContents.ToString());
@@ -584,15 +589,15 @@ namespace SC4Cleanitol {
 
 
             //Write HTML Template summary
-            templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(_scriptPath));
-            templateText = templateText.Replace("#COUNTFILES", FilesToRemove.Count.ToString());
+            templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(scriptPath));
+            templateText = templateText.Replace("#COUNTFILES", filesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");
-            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", FilesToRemove));
+            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", filesToRemove));
             templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
 
-            ScriptOutputDirectory = outputDir;
+            return outputDir;
         }
 
 

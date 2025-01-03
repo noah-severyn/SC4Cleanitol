@@ -2,6 +2,8 @@
 using SC4Cleanitol;
 using CommandLine;
 using SC4CleanitolConsole;
+using SQLite;
+using SC4CleanitolEngine;
 
 public class Program {
 
@@ -50,16 +52,25 @@ public class Program {
         CleanitolEngine cleanitol = new CleanitolEngine(opts.UserPlugins, opts.SystemPlugins, opts.CleanitolOutput, opts.ScriptPath);
     }
 
-    private static void Backup() {
-        //first needs to check the existance of the backups database
-        //if it doesn't exist show an error that `run` needs to be executed first
+    private static void Backup(BackupOptions opts) {
+        //There's no way of knowing where the backups db will be saved, so it must be passed as an argument.
+        SQLiteConnectionString options = new SQLiteConnectionString(opts.DbPath, false);
+        SQLiteConnection conn = new SQLiteConnection(options);
+
+    
+        string query = "SELECT * FROM Backups";
+        var results = conn.Query<BackupItem>(query);
+        conn.Close();
     }
 
 
 
     private static void Export() {
-        //first needs to check the existance of the tgi database
-        //if it doesn't exist show an error that `run` needs to be executed first
+        //There's no way of knowing where the tgi db will be saved, so it must be passed as an argument.
+
+        string backupPath = CleanitolEngine.BackupFiles(filesToRemove, outputDirectory, templateText, isWindowsOS, scriptPath);
+
+
     }
 
 

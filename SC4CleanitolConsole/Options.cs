@@ -40,7 +40,8 @@ namespace SC4CleanitolConsole {
 
     [Verb("backup", HelpText = "Move the files requested for removal to <see cref=\"ScriptOutputDirectory\"/> and create the `undo.bat` and `CleanupSummary.html` files. ")]
     internal class BackupOptions {
-
+        [Option('d', "db-path", Required = true, HelpText = "Path to the backup database created from the 'Run' command.")]
+        public string DbPath { get; set; }
     }
 
 

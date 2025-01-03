@@ -31,7 +31,7 @@ namespace SC4CleanitolEngine {
 
 
     /// <summary>
-    /// A TGI found in a scanned folder.
+    /// A TGI found in a scanned folder. Maps to a record in the <c>TGI</c> table created when scanning folders for TGIs.
     /// </summary>
     [Table("TGIs")]
     internal class TGIItem {
@@ -57,15 +57,21 @@ namespace SC4CleanitolEngine {
     }
 
     /// <summary>
-    /// An item for the undo batch file.
+    /// An item for the undo batch file. Maps to a record in the <c>Backups</c> table created when files are found that should be removed.
     /// </summary>
     [Table("Backups")]
-    internal class BackupItem {
+    public class BackupItem {
         [PrimaryKey, AutoIncrement]
         [Column("Id")]
         public uint Id { get; set; }
+        /// <summary>
+        /// The full path of the file in the current directory removed from its original location.
+        /// </summary>
         [Column("From")]
         public string From { get; set; }
+        /// <summary>
+        /// The full path of the original location of the file (where it will be moved back to).
+        /// </summary>
         [Column("To")]
         public string To { get; set; }
 
@@ -73,9 +79,23 @@ namespace SC4CleanitolEngine {
             return $"{Id}: {From}  →  {To}";
         }
 
+        /// <summary>
+        /// Instantiate a new instance of this class
+        /// </summary>
+        /// <param name="from">The full path of the file in the current directory removed from its original location.</param>
+        /// <param name="to">The full path of the original location of the file (where it will be moved back to).</param>
         public BackupItem(string from, string to) {
             From = from;
             To = to;
+        }
+
+        /// <summary>
+        /// Instantiate a new instance of this class
+        /// </summary>
+        /// <remarks>A parameterless constructor is required for SQLiteConnection query to return a list of this type.</remarks>
+        BackupItem() {
+            From = string.Empty;
+            To = string.Empty;
         }
     }
 }
