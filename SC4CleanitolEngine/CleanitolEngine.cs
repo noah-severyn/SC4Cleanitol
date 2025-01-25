@@ -33,87 +33,27 @@ namespace SC4Cleanitol {
         }
 
 
-        private string _userPlugins;
+        
         /// <summary>
         /// Location of the plugins folder found in the user's Documents folder.
         /// </summary>
-        public string UserPluginsDirectory {
-            get { return _userPlugins; }
-            set {
-                if (!Directory.Exists(value)) {
-                    _userPlugins = string.Empty;
-                } else {
-                    _userPlugins = value;
-                }
-            }
-        }
-
-        private string _systemPlugins;
+        public string UserPluginsDirectory { get; private set; }
         /// <summary>
         /// Location of the plugins folder found in the game install directory.
         /// </summary>
-        public string SystemPluginsDirectory {
-            get { return _systemPlugins; }
-            set {
-                if (!Directory.Exists(value)) {
-                    _systemPlugins = string.Empty;
-                } else {
-                    _systemPlugins = value;
-                }
-            }
-        }
-
-        private string _baseOutput;
+        public string SystemPluginsDirectory { get; private set; }
         /// <summary>
         /// Location files will be removed to and the output summary will be saved to.
         /// </summary>
-        public string BaseOutputDirectory {
-            get { return _baseOutput; }
-            set {
-                if (!Directory.Exists(value)) {
-                    _baseOutput = string.Empty;
-                } else {
-                    _baseOutput = value;
-                }
-            }
-        }
-
-        private string _scriptOutput;
+        public string BaseOutputDirectory { get; private set; }
         /// <summary>
         /// Location the last script run moved files to. Equivalent to the <see cref="BaseOutputDirectory"/> plus a date time stamp.
         /// </summary>
-        public string ScriptOutputDirectory { 
-            get { return _scriptOutput; }
-            private set { _scriptOutput = value; } 
-        }
-
-        private string _scriptPath;
+        public string ScriptOutputDirectory { get; private set; }
         /// <summary>
-        /// Path to the Cleanitol script to run.
+        /// Whether the current operating system is Windows or Unix-based (Mac/Linux).
         /// </summary>
-        public string ScriptPath {
-            get { return _scriptPath; }
-            set {
-                if (!File.Exists(value) && !value.StartsWith("https://raw.githubusercontent.com")) {
-                    _scriptPath = string.Empty;
-                } else {
-                    _scriptPath = value;
-                }
-            }
-        }
-
-        private List<string> _additionalFolders;
-        /// <summary>
-        /// A list of additional folders to scan in addition to the current plugins folders.
-        /// </summary>
-        public List<string> AdditionalFolders {
-            get { return _additionalFolders; }
-            set { _additionalFolders = value; }
-        }
-
-
-
-
+        public bool IsWindowsOS { get; private set; }
         /// <summary>
         /// Count of dependencies scanned.
         /// </summary>
@@ -127,11 +67,11 @@ namespace SC4Cleanitol {
         /// </summary>
         public int CountDepsMissing { get; private set; }
         /// <summary>
-        /// Files scanned by the script.
+        /// All file paths scanned by the script.
         /// </summary>
         public List<string> ListOfFiles { get; private set; }
         /// <summary>
-        /// File names trimmed from <see cref="ListOfFiles"/>.
+        /// All file names scanned by the script, extracted from <see cref="ListOfFiles"/>.
         /// </summary>
         public List<string> ListOfFileNames { get; private set; }
         /// <summary>
@@ -139,17 +79,27 @@ namespace SC4Cleanitol {
         /// </summary>
         public List<TGI> ListOfTGIs { get; private set; }
         /// <summary>
-        /// Files found to be removed from the script.
+        /// All file paths found by the script that should be removed.
         /// </summary>
-        public List<string> FilesToRemove { get; private set; }
-
+        public List<string> ListOfFilesToRemove { get; private set; }
+        /// <summary>
+        /// Path for the created log file.
+        /// </summary>
         public string LogPath { get; private set; }
+
+
+
+        /// <summary>
+        /// A list of additional folders to scan in addition to the current plugins folders.
+        /// </summary>
+        public List<string> AdditionalFolders { get; set; }
+
+
 
         private List<string> _scriptRules;
         private int _highestPctReached;
         private int _condDepsNotScanned;
         private List<FormattedRun> _runs;
-        private readonly bool _isWindowsOS;
 
 
         /// <summary>
@@ -161,35 +111,30 @@ namespace SC4Cleanitol {
         /// <param name="scriptPath">Path to the cleanitol script to run.</param>
         public CleanitolEngine(string userPluginsDirectory, string systemPluginsDirectory, string outputDirectory, string scriptPath) {
             if (!Directory.Exists(userPluginsDirectory)) {
-                _userPlugins = string.Empty;
+                UserPluginsDirectory = string.Empty;
             } else {
-                _userPlugins = userPluginsDirectory;
+                UserPluginsDirectory = userPluginsDirectory;
             }
             if (!Directory.Exists(systemPluginsDirectory)) {
-                _systemPlugins = string.Empty;
+                SystemPluginsDirectory = string.Empty;
             } else {
-                _systemPlugins = systemPluginsDirectory;
+                SystemPluginsDirectory = systemPluginsDirectory;
             }
             if (!Directory.Exists(outputDirectory)) {
-                _baseOutput = string.Empty;
+                BaseOutputDirectory = string.Empty;
             } else {
-                _baseOutput = outputDirectory;
+                BaseOutputDirectory = outputDirectory;
             }
-            _scriptOutput = _baseOutput;
-            if (!File.Exists(scriptPath)) {
-                _scriptPath = string.Empty;
-            } else {
-                _scriptPath = scriptPath;
-            }
+            ScriptOutputDirectory = BaseOutputDirectory;
 
-            _isWindowsOS = System.Runtime.InteropServices.RuntimeInformation.OSDescription.IndexOf("Windows") != -1;
-            _additionalFolders = new List<string>();
+            IsWindowsOS = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Contains("Windows");
+            AdditionalFolders = new List<string>();
             _scriptRules = new List<string>();
             _runs = new List<FormattedRun>();
             ListOfFiles = new List<string>();
             ListOfFileNames = new List<string>();
             ListOfTGIs = new List<TGI>();
-            FilesToRemove = new List<string>();
+            ListOfFilesToRemove = new List<string>();
 
             LogPath = Path.Combine(BaseOutputDirectory, "SC4Cleanitol_Error_Log.txt");
             if (BaseOutputDirectory != string.Empty && !Directory.Exists(BaseOutputDirectory)) {
@@ -202,6 +147,7 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Execute the script and return the results of each rule.
         /// </summary>
+        /// <param name="scriptPath">Path of the script to be run.</param>
         /// <param name="totalFiles">The Progress tracker for the total number of files.</param>
         /// <param name="progressFiles">The progress tracker for the current progress of scanned files.</param>
         /// <param name="progressTGIs">The progress tracker for the current progress of scanned TGIs.</param>
@@ -210,25 +156,34 @@ namespace SC4Cleanitol {
         /// <param name="extraFoldersOption">Specify to include the additional folders with the plugins folder in the scan.</param>
         /// <param name="verboseOutput">Specify to return a message for every rule, or only return a message if an action needs to be taken.</param>
         /// <returns>A series of formatted messages detailing the result of each script rule.</returns>
-        public List<FormattedRun> RunScript(IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, FolderOptions extraFoldersOption, bool verboseOutput = true) {
+        public List<FormattedRun> RunScript(string scriptPath, IProgress<int> totalFiles, IProgress<int> progressFiles, IProgress<int> progressTGIs, bool updateTGIdatabase, bool includeSystemPlugins, FolderOptions extraFoldersOption, bool verboseOutput = true) {
             CountDepsFound = 0;
             CountDepsMissing = 0;
             CountDepsScanned = 0;
-            FilesToRemove.Clear();
+            ListOfFilesToRemove.Clear();
             ListOfFiles.Clear();
             ListOfFileNames.Clear();
             _condDepsNotScanned = 0;
             _runs.Clear();
             List<FormattedRun> fileErrors = new List<FormattedRun>();
             using StreamWriter sw = new StreamWriter(LogPath, false);
-            if (_scriptPath.StartsWith("https://raw.githubusercontent.com")) {
-                _scriptRules.AddRange(ImportFromGithub(_scriptPath));
-            } else {
-                _scriptRules = File.ReadAllLines(_scriptPath).ToList();
-            }
-            
 
-            //add in any rules from the remote script, if any
+            if (!File.Exists(scriptPath) && !scriptPath.StartsWith("https://raw.githubusercontent.com")) {
+                _runs.Add(new FormattedRun("The script ", RunType.RedStd));
+                _runs.Add(new FormattedRun(scriptPath, RunType.RedMono));
+                _runs.Add(new FormattedRun(" does not exist or is pointing to an invalid Url.", RunType.RedMono));
+                return _runs;
+            }
+
+
+            //Initially populate the script rules with the file or Url
+            if (scriptPath.StartsWith("https://raw.githubusercontent.com")) {
+                _scriptRules.AddRange(ImportFromGithub(scriptPath));
+            } else {
+                _scriptRules = File.ReadAllLines(scriptPath).ToList();
+            }
+
+            //Subsequently insert any rules from the remote script, if any
             IEnumerable<string> imports = _scriptRules.AsParallel().Where(item => item.Replace(" ", string.Empty).StartsWith("@https://raw.githubusercontent.com"));
             foreach (string import in imports) {
                 _scriptRules.InsertRange(_scriptRules.IndexOf(import) + 1, ImportFromGithub(import.Replace(" ", string.Empty).Substring(1)));
@@ -239,24 +194,24 @@ namespace SC4Cleanitol {
             try {
                 switch (extraFoldersOption) {
                     case FolderOptions.PluginsOnly: //Plugins Only
-                        ListOfFiles.AddRange(Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList());
+                        ListOfFiles.AddRange(Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories).ToList());
                         if (includeSystemPlugins) {
-                            ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
+                            ListOfFiles.AddRange(Directory.EnumerateFiles(SystemPluginsDirectory, "*", SearchOption.AllDirectories).ToList());
                         }
                         break;
                     case FolderOptions.AdditionalFoldersIncludingPlugins:
-                        ListOfFiles.AddRange(Directory.EnumerateFiles(_userPlugins, "*", SearchOption.AllDirectories).ToList());
+                        ListOfFiles.AddRange(Directory.EnumerateFiles(UserPluginsDirectory, "*", SearchOption.AllDirectories).ToList());
                         if (includeSystemPlugins) {
-                            ListOfFiles.AddRange(Directory.EnumerateFiles(_systemPlugins, "*", SearchOption.AllDirectories).ToList());
+                            ListOfFiles.AddRange(Directory.EnumerateFiles(SystemPluginsDirectory, "*", SearchOption.AllDirectories).ToList());
                         }
-                        foreach (string folder in _additionalFolders) {
+                        foreach (string folder in AdditionalFolders) {
                             if (Path.Exists(folder)) {
                                 ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
                             }
                         }
                         break;
                     case FolderOptions.AdditionalFoldersExcludingPlugins:
-                        foreach (string folder in _additionalFolders) {
+                        foreach (string folder in AdditionalFolders) {
                             if (Path.Exists(folder)) {
                                 ListOfFiles.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
                             }
@@ -299,7 +254,7 @@ namespace SC4Cleanitol {
                             
                         sw.WriteLine("=============== Log Start ===============");
                         sw.WriteLine("Time: " + DateTime.Now);
-                        sw.WriteLine("Script: " + ScriptPath);
+                        sw.WriteLine("Script: " + scriptPath);
                         sw.WriteLine("File: " + filepath);
                         sw.WriteLine($"Error: {ex.GetType()}: {ex.Message}");
                         sw.WriteLine("Trace: \r\n" + ex.StackTrace);
@@ -328,15 +283,15 @@ namespace SC4Cleanitol {
                 EvaluateRule(_scriptRules[idx].Trim(), verboseOutput);
             }
             _runs.Add(new FormattedRun("\r\n\r\n"));
-            _runs.Insert(3, new FormattedRun($"{FilesToRemove.Count} files to remove.\r\n", RunType.BlackMonoBold));
+            _runs.Insert(3, new FormattedRun($"{ListOfFilesToRemove.Count} files to remove.\r\n", RunType.BlackMonoBold));
             _runs.Insert(4, new FormattedRun($"{CountDepsFound}/{CountDepsScanned} dependencies found." + (_condDepsNotScanned > 0 ? $" ({_condDepsNotScanned} dependencies not scanned due to their conditional rules not being met)" : "") +  "\r\n", RunType.BlueMono));
             _runs.Insert(5, new FormattedRun($"{CountDepsMissing}/{CountDepsScanned} dependencies missing.\r\n", RunType.RedMono));
             _runs.Insert(6, new FormattedRun("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\r\n", RunType.BlackMono));
 
             if (fileErrors.Count > 0) {
-                fileErrors.Add(new FormattedRun("Consult the ", RunType.RedMono));
-                fileErrors.Add(new FormattedRun("error log", RunType.Hyperlink, LogPath));
-                fileErrors.Add(new FormattedRun(" located in the output directory for detailed troubleshooting information.\r\n\r\n", RunType.RedMono));
+                _runs.Add(new FormattedRun("Consult the ", RunType.RedMono));
+                _runs.Add(new FormattedRun("error log", RunType.Hyperlink, LogPath));
+                _runs.Add(new FormattedRun(" located in the output directory for detailed troubleshooting information.\r\n\r\n", RunType.RedMono));
                 _runs.AddRange(fileErrors);
             }
 
@@ -347,9 +302,10 @@ namespace SC4Cleanitol {
         /// <summary>
         /// Evaluate whether any of the rules in this script rely on TGI dependencies, either as the search item or as the condition.
         /// </summary>
+        /// <param name="scriptPath">Path of the script to examine.</param>
         /// <returns>TRUE if any of the rules requires a TGI; FALSE if all rules involve file names</returns>
-        public bool ScriptHasTGIRules() {
-            _scriptRules = File.ReadAllLines(_scriptPath).ToList();
+        public bool ScriptHasTGIRules(string scriptPath) {
+            _scriptRules = File.ReadAllLines(scriptPath).ToList();
             string rule;
             ScriptRule.RuleType rt;
             for (int idx = 0; idx < _scriptRules.Count; idx++) {
@@ -437,7 +393,7 @@ namespace SC4Cleanitol {
                     _runs.Add(new FormattedRun(" (" + filename + ")", RunType.BlueMono));
                     _runs.Add(new FormattedRun(" found in ", RunType.BlackStd));
                     _runs.Add(new FormattedRun(Path.GetDirectoryName(file) + "\r\n", RunType.RedStd));
-                    FilesToRemove.Add(file);
+                    ListOfFilesToRemove.Add(file);
                 }
             }
         }
@@ -545,16 +501,14 @@ namespace SC4Cleanitol {
         /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and create the html summary document and undo batch script. 
         /// </summary>
         /// <param name="filesToRemove">List of files to remove</param>
-        /// <param name="outputDirectory">Files will be moved into a subfolder of this parent folder named according to the time this operation was run.</param>
         /// <param name="templateText">HTML template text</param>
-        /// <param name="isWindowsOS">Whether the current operating system is Windows (or Unix based Mac or Linux). Important for creating the batch undo file for the correct OS</param>
         /// <param name="scriptPath">Path of the script used to create the backup list. Used in the HTML output file</param>
-        /// <returns>The name of the output directory, which is the <paramref name="outputDirectory"/> plus the current timestamp.</returns>
-        public static string? BackupFiles(List<string> filesToRemove, string outputDirectory, string templateText, bool isWindowsOS, string scriptPath = "") {
-            if (filesToRemove.Count == 0) {
+        /// <returns>The name of the output directory, which is the <see cref="ScriptOutputDirectory"/> plus the current timestamp.</returns>
+        public string? BackupFiles(string templateText, string scriptPath = "") {
+            if (ListOfFilesToRemove.Count == 0) {
                 return null;
             }
-            string outputDir = Path.Combine(outputDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
+            string outputDir = Path.Combine(BaseOutputDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             string batchPath = Path.Combine(outputDir, "undo");
             SQLiteConnection db = DatabaseBuilder.CreateBackupdb(batchPath + ".db");
             Directory.CreateDirectory(outputDir);
@@ -562,7 +516,7 @@ namespace SC4Cleanitol {
 
             //Write batch undo file
             StringBuilder batchContents = new StringBuilder();
-            foreach (string file in filesToRemove) {
+            foreach (string file in ListOfFilesToRemove) {
                 string fname = Path.GetFileName(file);
                 string archivePath = Path.Combine(outputDir, fname);
                 if (File.Exists(file)) {
@@ -576,12 +530,12 @@ namespace SC4Cleanitol {
                         File.Delete(archivePath);
                         File.Move(file, archivePath);
                     } finally {
-                        batchContents.AppendLine((isWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
+                        batchContents.AppendLine((IsWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
                         db.Insert(new BackupItem(fname, file));
                     }
                 }
             }
-            if (isWindowsOS) {
+            if (IsWindowsOS) {
                 File.WriteAllText(batchPath + ".bat", batchContents.ToString());
             } else {
                 File.WriteAllText(batchPath + ".sh", "#!/bin/bash\n" + batchContents.ToString());
@@ -590,10 +544,10 @@ namespace SC4Cleanitol {
 
             //Write HTML Template summary
             templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(scriptPath));
-            templateText = templateText.Replace("#COUNTFILES", filesToRemove.Count.ToString());
+            templateText = templateText.Replace("#COUNTFILES", ListOfFilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");
-            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", filesToRemove));
+            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", ListOfFilesToRemove));
             templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
 
@@ -652,13 +606,15 @@ namespace SC4Cleanitol {
         /// <param name="folderPath">Folder containing files to add to the script</param>
         /// <param name="scriptPath">Full path of Cleanitol file to create</param>
         public static void CreateCleanitolList(string folderPath, string scriptPath) {
-            List<string> fileNames = new List<string>();
+            List<string> newRules = new List<string>();
             DirectoryInfo di = new DirectoryInfo(folderPath);
             FileInfo[] files = di.GetFiles("*", SearchOption.AllDirectories);
             foreach (FileInfo file in files) {
-                fileNames.Add(file.Name);
+                newRules.Add(">#" + file.Name);
+                newRules.AddRange(File.ReadAllLines(file.FullName));
+                newRules.Add("");
             }
-            File.WriteAllLines(scriptPath, fileNames);
+            File.WriteAllLines(scriptPath, newRules);
         }
     }
 }
