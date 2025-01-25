@@ -54,13 +54,21 @@ public class Program {
 
     private static void Backup(BackupOptions opts) {
         //There's no way of knowing where the backups db will be saved, so it must be passed as an argument.
-        SQLiteConnectionString options = new SQLiteConnectionString(opts.DbPath, false);
-        SQLiteConnection conn = new SQLiteConnection(options);
+        //SQLiteConnectionString options = new SQLiteConnectionString(opts.DbPath, false);
+        //SQLiteConnection conn = new SQLiteConnection(options);
 
     
-        string query = "SELECT * FROM Backups";
-        var results = conn.Query<BackupItem>(query);
-        conn.Close();
+        //string query = "SELECT * FROM Backups";
+        //var results = conn.Query<BackupItem>(query);
+        //List<string> filesToRemove
+
+        //The run command gives us only a list of files to remove. BackupFiles creates the database of files to remove and their new location
+
+        string backupPath = CleanitolEngine.BackupFiles(filesToRemove, outputDirectory, templateText, isWindowsOS, scriptPath);
+
+
+
+        //conn.Close();
     }
 
 
@@ -68,7 +76,6 @@ public class Program {
     private static void Export() {
         //There's no way of knowing where the tgi db will be saved, so it must be passed as an argument.
 
-        string backupPath = CleanitolEngine.BackupFiles(filesToRemove, outputDirectory, templateText, isWindowsOS, scriptPath);
 
 
     }
