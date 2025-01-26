@@ -33,19 +33,49 @@ namespace SC4Cleanitol {
         }
 
 
-        
+
+        private string _userPlugins;
         /// <summary>
         /// Location of the plugins folder found in the user's Documents folder.
         /// </summary>
-        public string UserPluginsDirectory { get; private set; }
+        public string UserPluginsDirectory {
+            get { return _userPlugins; }
+            set {
+                if (Directory.Exists(value)) {
+                    _userPlugins = value;
+                } else {
+                    _userPlugins = string.Empty;
+                }
+            }
+        }
+        private string _systemPlugins;
         /// <summary>
         /// Location of the plugins folder found in the game install directory.
         /// </summary>
-        public string SystemPluginsDirectory { get; private set; }
+        public string SystemPluginsDirectory {
+            get { return _systemPlugins; }
+            set {
+                if (Directory.Exists(value)) {
+                    _systemPlugins = value;
+                } else {
+                    _systemPlugins = string.Empty;
+                }
+            }
+        }
+        private string _baseOutput;
         /// <summary>
         /// Location files will be removed to and the output summary will be saved to.
         /// </summary>
-        public string BaseOutputDirectory { get; private set; }
+        public string BaseOutputDirectory {
+            get { return _baseOutput; }
+            set {
+                if (Directory.Exists(value)) {
+                    _baseOutput = value;
+                } else {
+                    _baseOutput = string.Empty;
+                }
+            }
+        }
         /// <summary>
         /// Location the last script run moved files to. Equivalent to the <see cref="BaseOutputDirectory"/> plus a date time stamp.
         /// </summary>
