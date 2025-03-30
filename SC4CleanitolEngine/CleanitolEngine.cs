@@ -406,7 +406,7 @@ namespace SC4Cleanitol {
 
         private void EvaluateRemovalRule(string ruleText, bool verboseOutput) {
             ruleText = ruleText.Replace("*", string.Empty);
-            IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.Contains("\\" + ruleText));
+            IEnumerable<string> matchingFiles = ListOfFiles.AsParallel().Where(item => item.EndsWith(ruleText));
 
             if (!matchingFiles.Any() && verboseOutput) {
                 _runs.Add(new FormattedRun(ruleText, RunType.BlueStd));

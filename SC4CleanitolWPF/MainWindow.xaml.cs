@@ -30,8 +30,8 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(1, 0, 1);
-        internal readonly string releaseDate = "Jan 2025"; 
+        internal readonly Version releaseVersion = new Version(1, 0, 2);
+        internal readonly string releaseDate = "Mar 2025"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
