@@ -30,8 +30,8 @@ namespace SC4CleanitolWPF {
         /// </summary>
         public bool DetailedOutput { get; set; } = false;
 
-        internal readonly Version releaseVersion = new Version(1, 0, 2);
-        internal readonly string releaseDate = "Mar 2025"; 
+        internal readonly Version releaseVersion = new Version(1, 0, 3);
+        internal readonly string releaseDate = "Apr 2025"; 
         private readonly Paragraph log;
         private readonly FlowDocument doc;
         private CleanitolEngine cleanitol;
@@ -257,29 +257,35 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void BackupFiles_Click(object sender, RoutedEventArgs e) {
-            cleanitol.BackupFiles(Properties.Resources.SummaryTemplate, null);
-            log.Inlines.Add(ConvertRun(new FormattedRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
+            try {
+                cleanitol.BackupFiles(Properties.Resources.SummaryTemplate, null);
+                log.Inlines.Add(ConvertRun(new FormattedRun("\r\nRemoval Summary\r\n", RunType.BlackHeading)));
 
-            Hyperlink link;
-            if (cleanitol.ListOfFilesToRemove.Count > 0) {
-                log.Inlines.Add(ConvertRun(new FormattedRun($"{cleanitol.ListOfFilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
-                link = new Hyperlink(new Run(cleanitol.ScriptOutputDirectory + "\r\n")) {
-                    NavigateUri = new Uri(cleanitol.ScriptOutputDirectory)
+                Hyperlink link;
+                if (cleanitol.ListOfFilesToRemove.Count > 0) {
+                    log.Inlines.Add(ConvertRun(new FormattedRun($"{cleanitol.ListOfFilesToRemove.Count} files removed from plugins. Files moved to: ", RunType.BlackStd)));
+                    link = new Hyperlink(new Run(cleanitol.ScriptOutputDirectory + "\r\n")) {
+                        NavigateUri = new Uri(cleanitol.ScriptOutputDirectory)
+                    };
+                    link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                    log.Inlines.Add(link);
+                }
+                log.Inlines.Add(ConvertRun(new FormattedRun("To undo this action, run the 'undo.bat' script in this folder.\r\n", RunType.BlackStd)));
+                link = new Hyperlink(ConvertRun(new FormattedRun("View Summary Report", RunType.BlueMono))) {
+                    NavigateUri = new Uri(Path.Combine(cleanitol.ScriptOutputDirectory, "CleanupSummary.html"))
                 };
                 link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
                 log.Inlines.Add(link);
-            }
-            log.Inlines.Add(ConvertRun(new FormattedRun("To undo this action, run the 'undo.bat' script in this folder.\r\n", RunType.BlackStd)));
-            link = new Hyperlink(ConvertRun(new FormattedRun("View Summary Report",RunType.BlueMono))) {
-                NavigateUri = new Uri(Path.Combine(cleanitol.ScriptOutputDirectory, "CleanupSummary.html"))
-            };
-            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-            log.Inlines.Add(link);
-            log.Inlines.Add(new Run("\r\n"));
+                log.Inlines.Add(new Run("\r\n"));
 
-            doc.Blocks.Add(log);
-            BackupFiles.IsEnabled = false;
-            ScriptOutput.ScrollToEnd();
+                doc.Blocks.Add(log);
+                BackupFiles.IsEnabled = false;
+                ScriptOutput.ScrollToEnd();
+            }
+            catch (Exception ex) {
+                WriteErrorLog(ex);
+                return;
+            }
         }
 
         /// <summary>
@@ -288,40 +294,44 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void CreateCleanitol_Click(object sender, RoutedEventArgs e) {
-            string? folderpath;
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog {
-                Title = "Choose folder containing the scripts",
-                InitialDirectory = cleanitol.UserPluginsDirectory,
-                IsFolderPicker = true
-            };
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
-                folderpath = dialog.FileName;
-            } else {
+            try {
+                string? folderpath;
+                CommonOpenFileDialog dialog = new CommonOpenFileDialog {
+                    Title = "Choose folder containing the scripts",
+                    InitialDirectory = cleanitol.UserPluginsDirectory,
+                    IsFolderPicker = true
+                };
+                if (dialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                    folderpath = dialog.FileName;
+                } else {
+                    return;
+                }
+
+                string? scriptname;
+                CommonSaveFileDialog dialog2 = new CommonSaveFileDialog {
+                    Title = "Save new script as",
+                    InitialDirectory = cleanitol.BaseOutputDirectory,
+
+                    AlwaysAppendDefaultExtension = true,
+                    DefaultExtension = ".txt",
+
+                };
+                dialog2.Filters.Add(new CommonFileDialogFilter("Text files", ".txt"));
+                if (dialog2.ShowDialog() == CommonFileDialogResult.Ok) {
+                    scriptname = dialog2.FileName;
+                } else {
+                    return;
+                }
+
+                if (folderpath is not null && scriptname is not null) {
+                    CleanitolEngine.CreateCleanitolList(folderpath, scriptname);
+                    MessageBox.Show("Script created successfully.", "", MessageBoxButton.OK);
+                }
+            }
+            catch (Exception ex) {
+                WriteErrorLog(ex);
                 return;
             }
-
-            string? scriptname;
-            CommonSaveFileDialog dialog2 = new CommonSaveFileDialog {
-                Title = "Save new script as",
-                InitialDirectory = cleanitol.BaseOutputDirectory,
-                
-                AlwaysAppendDefaultExtension = true,
-                DefaultExtension = ".txt",
-                
-            };
-            dialog2.Filters.Add(new CommonFileDialogFilter("Text files", ".txt"));
-            if (dialog2.ShowDialog() == CommonFileDialogResult.Ok) {
-                scriptname = dialog2.FileName;
-            } else {
-                return;
-            }
-
-            if (folderpath is not null &&  scriptname is not null) {
-                CleanitolEngine.CreateCleanitolList(folderpath, scriptname);
-                MessageBox.Show("Script created successfully.", "", MessageBoxButton.OK);
-            }
-
-
         }
 
         /// <summary>
@@ -340,19 +350,38 @@ namespace SC4CleanitolWPF {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ExportTGIs_Click(object sender, RoutedEventArgs e) {
-            string exportFilePath = cleanitol.ExportTGIs(cleanitol.BaseOutputDirectory,CleanitolEngine.ExportType.CSV, cleanitol.ListOfTGIs);
+            try {
+                string exportFilePath = cleanitol.ExportTGIs(cleanitol.BaseOutputDirectory, CleanitolEngine.ExportType.CSV, cleanitol.ListOfTGIs);
 
-            log.Inlines.Add(ConvertRun(new FormattedRun("\r\nTGI Export\r\n", RunType.BlackHeading)));
-            log.Inlines.Add(ConvertRun(new FormattedRun($"Scanned TGIs exported to CSV. ", RunType.BlackStd)));
-            Hyperlink link = new Hyperlink(ConvertRun(new FormattedRun("Open Export File", RunType.BlueMono))) {
-                NavigateUri = new Uri(exportFilePath)
-            };
-            link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
-            log.Inlines.Add(link);
-            log.Inlines.Add(new Run("\r\n"));
+                log.Inlines.Add(ConvertRun(new FormattedRun("\r\nTGI Export\r\n", RunType.BlackHeading)));
+                log.Inlines.Add(ConvertRun(new FormattedRun($"Scanned TGIs exported to CSV. ", RunType.BlackStd)));
+                Hyperlink link = new Hyperlink(ConvertRun(new FormattedRun("Open Export File", RunType.BlueMono))) {
+                    NavigateUri = new Uri(exportFilePath)
+                };
+                link.RequestNavigate += new RequestNavigateEventHandler(OnRequestNavigate);
+                log.Inlines.Add(link);
+                log.Inlines.Add(new Run("\r\n"));
 
-            doc.Blocks.Add(log);
-            ScriptOutput.ScrollToEnd();
+                doc.Blocks.Add(log);
+                ScriptOutput.ScrollToEnd();
+            }
+            catch (Exception ex) {
+                WriteErrorLog(ex);
+                return;
+            }
+            
+        }
+
+        private void WriteErrorLog(Exception ex) {
+            using StreamWriter sw = new StreamWriter(cleanitol.LogPath, true);
+            sw.WriteLine("=============== Log Start ===============");
+            sw.WriteLine("Time: " + DateTime.Now);
+            sw.WriteLine($"Error: {ex.GetType()}: {ex.Message}");
+            sw.WriteLine("Trace: \r\n" + ex.StackTrace);
+            sw.WriteLine("================ Log End ================");
+            log.Inlines.Add(ConvertRun(new FormattedRun($"\r\nError: {ex.GetType()}: {ex.Message}\r\n", RunType.RedMono)));
+            log.Inlines.Add(ConvertRun(new FormattedRun("Log details written to ", RunType.RedMono)));
+            log.Inlines.Add(ConvertRun(new FormattedRun(cleanitol.LogPath, RunType.RedStd)));
         }
     }
 }
