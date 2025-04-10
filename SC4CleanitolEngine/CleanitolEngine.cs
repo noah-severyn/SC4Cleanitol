@@ -540,7 +540,7 @@ namespace SC4Cleanitol {
             }
             string outputDir = Path.Combine(BaseOutputDirectory, DateTime.Now.ToString("yyyyMMdd HHmmss"));
             string batchPath = Path.Combine(outputDir, "undo");
-            SQLiteConnection db = DatabaseBuilder.CreateBackupdb(batchPath + ".db");
+            //SQLiteConnection db = DatabaseBuilder.CreateBackupdb(batchPath + ".db");
             Directory.CreateDirectory(outputDir);
 
 
@@ -561,7 +561,7 @@ namespace SC4Cleanitol {
                         File.Move(file, archivePath);
                     } finally {
                         batchContents.AppendLine((IsWindowsOS ? "copy" : "cp") + $" \"{fname}\" \"{file}\"");
-                        db.Insert(new BackupItem(fname, file));
+                        //db.Insert(new BackupItem(fname, file));
                     }
                 }
             }
@@ -581,6 +581,7 @@ namespace SC4Cleanitol {
             templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
 
+            ScriptOutputDirectory = outputDir;
             return outputDir;
         }
 
