@@ -30,8 +30,7 @@
 				 VerticalAlignment="Top"
 				 Margin="95,10,115,0"
 				 Height="24"
-				 VerticalContentAlignment="Center"
-				 LostFocus="ScriptPathTextBox_LostFocus" />
+				 VerticalContentAlignment="Center" />
 		<Button x:Name="ChooseScript"
 				Grid.Row="0"
 				Height="24"

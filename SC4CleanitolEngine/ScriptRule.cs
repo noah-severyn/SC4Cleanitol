@@ -87,8 +87,12 @@ namespace SC4Cleanitol {
                 } else {
                     SourceName = SearchItem;
                 }
-                
-                SourceURL = ruleText.Substring(httpLocn).Trim();
+                if (httpLocn == -1) {
+                    SourceURL = "Unspecified URL";
+                } else {
+                    SourceURL = ruleText.Substring(httpLocn).Trim();
+                }
+                    
 
                 // The script can allow for any separator between TGI numbers, but csDBPF uses comma space ", ". Automatically reformat the script format behind the scenes to allow for equality comparison.
                 if (IsSearchItemTGI) {
@@ -168,6 +172,8 @@ namespace SC4Cleanitol {
                     return RuleType.Import;
                 } else if (rule.Contains("??")) {
                     return RuleType.ConditionalDependency;
+                } else if (rule.Contains(';')) {
+                    return RuleType.Dependency;
                 } else {
                     return RuleType.Invalid;
                 }

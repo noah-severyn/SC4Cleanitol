@@ -15,5 +15,6 @@ Visit the [releases](https://github.com/noah-severyn/SC4Cleanitol/releases) page
 ## Projects
 This repository is divided into multiple different projects, each with a different implementation.
 - **SC4CleanitolEngine** stores the code that actually implements the Cleanitol functionality. Other implementations in this repository reference this project.
-- **SC4CleanitolConsole** is a cross-platform console based implementation.
-- **SC4CleanitolWPF** is a Windows-only UI application suitable for Windows 10 or higher.
+- **SC4CleanitolConsole** is a cross-platform console based implementation. ⚠ Incomplete! ⚠ 
+- **SC4CleanitolWPF** is a Windows-only UI application suitable for Windows 10 or higher. ⚠ Buggy! ⚠ 
+- **SC4CleanitolGUI** is a cross-platform UI application.
