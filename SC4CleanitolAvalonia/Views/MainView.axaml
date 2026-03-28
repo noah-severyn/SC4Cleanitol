@@ -1,0 +1,185 @@
+<UserControl
+	x:Class="SC4CleanitolAvalonia.Views.MainView"
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:SC4CleanitolAvalonia.ViewModels"
+	d:DesignHeight="550"
+	d:DesignWidth="800"
+	x:DataType="vm:MainViewModel"
+	mc:Ignorable="d">
+	<Design.DataContext>
+		<!--
+			This only sets the DataContext for the previewer in an IDE,
+			to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+		-->
+		<vm:MainViewModel />
+	</Design.DataContext>
+
+	<Grid RowDefinitions="Auto,Auto,*">
+		<!--  Row 0 : Header  -->
+		<Expander
+			Grid.Row="0"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<StackPanel Orientation="Horizontal">
+					<Label Classes="icon" Content="&#xe270;" />
+					<Label Content="Configuration" />
+				</StackPanel>
+			</Expander.Header>
+			<StackPanel Orientation="Vertical" Spacing="4">
+
+				<Label Content="User plugins folder. This is the folder in My Documents (or equivalent)." />
+				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+					<TextBox x:Name="UserPluginsPath"
+						Grid.Column="0"
+						FontFamily="Consolas, Courier New, monospace"
+						Text="{Binding UserPluginsPath}" />
+					<Button x:Name="ChooseUserPluginsPath"
+						Grid.Column="1"
+						Command="{Binding ChooseUserPluginsFolderCommand}"
+						ToolTip.Tip="Choose folder">
+						<StackPanel Orientation="Horizontal">
+							<Label Classes="icon" Content="&#xe258;" />
+						</StackPanel>
+					</Button>
+				</Grid>
+
+				<Label Content="System plugins folder. This is the folder your game install location." />
+				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+					<TextBox x:Name="SystemPluginsPath"
+						Grid.Column="0"
+						FontFamily="Consolas, Courier New, monospace"
+						Text="{Binding SystemPluginsPath}" />
+					<Button x:Name="ChooseSystemPluginsPath"
+						Grid.Column="1"
+						Command="{Binding ChooseSystemPluginsFolderCommand}"
+						ToolTip.Tip="Choose folder">
+						<StackPanel Orientation="Horizontal">
+							<Label Classes="icon" Content="&#xe258;" />
+						</StackPanel>
+					</Button>
+				</Grid>
+
+				<CheckBox x:Name="IncludeSystemPlugins"
+					Content="Include System Plugins in the scan."
+					IsChecked="{Binding IncludeSystemPlugins}" />
+
+				<Label Content="Cleanitol output path. Location where files are moved to." />
+				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+					<TextBox x:Name="OutputPath"
+						Grid.Column="0"
+						FontFamily="Consolas, Courier New, monospace"
+						Text="{Binding OutputPath}" />
+					<Button x:Name="ChooseOutputPath"
+						Grid.Column="1"
+						Command="{Binding ChooseOutputFolderCommand}"
+						ToolTip.Tip="Choose folder">
+						<StackPanel Orientation="Horizontal">
+							<Label Classes="icon" Content="&#xe258;" />
+						</StackPanel>
+					</Button>
+				</Grid>
+
+
+				<Label Content="Add additional folders to scan. Include one folder path per line." />
+				<TextBox
+					MinHeight="60"
+					AcceptsReturn="True"
+					FontFamily="Consolas, Courier New, monospace"
+					Text="{Binding AdditionalFoldersText}"
+					TextWrapping="NoWrap" />
+			</StackPanel>
+		</Expander>
+
+		<!--  Row 2 : Scan status  -->
+		<StackPanel
+			Grid.Row="1"
+			Margin="10"
+			Orientation="Horizontal"
+			Spacing="10">
+			<Button x:Name="ScanPlugins"
+				Command="{Binding ScanPluginsCommand}"
+				Content="Scan Plugins" />
+			<StackPanel>
+				<TextBlock x:Name="ScanState" Text="{Binding ScanProgress}" />
+				<ProgressBar x:Name="ScanProgress"
+					Maximum="{Binding FileCount}"
+					Value="{Binding FilesScanned}" />
+			</StackPanel>
+
+			<TextBlock x:Name="ScanTime"
+				VerticalAlignment="Center"
+				Text="{Binding LastScanned}" />
+		</StackPanel>
+
+		<!--  Row 3 : Data  -->
+		<ScrollViewer
+			Grid.Row="2"
+			Margin="10"
+			VerticalScrollBarVisibility="Auto">
+			<ItemsControl ItemsSource="{Binding Results}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top">
+							<Expander.Header>
+								<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
+									<SelectableTextBlock
+										Grid.Column="0"
+										VerticalAlignment="Center"
+										Text="{Binding Package}" />
+									<SelectableTextBlock
+										Grid.Column="1"
+										Margin="10,0"
+										HorizontalAlignment="Stretch"
+										VerticalAlignment="Center"
+										Text="(6 files)" />
+									<Button
+										Grid.Column="2"
+										Padding="2"
+										Command="{Binding OpenPackageInSc4pac}"
+										ToolTip.Tip="Open in sc4pac">
+										<StackPanel Orientation="Horizontal">
+											<Label Classes="icon" Content="&#xe1da;" />
+										</StackPanel>
+									</Button>
+									<Button
+										Grid.Column="3"
+										Padding="2"
+										Command="{Binding OpenParentFolder}"
+										ToolTip.Tip="Open parent folder">
+										<StackPanel Orientation="Horizontal">
+											<Label Classes="icon" Content="&#xe256;" />
+										</StackPanel>
+									</Button>
+									<Button
+										Grid.Column="4"
+										Padding="2"
+										Command="{Binding OpenParentFolder}"
+										ToolTip.Tip="Open parent folder">
+										<StackPanel Orientation="Horizontal">
+											<Label Classes="icon" Content="&#xec54;" />
+										</StackPanel>
+									</Button>
+								</Grid>
+							</Expander.Header>
+							<!--  Inner list of strings  -->
+							<StackPanel>
+								<ItemsControl ItemsSource="{Binding Files}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<SelectableTextBlock Margin="20,0,0,0" Text="{Binding}" />
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</Expander>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+
+	</Grid>
+</UserControl>

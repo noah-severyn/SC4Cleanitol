@@ -1,0 +1,18 @@
+<Application
+	x:Class="SC4CleanitolAvalonia.App"
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	RequestedThemeVariant="Default">
+	<!--  "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options.  -->
+
+	<Application.Styles>
+		<FluentTheme />
+		<StyleInclude Source="Styles/DefaultStyles.axaml" />
+	</Application.Styles>
+
+	<Application.Resources>
+		<FontFamily x:Key="Montserrat">avares://SC4CleanitolAvalonia/Assets/Fonts/Montserrat-Regular.ttf#Montserrat</FontFamily>
+		<FontFamily x:Key="Phosphor">avares://SC4CleanitolAvalonia/Assets/Fonts/Phosphor.ttf#Phosphor</FontFamily>
+		<FontFamily x:Key="PhosphorFill">avares://SC4CleanitolAvalonia/Assets/Fonts/Phosphor-Fill.ttf#Phosphor-Fill</FontFamily>
+	</Application.Resources>
+</Application>
