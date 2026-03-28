@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using SC4CleanitolEngine;
 
-namespace SC4CleanitolAvalonia.Services {
-    internal interface ICleanitolService {
+namespace SC4Cleanitol {
+    /// <summary>
+    /// A service layer on top of <see cref="CleanitolEngine"/>. Applications should implement this interface to code against.
+    /// </summary>
+    public interface ICleanitolService {
         /// <summary>
         /// Configure the engine with the folders to scan and the output directory.
         /// </summary>
@@ -14,14 +14,14 @@ namespace SC4CleanitolAvalonia.Services {
         /// Parse the folders provided for files and optionally TGIs.
         /// </summary>
         /// <param name="progress">Progress status of the scan.</param>
-        /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/></param>
+        /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="CleanitolEngine.PluginFolders"/></param>
         Task ScanAsync(IProgress<CleanitolEngine.CleanitolProgress>? progress = null, bool parseTGIs = false);
 
         /// <summary>
         /// Run the specified script.
         /// </summary>
         /// <param name="scriptPath">Path of the script to run. May either be a local file path or a Github raw url.</param>
-        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
+        /// <param name="resetResults">Reset the contents of <see cref="CleanitolEngine.Results"/> before running the script. Default is <see langword="true"/>.</param>
         Task RunAsync(string scriptPath, bool resetResults = true);
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace SC4CleanitolAvalonia.Services {
         /// </summary>
         /// <param name="scriptName">Name of the script.</param>
         /// <param name="rules">A collection of rules to run.</param>
-        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
+        /// <param name="resetResults">Reset the contents of <see cref="CleanitolEngine.Results"/> before running the script. Default is <see langword="true"/>.</param>
         Task RunAsync(string scriptName, List<string> rules, bool resetResults = true);
 
         /// <summary>
