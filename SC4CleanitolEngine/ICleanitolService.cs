@@ -21,16 +21,18 @@ namespace SC4Cleanitol {
         /// Run the specified script.
         /// </summary>
         /// <param name="scriptPath">Path of the script to run. May either be a local file path or a Github raw url.</param>
+        /// <param name="ignoreSc4pac">Ignore files found in an sc4pac folder. Default is <see langword="true"/>.</param>
         /// <param name="resetResults">Reset the contents of <see cref="CleanitolEngine.Results"/> before running the script. Default is <see langword="true"/>.</param>
-        Task RunAsync(string scriptPath, bool resetResults = true);
+        Task RunAsync(string scriptPath, bool ignoreSc4pac = true, bool resetResults = true);
 
         /// <summary>
         /// Process a collection of rules as if they were a script.
         /// </summary>
         /// <param name="scriptName">Name of the script.</param>
         /// <param name="rules">A collection of rules to run.</param>
+        /// <param name="ignoreSc4pac">Ignore files found in an sc4pac folder. Default is <see langword="true"/>.</param>
         /// <param name="resetResults">Reset the contents of <see cref="CleanitolEngine.Results"/> before running the script. Default is <see langword="true"/>.</param>
-        Task RunAsync(string scriptName, List<string> rules, bool resetResults = true);
+        Task RunAsync(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true, bool resetResults = true);
 
         /// <summary>
         /// The results of the most recent scan/run.

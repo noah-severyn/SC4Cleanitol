@@ -19,12 +19,12 @@ namespace SC4CleanitolAvalonia.Services {
             return Task.Run(() => _engine.Scan(progress, parseTGIs));
         }
 
-        public Task RunAsync(string scriptPath, bool resetResults = true) {
-            return Task.Run(() => _engine.Run(scriptPath, resetResults));
+        public Task RunAsync(string scriptPath, bool ignoreSc4pac = true, bool resetResults = true) {
+            return Task.Run(() => _engine.Run(scriptPath, ignoreSc4pac, resetResults));
         }
 
-        public Task RunAsync(string scriptName, List<string> rules, bool resetResults = false) {
-            return Task.Run(() => _engine.Run(scriptName, rules, resetResults));
+        public Task RunAsync(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true, bool resetResults = false) {
+            return Task.Run(() => _engine.Run(scriptName, rules, ignoreSc4pac, resetResults));
         }
     }
 }

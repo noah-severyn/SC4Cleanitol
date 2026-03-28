@@ -163,14 +163,15 @@ namespace SC4CleanitolEngine {
         /// </summary>
         /// <param name="scriptName">Name of the script.</param>
         /// <param name="rules">A collection of rules to run.</param>
+        /// <param name="ignoreSc4pac">Ignore files found in an sc4pac folder. Default is <see langword="true"/>.</param>
         /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
-        public void Run(string scriptName, IEnumerable<string> rules, bool resetResults = true) {
+        public void Run(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true, bool resetResults = true) {
             if (resetResults) {
                 Results.Reset();
             }
             _scriptName = scriptName;
             foreach (var rule in rules) {
-                ProcessRule(rule.Trim());
+                ProcessRule(rule.Trim(), ignoreSc4pac);
             }
         }
 
@@ -179,8 +180,9 @@ namespace SC4CleanitolEngine {
         /// Run the specified script.
         /// </summary>
         /// <param name="scriptPath">Path of the script to run. May either be a local file path or a Github raw url.</param>
+        /// <param name="ignoreSc4pac">Ignore files found in an sc4pac folder. Default is <see langword="true"/>.</param>
         /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
-        public void Run(string scriptPath, bool resetResults = true) {
+        public void Run(string scriptPath, bool ignoreSc4pac = true, bool resetResults = true) {
             if (resetResults) {
                 Results.Reset();
             }
@@ -200,7 +202,7 @@ namespace SC4CleanitolEngine {
 
             //TODO - write TGI list to DB for local storage?
             foreach (var rule in rules) {
-                ProcessRule(rule.Trim());
+                ProcessRule(rule.Trim(), ignoreSc4pac);
             }
         }
 
@@ -227,9 +229,9 @@ namespace SC4CleanitolEngine {
 
 
         /// <summary>
-        /// Process a Cleanitol rule.
+        /// Process a Cleanitol rule, optionally ignoring any files found in an sc4pac folder.
         /// </summary>
-        private void ProcessRule(string rule) {
+        private void ProcessRule(string rule, bool ignoreSc4pac) {
             var type = ScriptRule.Parse(rule);
             switch (type) {
                 case ScriptRule.Type.Invalid:
@@ -242,7 +244,7 @@ namespace SC4CleanitolEngine {
                     return;
 
                 case ScriptRule.Type.Removal:
-                    ProcessRemovalRule(rule);
+                    ProcessRemovalRule(rule, ignoreSc4pac);
                     return;
 
                 case ScriptRule.Type.ConditionalDependency:
@@ -276,16 +278,19 @@ namespace SC4CleanitolEngine {
         }
 
 
-        private void ProcessRemovalRule(string rule) {
-            rule = rule.Replace("*", string.Empty); //May have a rule like "*.jpg" to remove all files of a given extension.
-            var matchingFiles = _allFiles.Keys.AsParallel().Where(item => item.EndsWith(rule));
+        private void ProcessRemovalRule(string rule, bool ignoreSc4pac) {
+            rule = rule.Replace("*", string.Empty);
+            var matchingFiles = _allFiles.Keys
+                .Where(item => item.EndsWith(rule) && (ignoreSc4pac ? !IsSc4pacFile(item) : true))
+                .AsParallel()
+                .ToList();
 
             if (matchingFiles.Any()) {
                 foreach (string file in matchingFiles) {
                     var filename = Path.GetFileName(file);
                     //Make a special exception for the png images used for the in-game grid (the one that appears in the background when you play city tiles)
                     if (filename == "Background3D0.png" || filename == "Background3D1.png" || filename == "Background3D2.png" || filename == "Background3D3.png" || filename == "Background3D4.png") {
-                        break;
+                        continue;
                     }
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Warning,
@@ -386,6 +391,37 @@ namespace SC4CleanitolEngine {
                     });
                 }
             }
+        }
+
+        private static bool IsSc4pacFile(string path) {
+            //Intentionally exclude 075-my-plugins and 895-my-overrides to treat them like any other non-sc4pac folder
+            string[] sc4pacSubfolders = [
+                "050-load-first",
+                "060-config",
+                "100-props-textures",
+                "110-resources",
+                "140-ordinances",
+                "150-mods",
+                "170-terrain",
+                "180-flora",
+                "200-residential",
+                "300-commercial",
+                "360-landmark",
+                "400-industrial",
+                "410-agriculture",
+                "500-utilities",
+                "600-civics",
+                "610-safety",
+                "620-education",
+                "630-health",
+                "640-government",
+                "650-religion",
+                "660-parks",
+                "700-transit",
+                "710-automata",
+                "900-overrides",
+            ];
+            return sc4pacSubfolders.Any(subfolder => path.Contains(subfolder));
         }
 
 
