@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
-using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MsBox.Avalonia.Enums;
 using SC4CleanitolAvalonia.Models;
 using SC4CleanitolAvalonia.Services;
 using SC4CleanitolEngine;
+using SC4Cleanitol;
 
 namespace SC4CleanitolAvalonia.ViewModels;
 
@@ -40,6 +38,12 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     private string _outputPath = config.OutputPath;
     partial void OnOutputPathChanged(string value) {
         config.OutputPath = value;
+    }
+
+    [ObservableProperty]
+    private bool _checkSc4pacDuplicates = config.CheckSc4pacDuplicates;
+    partial void OnCheckSc4pacDuplicatesChanged(bool value) {
+        config.CheckSc4pacDuplicates = value;
     }
 
     [ObservableProperty]
@@ -96,8 +100,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         get {
             if (FilesTotal == 0) {
                 return string.Empty;
-            }
-            else if (FilesProcessed == FilesTotal) {
+            } else if (FilesProcessed == FilesTotal) {
                 return $"Scanned {FilesProcessed} / {FilesTotal} files";
             } else {
                 return $"Scanning {FilesProcessed} / {FilesTotal} files";
@@ -191,6 +194,9 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
         await cleanitolService.ScanAsync(progress, false);
 
+        if (config.CheckSc4pacDuplicates) {
+            await CheckForSc4pacDuplicates(foldersToScan);
+        }
         //Results.Clear();
         //var results = await cleanitolService.ScanAsync(config.UserPluginsPath, config.SystemPluginsPath, config.IncludeSystemPlugins, config.AdditionalFolders, progress);
 
@@ -204,6 +210,38 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         //    }
         //    Results.Add(new PackageGroup(this, g.Key, filesList));
         //}
+    }
+
+    /// <summary>
+    /// Since the CleanitolEngine was rewritten to allow a collection of rules to be run without a script file, we can treat the files in an sc4pac folder as a cleantiol script, where every file contained inside should be targeted for removal if found elsewhere.
+    /// </summary>
+    async private Task CheckForSc4pacDuplicates(List<string> foldersToScan) {
+        List<string> packageFolders = [];
+        foreach (var folder in foldersToScan) {
+            packageFolders.AddRange(Directory.EnumerateDirectories(folder, "*", SearchOption.AllDirectories).Where(f => f.EndsWith(".sc4pac")));
+        }
+        foreach (var folder in packageFolders) {
+            var files = cleanitolService.Results.ScannedFiles.Keys.Where(k => k.StartsWith(folder));
+            if (!files.Any()) {
+                continue;
+            }
+            var pkg = ExtractSc4pacPackage(folder);
+            await cleanitolService.RunAsync(pkg, files, true, false);
+        }
+    }
+
+    /// <summary>
+    /// Extract the sc4pac package identifier from a file path.
+    /// </summary>
+    /// <param name="path">File path to parse</param>
+    /// <returns>A string representing an sc4pac package identifier in the format <c>group:name</c>.</returns>
+    private static string ExtractSc4pacPackage(string path) {
+        //Example paths are:
+        //"C:\Users\Administrator\Documents\SimCity 4\Plugins\100-props-textures\simmer2.mega-prop-pack-vol1.1.0.sc4pac\SM2 Mega Prop Pack Vol1.dat"
+        //"C:\Users\Administrator\Documents\SimCity 4\Plugins\300-commercial\b62.safeway-60s-retro-grocery.1.sc4pac\B62-Safeway 60's Retro\b62 safeway_sign_70s v 2.0-0x6534284a-0x50ec22ad-0xf2a67ca6.SC4Desc"
+        string? pkg = path.Split('\\').FirstOrDefault(f => f.Contains(".sc4pac"));
+        var pkgParts = pkg?.Split('.').SkipLast(2).ToArray(); //remove the version and sc4pac suffex
+        return pkgParts?[0] + ":" + pkgParts?[1];
     }
 
     //public partial class PackageGroup(MainViewModel viewModel, string package, List<string> files) {

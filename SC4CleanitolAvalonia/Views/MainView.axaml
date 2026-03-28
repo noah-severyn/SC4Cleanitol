@@ -32,7 +32,10 @@
 			<StackPanel Orientation="Vertical" Spacing="4">
 
 				<Label Content="User plugins folder. This is the folder in your My Documents (or equivalent)." />
-				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+				<Grid
+					Margin="0,0,0,10"
+					ColumnDefinitions="*,Auto"
+					ColumnSpacing="10">
 					<TextBox x:Name="UserPluginsPath"
 						Grid.Column="0"
 						FontFamily="Consolas, Courier New, monospace"
@@ -64,11 +67,15 @@
 				</Grid>
 
 				<CheckBox x:Name="IncludeSystemPlugins"
+					Margin="0,0,0,10"
 					Content="Include System Plugins in the scan."
 					IsChecked="{Binding IncludeSystemPlugins}" />
 
 				<Label Content="Cleanitol output path. Location where files are moved to." />
-				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+				<Grid
+					Margin="0,0,0,10"
+					ColumnDefinitions="*,Auto"
+					ColumnSpacing="10">
 					<TextBox x:Name="OutputPath"
 						Grid.Column="0"
 						FontFamily="Consolas, Courier New, monospace"
@@ -83,14 +90,18 @@
 					</Button>
 				</Grid>
 
-
 				<Label Content="Add additional folders to scan. Include one folder path per line." />
 				<TextBox
 					MinHeight="60"
+					Margin="0,0,0,10"
 					AcceptsReturn="True"
 					FontFamily="Consolas, Courier New, monospace"
 					Text="{Binding AdditionalFoldersText}"
 					TextWrapping="NoWrap" />
+
+				<CheckBox x:Name="CheckSc4pacDuplicates"
+					Content="Check for duplicates with packages installed from sc4pac."
+					IsChecked="{Binding CheckSc4pacDuplicates}" />
 			</StackPanel>
 		</Expander>
 
