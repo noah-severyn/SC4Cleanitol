@@ -21,15 +21,19 @@ namespace SC4CleanitolEngine {
         /// <param name="filesProcessed">Count of files processed so far.</param>
         /// <param name="filesTotal">Count of all files in the specified plugins folder(s).</param>
         /// <param name="tgisProcessed">Count of TGIs processed so far.</param>
-        public record struct CleanitolProgress(int filesProcessed, int filesTotal, int tgisProcessed) {
-            public int FilesProcessed = filesProcessed;
-            public int FilesTotal = filesTotal;
-            public int TgisProcessed = tgisProcessed;
+        public record class CleanitolProgress(int filesProcessed, int filesTotal, int tgisProcessed) {
+            public int FilesProcessed { get; internal set; } = filesProcessed;
+            public int FilesTotal { get; internal set; } = filesTotal;
+            public int TgisProcessed { get; internal set; } = tgisProcessed;
         }
         /// <summary>
         /// Summary metrics describing the outcome resulting from the scan(s) and/or run(s).
         /// </summary>
         public record class CleanitolResult() {
+            /// <summary>
+            /// Files found from the scan. Key = file path, Value = file name.
+            /// </summary>
+            public Dictionary<string, string> ScannedFiles { get; internal set; } = [];
             public int DependenciesFound { get; internal set; }
             public int DependenciesMissing { get; internal set; }
             public int DependenciesSkipped { get; internal set; }
@@ -41,6 +45,7 @@ namespace SC4CleanitolEngine {
             /// <summary>
             /// Reset the results and clear the log. Typically used when a new script is ran.
             /// </summary>
+            /// <remarks>The scan results in <see cref="ScannedFiles"/> are not reset.</remarks>
             public void Reset() {
                 DependenciesFound = 0;
                 DependenciesMissing = 0;
@@ -110,6 +115,7 @@ namespace SC4CleanitolEngine {
         /// <param name="progress">Progress status of the scan.</param>
         /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/>.</param>
         public void Scan(IProgress<CleanitolProgress>? progress = null, bool parseTGIs = false) {
+            _allFiles.Clear();
             foreach (string folder in PluginFolders) {
                 var files = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories);
                 foreach (string file in files) {
@@ -147,6 +153,7 @@ namespace SC4CleanitolEngine {
             } else {
                 progress?.Report(new CleanitolProgress(_allFiles.Count, _allFiles.Count, 0));
             }
+            Results.ScannedFiles = _allFiles;
         }
 
 
