@@ -60,6 +60,7 @@ namespace SC4CleanitolEngine {
         /// </summary>
         public struct LogItem {
             public LogLevel Level;
+            public string Script;
             public string Item;
             public string Message;
             public Exception Error;
@@ -107,7 +108,7 @@ namespace SC4CleanitolEngine {
         private readonly Dictionary<string, string> _allFiles = [];
         private readonly List<FileTgiPair> _allTgis = [];
         private readonly List<string> _filesToRemove = [];
-        private string _scriptPath = string.Empty;
+        private string _scriptName = string.Empty;
 
         /// <summary>
         /// Parse the folders provided for files and optionally TGIs.
@@ -144,6 +145,7 @@ namespace SC4CleanitolEngine {
                     catch (Exception ex) {
                         Results.Log.Add(new LogItem() {
                             Level = LogLevel.Error,
+                            Script = "N/A",
                             Item = filepath,
                             Message = "Could not open file.",
                             Error = ex
@@ -156,6 +158,22 @@ namespace SC4CleanitolEngine {
             Results.ScannedFiles = _allFiles;
         }
 
+        /// <summary>
+        /// Process a collection of rules as if they were a script.
+        /// </summary>
+        /// <param name="scriptName">Name of the script.</param>
+        /// <param name="rules">A collection of rules to run.</param>
+        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
+        public void Run(string scriptName, IEnumerable<string> rules, bool resetResults = true) {
+            if (resetResults) {
+                Results.Reset();
+            }
+            _scriptName = scriptName;
+            foreach (var rule in rules) {
+                ProcessRule(rule.Trim());
+            }
+        }
+
 
         /// <summary>
         /// Run the specified script.
@@ -165,8 +183,8 @@ namespace SC4CleanitolEngine {
         public void Run(string scriptPath, bool resetResults = true) {
             if (resetResults) {
                 Results.Reset();
-            };
-            _scriptPath = scriptPath;
+            }
+            _scriptName = Path.GetFileName(scriptPath);
             List<string> rules = [];
             if (scriptPath.StartsWith("https://raw.githubusercontent.com")) {
                 rules = ImportScriptFromGithub(scriptPath);
@@ -198,6 +216,7 @@ namespace SC4CleanitolEngine {
             catch (Exception ex) {
                 Results.Log.Add(new LogItem() {
                     Level = LogLevel.Error,
+                    Script = _scriptName,
                     Item = githubFilePath,
                     Message = string.Empty,
                     Error = ex
@@ -210,20 +229,13 @@ namespace SC4CleanitolEngine {
         /// <summary>
         /// Process a Cleanitol rule.
         /// </summary>
-        /// <param name="rule">Rule to process.</param>
-        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before processing the rule. Default is <see langword="false"/>.</param>
-        /// <remarks>
-        /// May be used to run a rule in isolation. Otherwise <see cref="Run(string)"/> is recommended to process multiple rules from a script file. Ensure the rule is syntactically correct or unpredictable results can occur.
-        /// </remarks>
-        public void ProcessRule(string rule, bool resetResults = false) {
-            if (resetResults) {
-                Results.Reset();
-            };
+        private void ProcessRule(string rule) {
             var type = ScriptRule.Parse(rule);
             switch (type) {
                 case ScriptRule.Type.Invalid:
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Error,
+                        Script = _scriptName,
                         Item = rule,
                         Message = " is an invalid rule. Check syntax."
                     });
@@ -241,6 +253,7 @@ namespace SC4CleanitolEngine {
                 case ScriptRule.Type.Comment:
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Output,
+                        Script = _scriptName,
                         Item = rule,
                         Message = rule.Substring(1)
                     });
@@ -249,6 +262,7 @@ namespace SC4CleanitolEngine {
                 case ScriptRule.Type.Heading:
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Output,
+                        Script = _scriptName,
                         Item = rule,
                         Message = rule.TrimStart('#')
                     });
@@ -275,6 +289,7 @@ namespace SC4CleanitolEngine {
                     }
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Warning,
+                        Script = _scriptName,
                         Item = rule,
                         Message = $"was found in {Path.GetDirectoryName(file)}."
                     });
@@ -283,6 +298,7 @@ namespace SC4CleanitolEngine {
             } else {
                 Results.Log.Add(new LogItem() {
                     Level = LogLevel.Info,
+                    Script = _scriptName,
                     Item = rule,
                     Message = "is not present."
                 });
@@ -296,6 +312,7 @@ namespace SC4CleanitolEngine {
             if (dr.IsUnchecked) {
                 Results.Log.Add(new LogItem() {
                     Level = LogLevel.Error,
+                    Script = _scriptName,
                     Item = rule,
                     Message = " is an unchecked dependency (no outputPath provided). Validate manually. Download at: #url#",
                     Link = new Link() { Name = dr.LinkName, Path = dr.LinkUrl },
@@ -327,6 +344,7 @@ namespace SC4CleanitolEngine {
                     Results.DependenciesFound++;
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Info,
+                        Script = _scriptName,
                         Item = dr.SearchItem,
                         Message = " was found.",
                     });
@@ -334,6 +352,7 @@ namespace SC4CleanitolEngine {
                     Results.DependenciesMissing++;
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Error,
+                        Script = _scriptName,
                         Item = dr.SearchItem,
                         Message = " is missing. Download at: #url#",
                         Link = new Link() { Name = dr.LinkName, Path = dr.LinkUrl },
@@ -344,6 +363,7 @@ namespace SC4CleanitolEngine {
                     Results.DependenciesFound++;
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Info,
+                        Script = _scriptName,
                         Item = dr.SearchItem,
                         Message = " was found.",
                     });
@@ -351,6 +371,7 @@ namespace SC4CleanitolEngine {
                     Results.DependenciesMissing++;
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Error,
+                        Script = _scriptName,
                         Item = dr.SearchItem,
                         Message = " is missing. Download at: #url#",
                         Link = new Link() { Name = dr.LinkName, Path = dr.LinkUrl },
@@ -359,6 +380,7 @@ namespace SC4CleanitolEngine {
                     Results.DependenciesSkipped++;
                     Results.Log.Add(new LogItem() {
                         Level = LogLevel.Info,
+                        Script = _scriptName,
                         Item = dr.SearchItem,
                         Message = $" was skipped as {dr.ConditionalItem} was not found in {dr.LinkName ?? dr.LinkUrl}",
                     });
@@ -413,7 +435,7 @@ namespace SC4CleanitolEngine {
             using Stream stream = assembly.GetManifestResourceStream("SC4Cleanitol.Resources.SummaryTemplate.html")!;
             using StreamReader reader = new StreamReader(stream);
             string templateText = reader.ReadToEnd();
-            templateText = templateText.Replace("#SCRIPTNAME", Path.GetFileName(_scriptPath));
+            templateText = templateText.Replace("#SCRIPTNAME", _scriptName);
             templateText = templateText.Replace("#COUNTFILES", _filesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");

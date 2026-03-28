@@ -22,8 +22,8 @@ namespace SC4CleanitolAvalonia.Services {
             return Task.Run(() => _engine.Run(scriptPath, resetResults));
         }
 
-        public Task ProcessRuleAsync(string rule, bool resetResults = false) {
-            return Task.Run(() => _engine.ProcessRule(rule, resetResults));
+        public Task RunAsync(string scriptName, List<string> rules, bool resetResults = false) {
+            return Task.Run(() => _engine.Run(scriptName, rules, resetResults));
         }
     }
 }

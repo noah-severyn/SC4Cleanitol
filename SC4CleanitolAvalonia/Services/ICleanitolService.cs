@@ -18,21 +18,19 @@ namespace SC4CleanitolAvalonia.Services {
         Task ScanAsync(IProgress<CleanitolEngine.CleanitolProgress>? progress = null, bool parseTGIs = false);
 
         /// <summary>
-        /// Rune the specified script.
+        /// Run the specified script.
         /// </summary>
         /// <param name="scriptPath">Path of the script to run. May either be a local file path or a Github raw url.</param>
         /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
         Task RunAsync(string scriptPath, bool resetResults = true);
 
         /// <summary>
-        /// Process a Cleanitol rule.
+        /// Process a collection of rules as if they were a script.
         /// </summary>
-        /// <param name="rule">Rule to process.</param>
-        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before processing the rule. Default is <see langword="false"/>.</param>
-        /// <remarks>
-        /// May be used to run a rule in isolation. Otherwise <see cref="Run(string)"/> is recommended to process multiple rules from a script file. Ensure the rule is syntactically correct or unpredictable results can occur.
-        /// </remarks>
-        Task ProcessRuleAsync(string rule, bool resetResults = false);
+        /// <param name="scriptName">Name of the script.</param>
+        /// <param name="rules">A collection of rules to run.</param>
+        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
+        Task RunAsync(string scriptName, List<string> rules, bool resetResults = true);
 
         /// <summary>
         /// The results of the most recent scan/run.
