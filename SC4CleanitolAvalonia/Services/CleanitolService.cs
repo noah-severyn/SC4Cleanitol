@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using SC4CleanitolEngine;
 
@@ -16,8 +14,8 @@ namespace SC4CleanitolAvalonia.Services {
             _engine.OutputDirectory = outputDirectory;
         }
 
-        public Task ScanAsync(bool parseTGIs = false, IProgress<CleanitolEngine.CleanitolProgress>? progress = null) {
-            return Task.Run(() => _engine.Scan(parseTGIs, progress));
+        public Task ScanAsync(IProgress<CleanitolEngine.CleanitolProgress>? progress = null, bool parseTGIs = false) {
+            return Task.Run(() => _engine.Scan(progress, parseTGIs));
         }
 
         public Task RunAsync(string scriptPath, bool resetResults = true) {

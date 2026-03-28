@@ -31,7 +31,7 @@
 			</Expander.Header>
 			<StackPanel Orientation="Vertical" Spacing="4">
 
-				<Label Content="User plugins folder. This is the folder in My Documents (or equivalent)." />
+				<Label Content="User plugins folder. This is the folder in your My Documents (or equivalent)." />
 				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
 					<TextBox x:Name="UserPluginsPath"
 						Grid.Column="0"
@@ -106,8 +106,8 @@
 			<StackPanel>
 				<TextBlock x:Name="ScanState" Text="{Binding ScanProgress}" />
 				<ProgressBar x:Name="ScanProgress"
-					Maximum="{Binding FileCount}"
-					Value="{Binding FilesScanned}" />
+					Maximum="{Binding FilesTotal}"
+					Value="{Binding FilesProcessed}" />
 			</StackPanel>
 
 			<TextBlock x:Name="ScanTime"

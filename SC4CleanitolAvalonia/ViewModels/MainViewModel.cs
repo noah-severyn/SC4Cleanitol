@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using MsBox.Avalonia.Enums;
 using SC4CleanitolAvalonia.Models;
 using SC4CleanitolAvalonia.Services;
+using SC4CleanitolEngine;
 
 namespace SC4CleanitolAvalonia.ViewModels;
 
@@ -58,8 +59,8 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     /// <remarks>Changes to this property will also update <see cref="ScanProgress"/></remarks>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ScanProgress))]
-    private int _fileCount;
-    partial void OnFileCountChanged(int value) {
+    private int _filesTotal;
+    partial void OnFilesTotalChanged(int value) {
         OnPropertyChanged(nameof(ScanProgress));
     }
 
@@ -69,8 +70,8 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     /// <remarks>Changes to this property will also update <see cref="ScanProgress"/></remarks>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ScanProgress))]
-    private int _filesScanned;
-    partial void OnFilesScannedChanged(int value) {
+    private int _filesProcessed;
+    partial void OnFilesProcessedChanged(int value) {
         OnPropertyChanged(nameof(ScanProgress));
     }
 
@@ -91,10 +92,22 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     //[ObservableProperty]
     //private ObservableCollection<PackageGroup> _results = [];
 
-    public string ScanProgress => $"Scanning {FilesScanned} / {FileCount} files";
+    public string ScanProgress {
+        get {
+            if (FilesTotal == 0) {
+                return string.Empty;
+            }
+            else if (FilesProcessed == FilesTotal) {
+                return $"Scanned {FilesProcessed} / {FilesTotal} files";
+            } else {
+                return $"Scanning {FilesProcessed} / {FilesTotal} files";
+            }
+        }
+    }
+
     public string ChangesDetected => (Checksum != config.PluginsChecksum ? "Changes detected since last scan." : "No changes since last scan.");
 
-
+    public int TgisProcessed { get; private set; }
 
     [RelayCommand]
     private async Task ChooseUserPluginsFolder() {
@@ -121,42 +134,62 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     }
 
 
+    private List<string> ValidateFolderPaths() {
+        List<string> invalidFolders = [];
+        if (!Directory.Exists(config.UserPluginsPath)) {
+            invalidFolders.Add(config.UserPluginsPath);
+        }
+        if (!Directory.Exists(config.SystemPluginsPath)) {
+            invalidFolders.Add(config.SystemPluginsPath);
+        }
+        if (!Directory.Exists(config.OutputPath)) {
+            invalidFolders.Add(config.OutputPath);
+        }
+        foreach (var folder in config.AdditionalFolders) {
+            if (!Directory.Exists(folder)) {
+                invalidFolders.Add(folder);
+            }
+            
+        }
+        return invalidFolders;
+    }
 
     private bool AllPathsValid() {
-        return !string.IsNullOrEmpty(UserPluginsPath) && Directory.Exists(UserPluginsPath) &&
-            !string.IsNullOrEmpty(SystemPluginsPath) && Directory.Exists(SystemPluginsPath) &&
-            !string.IsNullOrEmpty(OutputPath) && Directory.Exists(OutputPath) &&
-            config.AdditionalFolders.All(f => string.IsNullOrEmpty(f) || Directory.Exists(f));
+        return ValidateFolderPaths().Count == 0;
     }
 
 
 
 
-    [RelayCommand(CanExecute = nameof(AllPathsValid))]
+    //[RelayCommand(CanExecute = nameof(AllPathsValid))]
+    [RelayCommand]
     private async Task ScanPlugins() {
-        List<string> invalidFolders = [];
-        foreach (var folder in config.AdditionalFolders) {
-            if (!Directory.Exists(folder)) {
-                invalidFolders.Add(folder);
-            }
-        }
-
+        var invalidFolders = ValidateFolderPaths();
         if (invalidFolders.Count > 0) {
             var message = "The following folders were not found. Validate they were typed correctly and exist:\n\n" + string.Join("\n", invalidFolders);
             await dialogService.ShowMessageBoxAsync("Invalid Folder Paths", message, Icon.Error);
             return;
         }
 
+        await configService.SaveAsync(config);
+
         LastScanned = "Last scan: " + DateTime.Now.ToString();
-        List<string> folders = [UserPluginsPath, (IncludeSystemPlugins ? SystemPluginsPath: string.Empty), ..config.AdditionalFolders];
-        Checksum = checksumService.Compute(folders);
 
 
+        List<string> foldersToScan = [config.UserPluginsPath];
+        if (IncludeSystemPlugins) {
+            foldersToScan.Add(config.SystemPluginsPath);
+        }
+        foldersToScan.AddRange(config.AdditionalFolders);
 
-        //var progress = new Progress<ScanProgress>(p => {
-        //    FilesScanned = p.FilesScanned;
-        //    FileCount = p.TotalFiles;
-        //});
+        cleanitolService.Configure(foldersToScan, OutputPath);
+        var progress = new Progress<CleanitolEngine.CleanitolProgress>(p => {
+            FilesProcessed = p.FilesProcessed;
+            FilesTotal = p.FilesTotal;
+            TgisProcessed = p.TgisProcessed;
+        });
+
+        await cleanitolService.ScanAsync(progress, false);
 
         //Results.Clear();
         //var results = await cleanitolService.ScanAsync(config.UserPluginsPath, config.SystemPluginsPath, config.IncludeSystemPlugins, config.AdditionalFolders, progress);

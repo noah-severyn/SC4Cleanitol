@@ -107,9 +107,9 @@ namespace SC4CleanitolEngine {
         /// <summary>
         /// Parse the folders provided for files and optionally TGIs.
         /// </summary>
-        /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/></param>
         /// <param name="progress">Progress status of the scan.</param>
-        public void Scan(bool parseTGIs = false, IProgress<CleanitolProgress>? progress = null) {
+        /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/>.</param>
+        public void Scan(IProgress<CleanitolProgress>? progress = null, bool parseTGIs = false) {
             foreach (string folder in PluginFolders) {
                 var files = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories);
                 foreach (string file in files) {
@@ -144,6 +144,8 @@ namespace SC4CleanitolEngine {
                         });
                     }
                 }
+            } else {
+                progress?.Report(new CleanitolProgress(_allFiles.Count, _allFiles.Count, 0));
             }
         }
 

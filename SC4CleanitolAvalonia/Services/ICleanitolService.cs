@@ -13,9 +13,9 @@ namespace SC4CleanitolAvalonia.Services {
         /// <summary>
         /// Parse the folders provided for files and optionally TGIs.
         /// </summary>
-        /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/></param>
         /// <param name="progress">Progress status of the scan.</param>
-        Task ScanAsync(bool parseTGIs = false, IProgress<CleanitolEngine.CleanitolProgress>? progress = null);
+        /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/></param>
+        Task ScanAsync(IProgress<CleanitolEngine.CleanitolProgress>? progress = null, bool parseTGIs = false);
 
         /// <summary>
         /// Rune the specified script.
