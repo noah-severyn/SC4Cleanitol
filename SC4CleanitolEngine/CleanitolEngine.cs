@@ -59,12 +59,12 @@ namespace SC4CleanitolEngine {
         /// Describes a finding or event as a result of a scan or run.
         /// </summary>
         public struct LogItem {
-            public LogLevel Level;
-            public string Script;
-            public string Item;
-            public string Message;
-            public Exception Error;
-            public Link Link;
+            public LogLevel Level { get; internal set; }
+            public string Script { get; internal set; }
+            public string Item { get; internal set; }
+            public string Message { get; internal set; }
+            public Exception Error { get; internal set; }
+            public Link Link { get; internal set; }
         }
 
         public enum LogLevel {
@@ -87,8 +87,8 @@ namespace SC4CleanitolEngine {
         }
 
         public record struct Link {
-            public string Path;
-            public string Name;
+            public string Path { get; internal set; }
+            public string Name { get; internal set; }
         }
 
 
@@ -121,9 +121,9 @@ namespace SC4CleanitolEngine {
                 var files = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories);
                 foreach (string file in files) {
                     _allFiles.Add(file, Path.GetFileName(file));
+                    progress?.Report(new CleanitolProgress(_allFiles.Count, _allFiles.Count, 0));
                 }
             }
-            progress?.Report(new CleanitolProgress(0, _allFiles.Count, 0));
 
             if (parseTGIs) {
                 int filesScanned = 0;
