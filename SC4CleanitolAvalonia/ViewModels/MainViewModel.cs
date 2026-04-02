@@ -1,16 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MsBox.Avalonia.Enums;
+using SC4Cleanitol;
 using SC4CleanitolAvalonia.Models;
 using SC4CleanitolAvalonia.Services;
 using SC4CleanitolEngine;
-using SC4Cleanitol;
+using static SC4CleanitolEngine.CleanitolEngine;
 
 namespace SC4CleanitolAvalonia.ViewModels;
 
@@ -93,8 +98,8 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         config.PluginsChecksum = Checksum;
     }
 
-    //[ObservableProperty]
-    //private ObservableCollection<PackageGroup> _results = [];
+    [ObservableProperty]
+    private ObservableCollection<ScriptResult> _results = [];
 
     public string ScanProgress {
         get {
@@ -216,6 +221,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     /// Since the CleanitolEngine was rewritten to allow a collection of rules to be run without a script file, we can treat the files in an sc4pac folder as a cleantiol script, where every file contained inside should be targeted for removal if found elsewhere.
     /// </summary>
     async private Task CheckForSc4pacDuplicates(List<string> foldersToScan) {
+        Results.Clear();
         List<string> packageFolders = [];
         foreach (var folder in foldersToScan) {
             packageFolders.AddRange(Directory.EnumerateDirectories(folder, "*", SearchOption.AllDirectories).Where(f => f.EndsWith(".sc4pac")));
@@ -226,7 +232,9 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
                 continue;
             }
             var pkg = ExtractSc4pacPackage(folder);
-            await cleanitolService.RunAsync(pkg, files, true, false);
+            await cleanitolService.RunAsync(pkg, files, true, true);
+            //`cleanitolService.Results.Log` is the same list reference every time. The engine resets and reuses Results.Log on each RunAsync call (resetResults: true). So every ScriptResult ends up holding a reference to the same list, which gets cleared on the next iteration — leaving all but the last one empty. `.ToList()` creates a snapshot of the log at that point in time, so each ScriptResult holds its own independent copy that won't be affected when the engine clears Results.Log on the next iteration.
+            Results.Add(new ScriptResult(pkg, cleanitolService.Results.Log.ToList()));
         }
     }
 
@@ -244,41 +252,83 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         return pkgParts?[0] + ":" + pkgParts?[1];
     }
 
-    //public partial class PackageGroup(MainViewModel viewModel, string package, List<string> files) {
-    //    private readonly MainViewModel _mvm = viewModel;
 
-    //    public string Package { get; } = package;
-    //    public List<string> Files { get; } = files;
 
-    //    [RelayCommand]
-    //    public void OpenPackageInSc4pac() {
-    //        //A package link looks like: sc4pac:///package?pkg=b62%3Asafeway-60s-retro-grocery
-    //        string uri = "sc4pac:///package?pkg=" + HttpUtility.UrlEncode(Package);
-    //        try {
-    //            OpenUrl(uri);
-    //        }
-    //        catch (Exception) {
-    //            throw;
-    //        }
-    //    }
+    public partial class ScriptResult(string scriptName, List<LogItem> logItems) {
+        
 
-    //    /// <summary>
-    //    /// Find the lowest level folder common among all the files and open it.
-    //    /// </summary>
-    //    [RelayCommand]
-    //    public void OpenParentFolder() {
-    //        var min = Files.MinBy(p => p.Length);
-    //        var minFldrs = min.Split(Path.DirectorySeparatorChar);
-    //        foreach (var path in Files) {
-    //            var fldrs = path.Split(Path.DirectorySeparatorChar);
-    //            if (fldrs.Length < minFldrs.Length) {
-    //                minFldrs = fldrs;
-    //            }
-    //        }
+        public string ScriptName { get; } = scriptName;
+        public string ItemCount { get; } = $"({logItems.Count} items)";
+        public List<LogItemDisplay> DisplayLog {
+            get {
+                List<LogItemDisplay> log = [];
+                foreach (var item in logItems) {
+                    log.Add(new LogItemDisplay(item));
+                }
+                return log;
+            }
+        }
 
-    //        OpenUrl(Path.Combine(_mvm.UserPluginsPath, Path.Combine(minFldrs.SkipLast(1).ToArray())));
-    //    }
-    //}
+
+
+
+        public bool IsSc4pacPackage {
+            get {
+                return Regex.IsMatch(ScriptName, @"^[a-z\-]*:[a-z\-]*$");
+            }
+        }
+
+        [RelayCommand]
+        public void OpenPackageInSc4pac() {
+            //A package link looks like: sc4pac:///package?pkg=b62%3Asafeway-60s-retro-grocery
+            string uri = "sc4pac:///package?pkg=" + HttpUtility.UrlEncode(ScriptName);
+            try {
+                OpenUrl(uri);
+            }
+            catch (Exception) {
+                throw;
+            }
+        }
+
+        [RelayCommand]
+        public void CleanUpFiles() {
+
+        }
+
+        /// <summary>
+        /// A wrapper for a <see cref="LogItem"/> containing all the properties needed for display.
+        /// /// </summary>
+        /// <param name="item"></param>
+        public partial class LogItemDisplay(LogItem item) {
+            public LogLevel Level { get; private set; } = item.Level;
+            public string Icon {
+                get {
+                    return item.Level switch {
+                        LogLevel.Output => "\ue06c",
+                        LogLevel.Info => "\ue2ce",
+                        LogLevel.Warning => "\uee44",
+                        LogLevel.Error => "\ue7fc",
+                        _ => "\ue31e",
+                    };
+                }
+            }
+            public IImmutableSolidColorBrush IconColor {
+                get {
+                    return item.Level switch {
+                        LogLevel.Output => Brushes.Green,
+                        LogLevel.Info => Brushes.SteelBlue,
+                        LogLevel.Warning => Brushes.Orange,
+                        LogLevel.Error => Brushes.Crimson,
+                        _ => Brushes.Black,
+                    };
+                }
+            }
+            public string Item { get; private set; } = Path.GetFileName(item.Item);
+            public string Message { get; private set; } = item.Message;
+            //public Exception Error { get; private set; } = item.Error;
+            public Link Link { get; private set; } = item.Link;
+        }
+    }
 
 
     private static void OpenUrl(string url) {
