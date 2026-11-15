@@ -190,48 +190,41 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         foldersToScan.AddRange(config.AdditionalFolders);
 
         cleanitolService.Configure(foldersToScan, OutputPath);
-        var progress = new Progress<CleanitolEngine.CleanitolProgress>(p => {
+        var progress = new Progress<CleanitolProgress>(p => {
             FilesProcessed = p.FilesProcessed;
             FilesTotal = p.FilesTotal;
             TgisProcessed = p.TgisProcessed;
         });
 
-        await cleanitolService.ScanAsync(progress, false);
+        await cleanitolService.ScanAsync(progress);
 
         if (config.CheckSc4pacDuplicates) {
             await CheckForSc4pacDuplicates(foldersToScan);
         }
-        //Results.Clear();
-        //var results = await cleanitolService.ScanAsync(config.UserPluginsPath, config.SystemPluginsPath, config.IncludeSystemPlugins, config.AdditionalFolders, progress);
-
-        //var grouped = results.GroupBy(i => i.Package);
-        //foreach (var g in grouped) {
-        //    var filesList = g.Select(scanresult => scanresult.Path).ToList();
-        //    for (int idx = 0; idx < filesList.Count; idx++) {
-        //        string file = filesList[idx].Replace(UserPluginsPath, string.Empty);
-        //        if (!file.StartsWith('\\')) file = "\\" + file;
-        //        filesList[idx] = file;
-        //    }
-        //    Results.Add(new PackageGroup(this, g.Key, filesList));
-        //}
     }
 
     /// <summary>
-    /// Since the CleanitolEngine was rewritten to allow a collection of rules to be run without a script file, we can treat the files in an sc4pac folder as a cleantiol script, where every file contained inside should be targeted for removal if found elsewhere.
+    /// Since the Cleanitol Engine can now execute a collection of rules as if they were a script, treat the files in an sc4pac package folder as a Cleanitol script where every file contained inside should be targeted for removal if found elsewhere.
     /// </summary>
     async private Task CheckForSc4pacDuplicates(List<string> foldersToScan) {
         Results.Clear();
-        List<string> packageFolders = [];
+
+        //We first want to know what sc4pac packages are already installed to find any duplicates. Treat each package folder as a cleanitol script with its contents as the rules.
+        HashSet<string> pkgFolders = [];
         foreach (var folder in foldersToScan) {
-            packageFolders.AddRange(Directory.EnumerateDirectories(folder, "*", SearchOption.AllDirectories).Where(f => f.EndsWith(".sc4pac")));
+            foreach (var dir in Directory.EnumerateDirectories(folder, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })) {
+                if (dir.EndsWith(".sc4pac")) {
+                    pkgFolders.Add(dir);
+                }
+            }
         }
-        foreach (var folder in packageFolders) {
-            var files = cleanitolService.Results.ScannedFiles.Keys.Where(k => k.StartsWith(folder));
-            if (!files.Any()) {
+        foreach (var folder in pkgFolders) {
+            var filesToFind = cleanitolService.Results.ScannedFiles.Where(k => k.Key.StartsWith(folder)).Select(k => k.Value);
+            if (!filesToFind.Any()) {
                 continue;
             }
-            var pkg = ExtractSc4pacPackage(folder);
-            await cleanitolService.RunAsync(pkg, files, true, true);
+            var pkg = ExtractPackageIdFromFolder(folder);
+            await cleanitolService.RunAsync(pkg, filesToFind, true, true);
             //`cleanitolService.Results.Log` is the same list reference every time. The engine resets and reuses Results.Log on each RunAsync call (resetResults: true). So every ScriptResult ends up holding a reference to the same list, which gets cleared on the next iteration — leaving all but the last one empty. `.ToList()` creates a snapshot of the log at that point in time, so each ScriptResult holds its own independent copy that won't be affected when the engine clears Results.Log on the next iteration.
             Results.Add(new ScriptResult(pkg, cleanitolService.Results.Log.ToList()));
         }
@@ -242,22 +235,39 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     /// </summary>
     /// <param name="path">File path to parse</param>
     /// <returns>A string representing an sc4pac package identifier in the format <c>group:name</c>.</returns>
-    private static string ExtractSc4pacPackage(string path) {
+    private static string ExtractPackageIdFromFolder(string path) {
         //Example paths are:
-        //"C:\Users\Administrator\Documents\SimCity 4\Plugins\100-props-textures\simmer2.mega-prop-pack-vol1.1.0.sc4pac\SM2 Mega Prop Pack Vol1.dat"
+        //"C:\Users\Administrator\Documents\SimCity 4\Plugins\060-config\config.sc4-edition.Windows-digital.1.sc4pac"
         //"C:\Users\Administrator\Documents\SimCity 4\Plugins\300-commercial\b62.safeway-60s-retro-grocery.1.sc4pac\B62-Safeway 60's Retro\b62 safeway_sign_70s v 2.0-0x6534284a-0x50ec22ad-0xf2a67ca6.SC4Desc"
-        string? pkg = path.Split('\\').FirstOrDefault(f => f.Contains(".sc4pac"));
-        var pkgParts = pkg?.Split('.').SkipLast(2).ToArray(); //remove the version and sc4pac suffex
+        string? pkgInfo = path.Split('\\').FirstOrDefault(f => f.Contains(".sc4pac"));
+        var pkgParts = pkgInfo?.Split('.').Take(2).ToArray(); //keep only the group and name parts
         return pkgParts?[0] + ":" + pkgParts?[1];
     }
 
 
 
     public partial class ScriptResult(string scriptName, List<LogItem> logItems) {
-        
-
+        /// <summary>
+        /// Name of script run - either the Cleanitol file name or a sc4pac package.
+        /// </summary>
         public string ScriptName { get; } = scriptName;
-        public string ItemCount { get; } = $"({logItems.Count} items)";
+        /// <summary>
+        /// Number of findings at warning level or higher.
+        /// </summary>
+        public int ItemCount { get; } = logItems.Count(i => i.Level >= LogLevel.Warning);
+        public string ItemCountLabel => $"({ItemCount} files)";
+        /// <summary>
+        /// Items that don't have any results are not shown in the window.
+        /// </summary>
+        public bool HasItems => ItemCount > 0;
+        /// <summary>
+        /// Gets a value indicating whether the script name is in sc4pac package format of <c>group:name</c>.
+        /// </summary>
+        public bool IsSc4pacPackage {
+            get {
+                return Regex.IsMatch(ScriptName, @"^[a-z\-]*:[a-z\-]*$");
+            }
+        }
         public List<LogItemDisplay> DisplayLog {
             get {
                 List<LogItemDisplay> log = [];
@@ -268,24 +278,13 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             }
         }
 
-
-
-        /// <summary>
-        /// Gets a value indicating whether the script name is in sc4pac package format of <c>group:name</c>.
-        /// </summary>
-        public bool IsSc4pacPackage {
-            get {
-                return Regex.IsMatch(ScriptName, @"^[a-z\-]*:[a-z\-]*$");
-            }
-        }
-
         /// <summary>
         /// Opens the current package in sc4pac using a package URI built from the URL-encoded script name.
         /// </summary>
         [RelayCommand]
         public void OpenPackageInSc4pac() {
             //A package link looks like: sc4pac:///package?pkg=b62%3Asafeway-60s-retro-grocery
-            string uri = "sc4pac:///package?pkg=" + HttpUtility.UrlEncode(ScriptName);
+            string uri = "sc4pac:///package?pkgInfo=" + HttpUtility.UrlEncode(ScriptName);
             try {
                 OpenUrl(uri);
             }

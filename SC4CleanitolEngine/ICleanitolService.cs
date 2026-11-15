@@ -12,7 +12,7 @@ namespace SC4CleanitolEngine {
         void Configure(List<string> pluginFolders, string outputDirectory);
 
         /// <summary>
-        /// Parse the folders provided for files and optionally TGIs.
+        /// Parse the specified folders to generate an internal index of files and optionally, TGIs. Required before any other actions may be taken.
         /// </summary>
         /// <param name="progress">Progress status of the scan.</param>
         /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="CleanitolEngine.PluginFolders"/>. If <see langword="false"/> (the default value), only files are scanned.</param>

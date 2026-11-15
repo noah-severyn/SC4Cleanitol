@@ -45,7 +45,7 @@ namespace SC4CleanitolEngine {
             /// <summary>
             /// Reset the results and clear the log. Typically used when a new script is ran.
             /// </summary>
-            /// <remarks>The scan results in <see cref="ScannedFiles"/> are not reset.</remarks>
+            /// <remarks>Note: the scan results in <see cref="ScannedFiles"/> are not reset.</remarks>
             public void Reset() {
                 DependenciesFound = 0;
                 DependenciesMissing = 0;
@@ -111,14 +111,14 @@ namespace SC4CleanitolEngine {
         private string _scriptName = string.Empty;
 
         /// <summary>
-        /// Parse the folders provided for files and optionally TGIs.
+        /// Parse the specified folders to generate an internal index of files and optionally, TGIs. Required before any other actions may be taken.
         /// </summary>
         /// <param name="progress">Progress status of the scan.</param>
         /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/>.</param>
         public void Scan(IProgress<CleanitolProgress>? progress = null, bool parseTGIs = false) {
             _allFiles.Clear();
             foreach (string folder in PluginFolders) {
-                var files = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories);
+                var files = Directory.EnumerateFiles(folder, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true });
                 foreach (string file in files) {
                     _allFiles.Add(file, Path.GetFileName(file));
                     progress?.Report(new CleanitolProgress(_allFiles.Count, _allFiles.Count, 0));
@@ -394,34 +394,8 @@ namespace SC4CleanitolEngine {
         }
 
         private static bool IsSc4pacFile(string path) {
-            //Intentionally exclude 075-my-plugins and 895-my-overrides to treat them like any other non-sc4pac folder
-            string[] sc4pacSubfolders = [
-                "050-load-first",
-                "060-config",
-                "100-props-textures",
-                "110-resources",
-                "140-ordinances",
-                "150-mods",
-                "170-terrain",
-                "180-flora",
-                "200-residential",
-                "300-commercial",
-                "360-landmark",
-                "400-industrial",
-                "410-agriculture",
-                "500-utilities",
-                "600-civics",
-                "610-safety",
-                "620-education",
-                "630-health",
-                "640-government",
-                "650-religion",
-                "660-parks",
-                "700-transit",
-                "710-automata",
-                "900-overrides",
-            ];
-            return sc4pacSubfolders.Any(subfolder => path.Contains(subfolder));
+            //sc4pac installs each package into a folder whose name ends in ".sc4pac". Files in 075-my-plugins and 895-my-overrides do not contain this ans as such are treated like any other non-sc4pac file.
+            return path.Split(Path.DirectorySeparatorChar).Any(segment => segment.EndsWith(".sc4pac", StringComparison.OrdinalIgnoreCase));
         }
 
 

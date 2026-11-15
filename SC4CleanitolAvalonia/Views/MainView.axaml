@@ -135,7 +135,7 @@
 			<ItemsControl ItemsSource="{Binding Results}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
-						<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top">
+						<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top" IsVisible="{Binding HasItems}">
 							<Expander.Header>
 								<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
 									<SelectableTextBlock
@@ -147,7 +147,7 @@
 										Margin="10,0"
 										HorizontalAlignment="Stretch"
 										VerticalAlignment="Center"
-										Text="{Binding ItemCount}" />
+										Text="{Binding ItemCountLabel}" />
 									<Button
 										Grid.Column="2"
 										Padding="2"
