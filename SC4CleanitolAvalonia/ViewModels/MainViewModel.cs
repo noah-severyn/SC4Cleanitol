@@ -271,13 +271,18 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
 
 
-
+        /// <summary>
+        /// Gets a value indicating whether the script name is in sc4pac package format of <c>group:name</c>.
+        /// </summary>
         public bool IsSc4pacPackage {
             get {
                 return Regex.IsMatch(ScriptName, @"^[a-z\-]*:[a-z\-]*$");
             }
         }
 
+        /// <summary>
+        /// Opens the current package in sc4pac using a package URI built from the URL-encoded script name.
+        /// </summary>
         [RelayCommand]
         public void OpenPackageInSc4pac() {
             //A package link looks like: sc4pac:///package?pkg=b62%3Asafeway-60s-retro-grocery

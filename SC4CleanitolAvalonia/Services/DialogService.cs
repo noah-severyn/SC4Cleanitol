@@ -7,13 +7,17 @@ using Avalonia.Controls;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 
-namespace SC4CleanitolAvalonia.Services {
-    internal class DialogService(Window window) : IDialogService {
-        private readonly Window _window = window;
+namespace SC4CleanitolAvalonia.Services;
 
-        public async Task ShowMessageBoxAsync(string title, string message, Icon icon) {
-            var msgbox = MessageBoxManager.GetMessageBoxStandard(title, message, ButtonEnum.Ok, icon);
-            await msgbox.ShowWindowDialogAsync(_window);
-        }
+/// <summary>
+/// Provides dialog operations for a specific owner window.
+/// </summary>
+/// <param name="window">Owner window used as the parent for displayed dialogs.</param>
+internal class DialogService(Window window) : IDialogService {
+    private readonly Window _window = window;
+
+    public async Task ShowMessageBoxAsync(string title, string message, Icon icon) {
+        var msgbox = MessageBoxManager.GetMessageBoxStandard(title, message, ButtonEnum.Ok, icon);
+        await msgbox.ShowWindowDialogAsync(_window);
     }
 }

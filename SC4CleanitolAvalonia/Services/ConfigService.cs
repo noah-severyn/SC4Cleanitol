@@ -6,6 +6,10 @@ using SC4CleanitolAvalonia.Models;
 
 namespace SC4CleanitolAvalonia.Services;
 
+/// <summary>
+/// Provides methods to load and save user configuration settings.
+/// </summary>
+/// <remarks>Configuration is saved in <c>%AppData%\SC4Cleanitol\config.json</c>. Loading returns a new <see cref="UserConfig"/> when the file is missing or deserialization yields null.</remarks>
 public class ConfigService : IConfigService {
     private static readonly string ConfigPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SC4Cleanitol", "config.json");
 
