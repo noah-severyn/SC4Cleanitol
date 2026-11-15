@@ -1,6 +1,5 @@
-using SC4CleanitolEngine;
 
-namespace SC4Cleanitol {
+namespace SC4CleanitolEngine {
     /// <summary>
     /// Provides task-based operations for configuring and using the Cleanitol Engine by acting as a service layer on top of <see cref="CleanitolEngine"/>. Applications should implement this interface to code against.
     /// </summary>

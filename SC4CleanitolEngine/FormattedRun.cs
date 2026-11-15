@@ -1,4 +1,4 @@
-﻿namespace SC4Cleanitol {
+﻿namespace SC4CleanitolEngine {
     /// <summary>
     /// Abstract description of a run of richly formatted text describing the text and the style it should be formatted as.
     /// </summary>

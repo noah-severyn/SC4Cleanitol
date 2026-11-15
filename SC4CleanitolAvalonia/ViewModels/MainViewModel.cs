@@ -11,7 +11,6 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MsBox.Avalonia.Enums;
-using SC4Cleanitol;
 using SC4CleanitolAvalonia.Models;
 using SC4CleanitolAvalonia.Services;
 using SC4CleanitolEngine;
