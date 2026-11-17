@@ -7,13 +7,6 @@ namespace SC4CleanitolEngine {
     /// Contains the functions and logic to process Cleanitol rules and operate on a user's plugins folder.
     /// </summary>
     public class CleanitolEngine {
-        /// <summary>
-        /// Export file type.
-        /// </summary>
-        public enum ExportType {
-            Csv,
-            SQLite
-        }
 
         /// <summary>
         /// Stores metrics about the status of the current scan.
@@ -27,39 +20,66 @@ namespace SC4CleanitolEngine {
             public int TgisProcessed { get; internal set; } = tgisProcessed;
         }
         /// <summary>
-        /// Summary metrics describing the outcome resulting from the scan(s) and/or run(s).
+        /// Summary metrics describing the outcome of the Cleanitol scan.
         /// </summary>
-        public record class CleanitolResult() {
+        public record ScanResult {
+            public ScanResult(Dictionary<string, string> scannedFiles, List<KeyValuePair<string, string>> scannedTgis, List<Finding> findings) {
+                ScannedFiles = scannedFiles;
+                ScannedTGIs = scannedTgis;
+                Findings = findings;
+            }
+
             /// <summary>
             /// Files found from the scan. Key = file path, Value = file name.
             /// </summary>
-            public Dictionary<string, string> ScannedFiles { get; internal set; } = [];
-            public int DependenciesFound { get; internal set; }
-            public int DependenciesMissing { get; internal set; }
-            public int DependenciesSkipped { get; internal set; }
+            public IReadOnlyDictionary<string, string> ScannedFiles { get; private set; }
             /// <summary>
-            /// A collection of findings as a result of the scan(s) and/or run(s).
+            /// File and TGI pairs discovered during scanning.
             /// </summary>
-            public List<LogItem> Log { get; internal set; } = [];
+            public IReadOnlyList<KeyValuePair<string, string>> ScannedTGIs { get; private set; }
+            /// <summary>
+            /// Findings identified during the scan.
+            /// </summary>
+            public IReadOnlyList<Finding> Findings { get; private set; } = [];
+        }
+
+        public record RunResult {
+            public RunResult(string scriptName, List<Finding> findings, List<string>? filesToRemove = null) {
+                ScriptName = scriptName;
+                Findings = findings;
+                FilesToRemove = filesToRemove ?? [];
+            }
 
             /// <summary>
-            /// Reset the results and clear the log. Typically used when a new script is ran.
+            /// Gets the Cleanitol script name.
             /// </summary>
-            /// <remarks>Note: the scan results in <see cref="ScannedFiles"/> are not reset.</remarks>
-            public void Reset() {
-                DependenciesFound = 0;
-                DependenciesMissing = 0;
-                DependenciesSkipped = 0;
-                Log.Clear();
-            }
+            public string ScriptName { get; private set; } = string.Empty;
+            /// <summary>
+            /// Findings identified during the run.
+            /// </summary>
+            public IReadOnlyList<Finding> Findings { get; private set; } = [];
+            /// <summary>
+            /// Count of dependencies found during the run.
+            /// </summary>
+            //public int DependenciesFound { get; private set; }
+            /// <summary>
+            /// Count of dependencies missing during the run.
+            /// </summary>
+            //public int DependenciesMissing { get; private set; }
+            /// <summary>
+            /// Count of dependencies skipped during the run.
+            /// </summary>
+            //public int DependenciesSkipped { get; private set; }
+
+            public IReadOnlyList<string> FilesToRemove { get; private set; } = [];
         }
 
 
         /// <summary>
         /// Describes a finding or event as a result of a scan or run.
         /// </summary>
-        public struct LogItem {
-            public LogLevel Level { get; internal set; }
+        public record Finding {
+            public FindingSeverity Severity { get; internal set; }
             public string Script { get; internal set; }
             public string Item { get; internal set; }
             public string Message { get; internal set; }
@@ -67,7 +87,7 @@ namespace SC4CleanitolEngine {
             public Link Link { get; internal set; }
         }
 
-        public enum LogLevel {
+        public enum FindingSeverity {
             /// <summary>
             /// A comment or heading always shown to the user.
             /// </summary>
@@ -86,11 +106,13 @@ namespace SC4CleanitolEngine {
             Error,
         }
 
-        public record struct Link {
+        public record Link {
             public string Path { get; internal set; }
             public string Name { get; internal set; }
         }
 
+
+        
 
         /// <summary>
         /// Location files will be removed to and the output summary will be saved to.
@@ -100,51 +122,47 @@ namespace SC4CleanitolEngine {
         /// A list of folders to scan, which may include user plugins, system plugins, and/or additional folders.
         /// </summary>
         public List<string> PluginFolders { get; set; } = [];
-        public CleanitolResult Results { get; private set; } = new CleanitolResult();
 
-        /// <summary>
-        /// Key = file path, Value = file name
-        /// </summary>
-        private readonly Dictionary<string, string> _allFiles = [];
-        private readonly List<FileTgiPair> _allTgis = [];
-        private readonly List<string> _filesToRemove = [];
-        private string _scriptName = string.Empty;
+        private ScanResult? _scan;
 
         /// <summary>
         /// Parse the specified folders to generate an internal index of files and optionally, TGIs. Required before any other actions may be taken.
         /// </summary>
         /// <param name="progress">Progress status of the scan.</param>
         /// <param name="parseTGIs">Parse the TGIs out of each file found in <see cref="PluginFolders"/>.</param>
-        public void Scan(IProgress<CleanitolProgress>? progress = null, bool parseTGIs = false) {
-            _allFiles.Clear();
+        public ScanResult Scan(IProgress<CleanitolProgress>? progress = null, bool parseTGIs = false) {
+            var scannedFiles = new Dictionary<string, string>();
+            var scannedTgis = new List<KeyValuePair<string, string>>();
+            var findings = new List<Finding>();
+
             foreach (string folder in PluginFolders) {
                 var files = Directory.EnumerateFiles(folder, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true });
                 foreach (string file in files) {
-                    _allFiles.Add(file, Path.GetFileName(file));
-                    progress?.Report(new CleanitolProgress(_allFiles.Count, _allFiles.Count, 0));
+                    if (scannedFiles.TryAdd(file, Path.GetFileName(file))) {
+                        progress?.Report(new CleanitolProgress(scannedFiles.Count, scannedFiles.Count, 0));
+                    }
                 }
             }
 
             if (parseTGIs) {
                 int filesScanned = 0;
-                _allTgis.Clear();
 
-                foreach (string filepath in _allFiles.Keys) {
+                foreach (string filepath in scannedFiles.Keys) {
                     filesScanned++;
-                    progress?.Report(new CleanitolProgress(filesScanned, _allFiles.Count, 0));
+                    progress?.Report(new CleanitolProgress(filesScanned, scannedFiles.Count, 0));
 
                     try {
                         if (filepath.IsDBPF()) {
                             DBPFFile dbpf = new DBPFFile(filepath);
                             foreach (var tgi in dbpf.ListOfTGIs) {
-                                _allTgis.Add(new FileTgiPair(filepath, tgi));
+                                scannedTgis.Add(new KeyValuePair<string, string>(filepath, tgi.ToString()));
                             }
-                            progress?.Report(new CleanitolProgress(filesScanned, _allFiles.Count, _allTgis.Count));
+                            progress?.Report(new CleanitolProgress(filesScanned, scannedFiles.Count, scannedTgis.Count));
                         }
                     }
                     catch (Exception ex) {
-                        Results.Log.Add(new LogItem() {
-                            Level = LogLevel.Error,
+                        findings.Add(new Finding() {
+                            Severity = FindingSeverity.Error,
                             Script = "N/A",
                             Item = filepath,
                             Message = "Could not open file.",
@@ -153,9 +171,11 @@ namespace SC4CleanitolEngine {
                     }
                 }
             } else {
-                progress?.Report(new CleanitolProgress(_allFiles.Count, _allFiles.Count, 0));
+                progress?.Report(new CleanitolProgress(scannedFiles.Count, scannedFiles.Count, 0));
             }
-            Results.ScannedFiles = _allFiles;
+
+            _scan = new ScanResult(scannedFiles, scannedTgis, findings);
+            return _scan;
         }
 
         /// <summary>
@@ -164,49 +184,69 @@ namespace SC4CleanitolEngine {
         /// <param name="scriptName">Name of the script.</param>
         /// <param name="rules">A collection of rules to run.</param>
         /// <param name="ignoreSc4pac">Ignore files found in an sc4pac folder. Default is <see langword="true"/>.</param>
-        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
-        public void Run(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true, bool resetResults = true) {
-            if (resetResults) {
-                Results.Reset();
+        /// <returns>A new <see cref="CleanitolResult"/> containing only the findings of this run. Also available as <see cref="Results"/> until the next run.</returns>
+        public RunResult Run(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true) {
+            if (_scan is null) {
+                throw new InvalidOperationException("Scan must be completed before running a script.");
             }
-            _scriptName = scriptName;
+            var findings = new List<Finding>();
+            var filesToRemove = new List<string>();
             foreach (var rule in rules) {
-                ProcessRule(rule.Trim(), ignoreSc4pac);
+                var res = ProcessRule(rule.Trim(), scriptName, ignoreSc4pac);
+                findings.AddRange(res.findings);
+                filesToRemove.AddRange(res.filesToRemove);
             }
+            return new RunResult(scriptName, findings, filesToRemove);
         }
 
 
         /// <summary>
         /// Run the specified script.
         /// </summary>
-        /// <param name="scriptPath">Path of the script to run. May either be a local file path or a Github raw url.</param>
+        /// <param name="scriptPath">Path of the script to run. May either be a local file path or a GitHub raw url.</param>
         /// <param name="ignoreSc4pac">Ignore files found in an sc4pac folder. Default is <see langword="true"/>.</param>
-        /// <param name="resetResults">Reset the contents of <see cref="Results"/> before running the script. Default is <see langword="true"/>.</param>
-        public void Run(string scriptPath, bool ignoreSc4pac = true, bool resetResults = true) {
-            if (resetResults) {
-                Results.Reset();
+        /// <returns>A new <see cref="CleanitolResult"/> containing only the findings of this run. Also available as <see cref="Results"/> until the next run.</returns>
+        public RunResult Run(string scriptPath, bool ignoreSc4pac = true) {
+            if (_scan is null) {
+                throw new InvalidOperationException("Scan must be completed before running a script.");
             }
-            _scriptName = Path.GetFileName(scriptPath);
-            List<string> rules = [];
+            var scriptName = Path.GetFileName(scriptPath);
+            var findings = new List<Finding>();
+            List<string> rawRules;
             if (scriptPath.StartsWith("https://raw.githubusercontent.com")) {
-                rules = ImportScriptFromGithub(scriptPath);
+                rawRules = ImportScriptFromGithub(scriptPath, ref findings);
             } else {
-                rules = File.ReadAllLines(scriptPath).ToList();
+                rawRules = File.ReadAllLines(scriptPath).ToList();
             }
 
-            //Follow by inserting any rules from the remote script, if applicable
-            var urls = rules.AsParallel().Where(item => item.Trim().StartsWith("@https://raw.githubusercontent.com"));
-            foreach (string url in urls) {
-                rules.InsertRange(rules.IndexOf(url) + 1, ImportScriptFromGithub(url.Trim().Substring(1)));
-            }
+            //Expand remote script imports in place, in order, guarding against cycles
+            var rules = ExpandImports(rawRules, ref findings, [scriptPath]);
 
-            //TODO - write TGI list to DB for local storage?
+            var filesToRemove = new List<string>();
             foreach (var rule in rules) {
-                ProcessRule(rule.Trim(), ignoreSc4pac);
+                var res = ProcessRule(rule.Trim(), scriptName, ignoreSc4pac);
+                findings.AddRange(res.findings);
+                filesToRemove.AddRange(res.filesToRemove);
             }
+            return new RunResult(scriptName, findings, filesToRemove);
         }
 
-        private List<string> ImportScriptFromGithub(string githubFilePath) {
+        private static List<string> ExpandImports(List<string> rules, ref List<Finding> findings, HashSet<string> visited) {
+            var expanded = new List<string>();
+            foreach (var rule in rules) {
+                expanded.Add(rule);
+                var trimmed = rule.Trim();
+                if (trimmed.StartsWith("@https://raw.githubusercontent.com")) {
+                    var url = trimmed.Substring(1);
+                    if (visited.Add(url)) {
+                        expanded.AddRange(ExpandImports(ImportScriptFromGithub(url, ref findings), ref findings, visited));
+                    }
+                }
+            }
+            return expanded;
+        }
+
+        private static List<string> ImportScriptFromGithub(string githubFilePath, ref List<Finding> findings) {
             try {
                 HttpClient client = new HttpClient();
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, githubFilePath);
@@ -216,9 +256,9 @@ namespace SC4CleanitolEngine {
                 return content.Split('\n').ToList();
             }
             catch (Exception ex) {
-                Results.Log.Add(new LogItem() {
-                    Level = LogLevel.Error,
-                    Script = _scriptName,
+                findings.Add(new Finding() {
+                    Severity = FindingSeverity.Error,
+                    Script = Path.GetFileName(githubFilePath),
                     Item = githubFilePath,
                     Message = string.Empty,
                     Error = ex
@@ -231,97 +271,108 @@ namespace SC4CleanitolEngine {
         /// <summary>
         /// Process a Cleanitol rule, optionally ignoring any files found in an sc4pac folder.
         /// </summary>
-        private void ProcessRule(string rule, bool ignoreSc4pac) {
+        private (List<Finding> findings, List<string> filesToRemove) ProcessRule(string rule, string scriptName, bool ignoreSc4pac) {
+            var findings = new List<Finding>();
+            var filesToRemove = new List<string>();
             var type = ScriptRule.Parse(rule);
             switch (type) {
                 case ScriptRule.Type.Invalid:
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Error,
-                        Script = _scriptName,
+                    findings.Add(new Finding() {
+                        Severity = FindingSeverity.Error,
+                        Script = scriptName,
                         Item = rule,
-                        Message = " is an invalid rule. Check syntax."
+                        Message = "is an invalid rule. Check syntax."
                     });
-                    return;
+                    break;
 
                 case ScriptRule.Type.Removal:
-                    ProcessRemovalRule(rule, ignoreSc4pac);
-                    return;
+                    var res = ProcessRemovalRule(rule, scriptName, ignoreSc4pac);
+                    findings.AddRange(res.findings);
+                    filesToRemove.AddRange(res.filesToRemove);
+                    break;
 
                 case ScriptRule.Type.ConditionalDependency:
                 case ScriptRule.Type.Dependency:
-                    ProcessDependencyRule(rule);
-                    return;
+                    findings.Add(ProcessDependencyRule(rule, scriptName));
+                    break;
 
                 case ScriptRule.Type.Comment:
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Output,
-                        Script = _scriptName,
+                    findings.Add(new Finding() {
+                        Severity = FindingSeverity.Output,
+                        Script = scriptName,
                         Item = rule,
                         Message = rule.Substring(1)
                     });
-                    return;
+                    break;
 
                 case ScriptRule.Type.Heading:
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Output,
-                        Script = _scriptName,
+                    findings.Add(new Finding() {
+                        Severity = FindingSeverity.Output,
+                        Script = scriptName,
                         Item = rule,
                         Message = rule.TrimStart('#')
                     });
-                    return;
+                    break;
 
                 case ScriptRule.Type.HiddenComment:
                 case ScriptRule.Type.Import:
                 default:
-                    return;
+                    return ([], []);
             }
+            return (findings, filesToRemove);
         }
 
 
-        private void ProcessRemovalRule(string rule, bool ignoreSc4pac) {
+        private (List<Finding> findings, List<string> filesToRemove) ProcessRemovalRule(string rule, string scriptName, bool ignoreSc4pac) {
+            var findings = new List<Finding>();
+            var filesToRemove = new List<string>();
+            ScanResult scan = _scan ?? throw new InvalidOperationException("Scan must be completed before running a script.");
+
             rule = rule.Replace("*", string.Empty);
-            var matchingFiles = _allFiles.Keys
-                .Where(item => item.EndsWith(rule) && (ignoreSc4pac ? !IsSc4pacFile(item) : true))
+            List<string> matchingFiles = scan.ScannedFiles.Keys
+                .Where(item => item.EndsWith(rule) && (!ignoreSc4pac || !IsSc4pacFile(item)))
                 .AsParallel()
                 .ToList();
 
-            if (matchingFiles.Any()) {
+            if (matchingFiles.Count != 0) {
                 foreach (string file in matchingFiles) {
                     var filename = Path.GetFileName(file);
-                    //Make a special exception for the png images used for the in-game grid (the one that appears in the background when you play city tiles)
+                    //Make a special exception for the PNG images used for the in-game grid (the one that appears in the background when you play city tiles)
                     if (filename == "Background3D0.png" || filename == "Background3D1.png" || filename == "Background3D2.png" || filename == "Background3D3.png" || filename == "Background3D4.png") {
                         continue;
                     }
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Warning,
-                        Script = _scriptName,
+                    filesToRemove.Add(file);
+                    findings.Add(new Finding() {
+                        Severity = FindingSeverity.Warning,
+                        Script = scriptName,
                         Item = rule,
                         Message = $"was found in {Path.GetDirectoryName(file)}."
                     });
-                    _filesToRemove.Add(file);
                 }
             } else {
-                Results.Log.Add(new LogItem() {
-                    Level = LogLevel.Info,
-                    Script = _scriptName,
+                findings.Add(new Finding() {
+                    Severity = FindingSeverity.Info,
+                    Script = scriptName,
                     Item = rule,
                     Message = "is not present."
                 });
             }
+            return (findings, filesToRemove);
         }
 
 
-        private void ProcessDependencyRule(string rule) {
+        private Finding ProcessDependencyRule(string rule, string scriptName) {
+            ScanResult scan = _scan ?? throw new InvalidOperationException("Scan must be completed before running a script.");
             var dr = new ScriptRule.DependencyRule(rule);
 
             if (dr.IsUnchecked) {
-                Results.Log.Add(new LogItem() {
-                    Level = LogLevel.Error,
-                    Script = _scriptName,
+                return new Finding() {
+                    Severity = FindingSeverity.Error,
+                    Script = scriptName,
                     Item = rule,
                     Message = " is an unchecked dependency (no outputPath provided). Validate manually. Download at: #url#",
                     Link = new Link() { Name = dr.LinkName, Path = dr.LinkUrl },
-                });
+                };
             }
 
             bool isConditionalFound = false;
@@ -330,7 +381,7 @@ namespace SC4CleanitolEngine {
                     //isConditionalFound = _allTgis.BinarySearch(DBPFTGI.ParseTGIString(dr.ConditionalItem)) >= 0;
                     throw new NotImplementedException("Temporarily removed");
                 } else {
-                    isConditionalFound = _allFiles.ContainsValue(dr.SearchItem);
+                    isConditionalFound = scan.ScannedFiles.Values.Contains(dr.SearchItem);
                 }
             }
 
@@ -340,55 +391,62 @@ namespace SC4CleanitolEngine {
                     //isItemFound = _allTgis.BinarySearch(DBPFTGI.ParseTGIString(dr.SearchItem)) >= 0;
                     throw new NotImplementedException("Temporarily removed");
                 } else {
-                    isItemFound = _allFiles.ContainsValue(dr.SearchItem);
+                    isItemFound = scan.ScannedFiles.Values.Contains(dr.SearchItem);
                 }
             }
 
             if (!dr.IsConditional) {
                 if (isItemFound) {
-                    Results.DependenciesFound++;
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Info,
-                        Script = _scriptName,
+                    //_dependenciesFound++;
+                    return new Finding() {
+                        Severity = FindingSeverity.Info,
+                        Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " was found.",
-                    });
+                    };
                 } else {
-                    Results.DependenciesMissing++;
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Error,
-                        Script = _scriptName,
+                    //_dependenciesMissing++;
+                    return new Finding() {
+                        Severity = FindingSeverity.Error,
+                        Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " is missing. Download at: #url#",
                         Link = new Link() { Name = dr.LinkName, Path = dr.LinkUrl },
-                    });
+                    };
                 }
             } else {
                 if (isConditionalFound && isItemFound) {
-                    Results.DependenciesFound++;
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Info,
-                        Script = _scriptName,
+                    //_dependenciesFound++;
+                    return new Finding() {
+                        Severity = FindingSeverity.Info,
+                        Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " was found.",
-                    });
+                    };
                 } else if (isConditionalFound && !isItemFound) {
-                    Results.DependenciesMissing++;
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Error,
-                        Script = _scriptName,
+                    //_dependenciesMissing++;
+                    return new Finding() {
+                        Severity = FindingSeverity.Error,
+                        Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " is missing. Download at: #url#",
                         Link = new Link() { Name = dr.LinkName, Path = dr.LinkUrl },
-                    });
+                    };
                 } else if (!isConditionalFound) {
-                    Results.DependenciesSkipped++;
-                    Results.Log.Add(new LogItem() {
-                        Level = LogLevel.Info,
-                        Script = _scriptName,
+                    //_dependenciesSkipped++;
+                    return new Finding() {
+                        Severity = FindingSeverity.Info,
+                        Script = scriptName,
                         Item = dr.SearchItem,
                         Message = $" was skipped as {dr.ConditionalItem} was not found in {dr.LinkName ?? dr.LinkUrl}",
-                    });
+                    };
+                } else {
+                    return new Finding() {
+                        Severity = FindingSeverity.Error,
+                        Script = scriptName,
+                        Item = dr.SearchItem,
+                        Message = "Unexpected conditional dependency evaluation.",
+                    };
                 }
             }
         }
@@ -403,18 +461,18 @@ namespace SC4CleanitolEngine {
         /// <summary>
         /// Move the files requested for removal to <see cref="ScriptOutputDirectory"/> and create the html summary document and undo batch script. 
         /// </summary>
-        public void BackupFiles() {
-            if (_filesToRemove.Count == 0) {
+        public static void BackupFiles(RunResult result, string outputDirectory) {
+            if (result.FilesToRemove.Count == 0) {
                 return;
             }
-            string outputDir = Path.Combine(OutputDirectory, DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
+            string outputDir = Path.Combine(outputDirectory, DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
             Directory.CreateDirectory(outputDir);
 
             // Write batch undo file
             var isWindowsOS = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Contains("Windows");
             string contents = string.Empty;
 
-            foreach (string file in _filesToRemove) {
+            foreach (string file in result.FilesToRemove) {
                 string fname = Path.GetFileName(file);
                 string archivePath = Path.Combine(outputDir, fname);
                 if (File.Exists(file)) {
@@ -445,11 +503,11 @@ namespace SC4CleanitolEngine {
             using Stream stream = assembly.GetManifestResourceStream("SC4Cleanitol.Resources.SummaryTemplate.html")!;
             using StreamReader reader = new StreamReader(stream);
             string templateText = reader.ReadToEnd();
-            templateText = templateText.Replace("#SCRIPTNAME", _scriptName);
-            templateText = templateText.Replace("#COUNTFILES", _filesToRemove.Count.ToString());
+            templateText = templateText.Replace("#SCRIPTNAME", result.ScriptName);
+            templateText = templateText.Replace("#COUNTFILES", result.FilesToRemove.Count.ToString());
             templateText = templateText.Replace("#FOLDERPATH", outputDir);
             templateText = templateText.Replace("#HELPDOC", "https://github.com/noah-severyn/SC4Cleanitol/wiki");
-            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", _filesToRemove));
+            templateText = templateText.Replace("#LISTOFFILES", string.Join("<br/>", result.FilesToRemove));
             templateText = templateText.Replace("#DATETIME", DateTime.Now.ToString("dd MMM yyyy HH:mm"));
             File.WriteAllText(Path.Combine(outputDir, "CleanupSummary.html"), templateText);
         }
@@ -457,21 +515,29 @@ namespace SC4CleanitolEngine {
 
 
         /// <summary>
+        /// Export file type.
+        /// </summary>
+        public enum ExportType {
+            Csv,
+            SQLite
+        }
+
+        /// <summary>
         /// Export the scanned TGIs a document in the specified format.
         /// </summary>
         /// <param name="fileType">Export file type. Default is <see cref="ExportType.Csv"/>.</param>
         /// <returns>The full path of the created export file.</returns>
-        public string ExportTGIs(ExportType fileType = ExportType.Csv) {
+        public string ExportTGIs(ScanResult result, ExportType fileType = ExportType.Csv) {
             string outputPath = Path.Combine(OutputDirectory, "ScannedTGIs " + DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), fileType == ExportType.Csv ? ".csv" : ".db");
 
             if (fileType == ExportType.Csv) {
                 StringBuilder list = new StringBuilder("File,Type,Group,Instance,\r\n");
-                foreach (var item in _allTgis) {
-                    list.AppendLine(item.FilePath + "," + item.Tgi.ToString().Replace(" ", string.Empty));
+                foreach (var item in result.ScannedTGIs) {
+                    list.AppendLine(item.Key + "," + item.Value.ToString().Replace(" ", string.Empty));
                 }
                 File.WriteAllText(outputPath, list.ToString());
             } else {
-                DatabaseBuilder.CreateDb(outputPath, _allTgis);
+                DatabaseBuilder.CreateDb(outputPath, result.ScannedTGIs);
             }
             return outputPath;
         }
