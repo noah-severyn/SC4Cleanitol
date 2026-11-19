@@ -20,6 +20,25 @@ namespace SC4CleanitolAvalonia.ViewModels;
 
 internal partial class MainViewModel(ICleanitolService cleanitolService, IFolderPickerService folderPickerService, IDialogService dialogService, IConfigService configService, UserConfig config, IChecksumService checksumService) : ObservableObject {
 
+    /// <summary>
+    /// Parameterless constructor used only by the XAML previewer (<c>Design.DataContext</c>). Services are null, so commands must not be executed.
+    /// </summary>
+    public MainViewModel() : this(null!, null!, null!, null!, new UserConfig(), null!) {
+        LastScanned = "Last scan: " + DateTime.Now.ToString();
+
+        Results.Add(new ScriptResult("nam-team:network-addon-mod", [
+            new Finding { Severity = FindingSeverity.Warning, Script = "nam-team:network-addon-mod", Item = "NetworkAddonMod_Locale_pt.dat", Message = "was found in C:\\Plugins\\075-my-plugins\\NAM\\@4^1 Core\\locale" },
+            new Finding { Severity = FindingSeverity.Warning, Script = "nam-team:network-addon-mod", Item = "NetworkAddonMod_Locale_de.dat", Message = "was found in C:\\Plugins\\075-my-plugins\\NAM\\@4^1 Core\\locale" },
+            new Finding { Severity = FindingSeverity.Info, Script = "nam-team:network-addon-mod", Item = "NetworkAddonMod_Controller.dat", Message = "is not present." },
+        ]));
+        Results.Add(new ScriptResult("b62:safeway-60s-retro-grocery", [
+            new Finding { Severity = FindingSeverity.Warning, Script = "b62:safeway-60s-retro-grocery", Item = "B62-CS$$_Safeway Retro 1960s v 2.0-0x6534284a-0xd3a3e650-0x5639d97a.SC4Desc", Message = "was found in C:\\Plugins\\B62-Safeway 60's Retro" },
+            new Finding { Severity = FindingSeverity.Warning, Script = "b62:safeway-60s-retro-grocery", Item = "CS$$2_6x6_B62-CS$$_Safeway Retro 1960s v 2.0_8639d990.SC4Lot", Message = "was found in C:\\Plugins\\B62-Safeway 60's Retro" },
+            new Finding { Severity = FindingSeverity.Warning, Script = "b62:safeway-60s-retro-grocery", Item = "b62 1960s Safeway Retro v 2.0-0x5ad0e817_0xb2a42fa9_0x30000.SC4Model", Message = "was found in C:\\Plugins\\B62-Safeway 60's Retro\\B62-Safeway 60's Retro" },
+            //new LogItem { Level = LogLevel.Error, Script = "b62:safeway-60s-retro-grocery", Item = "Missing dependency", Message = "is missing. Download at: #url#", Link = new Link { Name = "SC4Evermore", Path = "https://www.sc4evermore.com" } },
+        ]));
+    }
+
     [ObservableProperty]
     private string _userPluginsPath = config.UserPluginsPath;
     partial void OnUserPluginsPathChanged(string value) {
@@ -116,6 +135,10 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
     public int TgisProcessed { get; private set; }
 
+    public ScanResult? ScanResults { get; private set; }
+
+    public List<RunResult>? RunResults { get; private set; }
+
     [RelayCommand]
     private async Task ChooseUserPluginsFolder() {
         var folder = await folderPickerService.PickFolderAsync();
@@ -196,7 +219,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             TgisProcessed = p.TgisProcessed;
         });
 
-        await cleanitolService.ScanAsync(progress);
+        ScanResults = await cleanitolService.ScanAsync(progress);
 
         if (config.CheckSc4pacDuplicates) {
             await CheckForSc4pacDuplicates(foldersToScan);
@@ -210,7 +233,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         Results.Clear();
 
         //We first want to know what sc4pac packages are already installed to find any duplicates. Treat each package folder as a cleanitol script with its contents as the rules.
-        HashSet<string> pkgFolders = [];
+        var pkgFolders = new HashSet<string>();
         foreach (var folder in foldersToScan) {
             foreach (var dir in Directory.EnumerateDirectories(folder, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })) {
                 if (dir.EndsWith(".sc4pac")) {
@@ -219,14 +242,13 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             }
         }
         foreach (var folder in pkgFolders) {
-            var filesToFind = cleanitolService.Results.ScannedFiles.Where(k => k.Key.StartsWith(folder)).Select(k => k.Value);
+            var filesToFind = ScanResults.ScannedFiles.Where(k => k.Key.StartsWith(folder)).Select(k => k.Value);
             if (!filesToFind.Any()) {
                 continue;
             }
             var pkg = ExtractPackageIdFromFolder(folder);
-            await cleanitolService.RunAsync(pkg, filesToFind, true, true);
-            //`cleanitolService.Results.Log` is the same list reference every time. The engine resets and reuses Results.Log on each RunAsync call (resetResults: true). So every ScriptResult ends up holding a reference to the same list, which gets cleared on the next iteration — leaving all but the last one empty. `.ToList()` creates a snapshot of the log at that point in time, so each ScriptResult holds its own independent copy that won't be affected when the engine clears Results.Log on the next iteration.
-            Results.Add(new ScriptResult(pkg, cleanitolService.Results.Log.ToList()));
+            var result = await cleanitolService.RunAsync(pkg, filesToFind);
+            Results.Add(new ScriptResult(pkg, result.Findings.ToList()));
         }
     }
 
@@ -246,7 +268,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
 
 
-    public partial class ScriptResult(string scriptName, List<LogItem> logItems) {
+    public partial class ScriptResult(string scriptName, List<Finding> findings) {
         /// <summary>
         /// Name of script run - either the Cleanitol file name or a sc4pac package.
         /// </summary>
@@ -254,7 +276,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         /// <summary>
         /// Number of findings at warning level or higher.
         /// </summary>
-        public int ItemCount { get; } = logItems.Count(i => i.Level >= LogLevel.Warning);
+        public int ItemCount { get; } = findings.Count(i => i.Severity >= FindingSeverity.Warning);
         public string ItemCountLabel => $"({ItemCount} files)";
         /// <summary>
         /// Items that don't have any results are not shown in the window.
@@ -271,7 +293,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         public List<LogItemDisplay> DisplayLog {
             get {
                 List<LogItemDisplay> log = [];
-                foreach (var item in logItems) {
+                foreach (var item in findings) {
                     log.Add(new LogItemDisplay(item));
                 }
                 return log;
@@ -299,29 +321,29 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         }
 
         /// <summary>
-        /// A wrapper for a <see cref="LogItem"/> containing all the properties needed for display.
+        /// A wrapper for a <see cref="Finding"/> containing all the properties needed for display.
         /// /// </summary>
         /// <param name="item"></param>
-        public partial class LogItemDisplay(LogItem item) {
-            public LogLevel Level { get; private set; } = item.Level;
+        public partial class LogItemDisplay(Finding item) {
+            public FindingSeverity Level { get; private set; } = item.Severity;
             public string Icon {
                 get {
-                    return item.Level switch {
-                        LogLevel.Output => "\ue06c",
-                        LogLevel.Info => "\ue2ce",
-                        LogLevel.Warning => "\uee44",
-                        LogLevel.Error => "\ue7fc",
+                    return item.Severity switch {
+                        FindingSeverity.Output => "\ue06c",
+                        FindingSeverity.Info => "\ue2ce",
+                        FindingSeverity.Warning => "\uee44",
+                        FindingSeverity.Error => "\ue7fc",
                         _ => "\ue31e",
                     };
                 }
             }
             public IImmutableSolidColorBrush IconColor {
                 get {
-                    return item.Level switch {
-                        LogLevel.Output => Brushes.Green,
-                        LogLevel.Info => Brushes.SteelBlue,
-                        LogLevel.Warning => Brushes.Orange,
-                        LogLevel.Error => Brushes.Crimson,
+                    return item.Severity switch {
+                        FindingSeverity.Output => Brushes.Green,
+                        FindingSeverity.Info => Brushes.SteelBlue,
+                        FindingSeverity.Warning => Brushes.Orange,
+                        FindingSeverity.Error => Brushes.Crimson,
                         _ => Brushes.Black,
                     };
                 }

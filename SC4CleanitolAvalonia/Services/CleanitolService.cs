@@ -11,7 +11,9 @@ namespace SC4CleanitolAvalonia.Services;
 internal class CleanitolService: ICleanitolService {
     private readonly CleanitolEngine _engine = new();
 
-    public CleanitolEngine.CleanitolResult Results => _engine.Results;
+    public CleanitolEngine.ScanResult? ScanResult;
+
+    public CleanitolEngine.RunResult? RunResult;
 
     ///<inheritdoc/>
     public void Configure(List<string> pluginFolders, string outputDirectory) {
@@ -20,17 +22,17 @@ internal class CleanitolService: ICleanitolService {
     }
 
     ///<inheritdoc/>
-    public Task ScanAsync(IProgress<CleanitolEngine.CleanitolProgress>? progress = null, bool parseTGIs = false) {
+    public Task<CleanitolEngine.ScanResult> ScanAsync(IProgress<CleanitolEngine.CleanitolProgress>? progress = null, bool parseTGIs = false) {
         return Task.Run(() => _engine.Scan(progress, parseTGIs));
     }
 
     ///<inheritdoc/>
-    public Task RunAsync(string scriptPath, bool ignoreSc4pac = true, bool resetResults = true) {
-        return Task.Run(() => _engine.Run(scriptPath, ignoreSc4pac, resetResults));
+    public Task<CleanitolEngine.RunResult> RunAsync(string scriptPath, bool ignoreSc4pac = true) {
+        return Task.Run(() => _engine.Run(scriptPath, ignoreSc4pac));
     }
 
     ///<inheritdoc/>
-    public Task RunAsync(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true, bool resetResults = false) {
-        return Task.Run(() => _engine.Run(scriptName, rules, ignoreSc4pac, resetResults));
+    public Task<CleanitolEngine.RunResult> RunAsync(string scriptName, IEnumerable<string> rules, bool ignoreSc4pac = true) {
+        return Task.Run(() => _engine.Run(scriptName, rules, ignoreSc4pac));
     }
 }
