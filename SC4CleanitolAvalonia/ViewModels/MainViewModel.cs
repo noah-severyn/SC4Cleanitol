@@ -196,9 +196,13 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     private async Task ScanPlugins() {
         var invalidFolders = ValidateFolderPaths();
         if (invalidFolders.Count > 0) {
-            var message = "The following folders were not found. Validate they were typed correctly and exist:\n\n" + string.Join("\n", invalidFolders);
-            await dialogService.ShowMessageBoxAsync("Invalid Folder Paths", message, Icon.Error);
-            return;
+            var message = "The following folders were not found. Do you want to create them?\n\n" + string.Join("\n", invalidFolders);
+            var result = await dialogService.ShowMessageBoxAsync("Invalid Folder Paths", message, Icon.Error);
+            if (result == ButtonResult.Yes) {
+                foreach (var folder in invalidFolders) {
+                    Directory.CreateDirectory(folder);
+                }
+            }
         }
 
         await configService.SaveAsync(config);

@@ -16,8 +16,8 @@ namespace SC4CleanitolAvalonia.Services;
 internal class DialogService(Window window) : IDialogService {
     private readonly Window _window = window;
 
-    public async Task ShowMessageBoxAsync(string title, string message, Icon icon) {
-        var msgbox = MessageBoxManager.GetMessageBoxStandard(title, message, ButtonEnum.Ok, icon);
-        await msgbox.ShowWindowDialogAsync(_window);
+    public async Task<ButtonResult> ShowMessageBoxAsync(string title, string message, Icon icon) {
+        var msgbox = MessageBoxManager.GetMessageBoxStandard(title, message, ButtonEnum.YesNo, icon);
+        return await msgbox.ShowWindowDialogAsync(_window);
     }
 }
