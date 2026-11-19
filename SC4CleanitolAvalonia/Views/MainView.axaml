@@ -6,8 +6,9 @@
 	xmlns:engine="clr-namespace:SC4CleanitolEngine;assembly=SC4CleanitolEngine"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:SC4CleanitolAvalonia.ViewModels"
-	d:DesignHeight="550"
-	d:DesignWidth="800"
+	xmlns:components="clr-namespace:SC4CleanitolAvalonia.Views.Components"
+	d:DesignHeight="800"
+	d:DesignWidth="1200"
 	x:DataType="vm:MainViewModel"
 	mc:Ignorable="d">
 	<Design.DataContext>
@@ -18,17 +19,14 @@
 		<vm:MainViewModel />
 	</Design.DataContext>
 
-	<Grid RowDefinitions="Auto,Auto,*">
-		<!--  Row 0 : Header  -->
+	<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+		<!--  Row 0 : Configuration  -->
 		<Expander
 			Grid.Row="0"
 			Margin="10"
 			HorizontalAlignment="Stretch">
 			<Expander.Header>
-				<StackPanel Orientation="Horizontal">
-					<Label Classes="icon" Content="&#xe270;" />
-					<Label Content="Configuration" />
-				</StackPanel>
+				<components:ExpanderHeader Icon="&#xe270;" Title="Configuration" />
 			</Expander.Header>
 			<StackPanel Orientation="Vertical" Spacing="4">
 
@@ -106,7 +104,7 @@
 			</StackPanel>
 		</Expander>
 
-		<!--  Row 2 : Scan status  -->
+		<!--  Row 1 : scan status  -->
 		<StackPanel
 			Grid.Row="1"
 			Margin="10"
@@ -127,103 +125,129 @@
 				Text="{Binding LastScanned}" />
 		</StackPanel>
 
-		<!--  Row 3 : Data  -->
-		<ScrollViewer
+		<!--  Row 2 : duplicates with sc4pac  -->
+		<Expander
 			Grid.Row="2"
 			Margin="10"
-			VerticalScrollBarVisibility="Auto">
-			<ItemsControl ItemsSource="{Binding Results}">
-				<ItemsControl.ItemTemplate>
-					<DataTemplate>
-						<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top" IsVisible="{Binding HasItems}">
-							<Expander.Header>
-								<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
-									<SelectableTextBlock
-										Grid.Column="0"
-										VerticalAlignment="Center"
-										Text="{Binding ScriptName}" />
-									<SelectableTextBlock
-										Grid.Column="1"
-										Margin="10,0"
-										HorizontalAlignment="Stretch"
-										VerticalAlignment="Center"
-										Text="{Binding ItemCountLabel}" />
-									<Button
-										Grid.Column="2"
-										Padding="2"
-										Command="{Binding OpenPackageInSc4pac}"
-										ToolTip.Tip="Open in sc4pac">
-										<StackPanel Orientation="Horizontal">
-											<Label Classes="icon" Content="&#xe1da;" />
-										</StackPanel>
-									</Button>
-									<Button
-										Grid.Column="4"
-										Padding="2"
-										Command="{Binding CleanUpFiles}"
-										ToolTip.Tip="Clean up files">
-										<StackPanel Orientation="Horizontal">
-											<Label Classes="icon" Content="&#xec54;" />
-										</StackPanel>
-									</Button>
-								</Grid>
-							</Expander.Header>
-							<!--  Inner list of LogItems  -->
-							<ItemsControl ItemsSource="{Binding DisplayLog}">
-								<ItemsControl.ItemTemplate>
-									<DataTemplate>
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xe2d2;" Title="1:  Duplicates with installed sc4pac packages" Count="{Binding Results.Count}" />
+			</Expander.Header>
+			<ScrollViewer
+				Margin="-10"
+				VerticalScrollBarVisibility="Auto">
+				<ItemsControl ItemsSource="{Binding Results}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top" IsVisible="{Binding HasItems}">
+								<Expander.Header>
+									<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
+										<SelectableTextBlock
+											Grid.Column="0"
+											VerticalAlignment="Center"
+											Text="{Binding ScriptName}" />
+										<SelectableTextBlock
+											Grid.Column="1"
+											Margin="10,0"
+											HorizontalAlignment="Stretch"
+											VerticalAlignment="Center"
+											Text="{Binding ItemCountLabel}" />
+										<Button
+											Grid.Column="2"
+											Padding="2"
+											Command="{Binding OpenPackageInSc4pac}"
+											ToolTip.Tip="Open in sc4pac">
+											<StackPanel Orientation="Horizontal">
+												<Label Classes="icon" Content="&#xe1da;" />
+											</StackPanel>
+										</Button>
+										<Button
+											Grid.Column="4"
+											Padding="2"
+											Command="{Binding CleanUpFiles}"
+											ToolTip.Tip="Clean up files">
+											<StackPanel Orientation="Horizontal">
+												<Label Classes="icon" Content="&#xec54;" />
+											</StackPanel>
+										</Button>
+									</Grid>
+								</Expander.Header>
+								<!--  Inner list of LogItems  -->
+								<ItemsControl ItemsSource="{Binding DisplayLog}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
 
-										<Grid
-											Margin="20,1,0,1"
-											ColumnDefinitions="Auto,Auto,*,Auto"
-											ColumnSpacing="6">
+											<Grid
+												Margin="20,1,0,1"
+												ColumnDefinitions="Auto,Auto,*,Auto"
+												ColumnSpacing="6">
 
-											<!--  Level icon  -->
-											<Label
-												Grid.Column="0"
-												Padding="0"
-												VerticalAlignment="Center"
-												Classes="icon"
-												Content="{Binding Icon}"
-												Foreground="{Binding IconColor}" />
-
-											<!--  Item (filename / rule)  -->
-											<SelectableTextBlock
-												Grid.Column="1"
-												VerticalAlignment="Center"
-												FontFamily="Consolas, Courier New, monospace"
-												FontSize="12"
-												Text="{Binding Item}" />
-
-											<!--  Message  -->
-											<SelectableTextBlock
-												Grid.Column="2"
-												VerticalAlignment="Center"
-												Text="{Binding Message}"
-												TextWrapping="Wrap" />
-
-											<!--  Optional link button  -->
-											<Button
-												Grid.Column="3"
-												Padding="2"
-												IsVisible="{Binding Link.Path, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-												Tag="{Binding Link.Path}"
-												ToolTip.Tip="{Binding Link.Name}">
+												<!--  Level icon  -->
 												<Label
+													Grid.Column="0"
 													Padding="0"
+													VerticalAlignment="Center"
 													Classes="icon"
-													Content="&#xe1da;" />
-											</Button>
+													Content="{Binding Icon}"
+													Foreground="{Binding IconColor}" />
 
-										</Grid>
-									</DataTemplate>
-								</ItemsControl.ItemTemplate>
-							</ItemsControl>
-						</Expander>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
-			</ItemsControl>
-		</ScrollViewer>
+												<!--  Item (filename / rule)  -->
+												<SelectableTextBlock
+													Grid.Column="1"
+													VerticalAlignment="Center"
+													FontFamily="Consolas, Courier New, monospace"
+													Text="{Binding Item}" />
 
+												<!--  Message  -->
+												<SelectableTextBlock
+													Grid.Column="2"
+													VerticalAlignment="Center"
+													Text="{Binding Message}"
+													TextWrapping="Wrap" />
+
+												<!--  Optional link button  -->
+												<Button
+													Grid.Column="3"
+													Padding="2"
+													IsVisible="{Binding Link.Path, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+													Tag="{Binding Link.Path}"
+													ToolTip.Tip="{Binding Link.Name}">
+													<Label
+														Padding="0"
+														Classes="icon"
+														Content="&#xe1da;" />
+												</Button>
+
+											</Grid>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</Expander>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+		
+		</Expander>
+
+		<!--- Row 3: items that can be migrated to sc4pac -->
+		<Expander
+			Grid.Row="3"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xe882;" Title="2:  Items that can be migrated to sc4pac" />
+			</Expander.Header>
+		</Expander>
+
+		<!--- Row 4: final cleanup -->
+		<Expander
+			Grid.Row="4"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xec54;" Title="3:  Cleanup of non-sc4pac items" />
+			</Expander.Header>
+		</Expander>
 	</Grid>
 </UserControl>

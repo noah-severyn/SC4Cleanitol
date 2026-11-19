@@ -18,6 +18,7 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\SummaryTemplate.html" />
+		<InternalsVisibleTo Include="SC4CleanitolAvalonia" />
 	</ItemGroup>
 
 </Project>

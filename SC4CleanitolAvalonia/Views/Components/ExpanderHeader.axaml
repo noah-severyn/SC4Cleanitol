@@ -1,0 +1,16 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d"
+			 x:Class="SC4CleanitolAvalonia.Views.Components.ExpanderHeader"
+			 x:Name="Root"
+			 d:DesignWidth="400" d:DesignHeight="40">
+	<StackPanel Orientation="Horizontal">
+		<Label Classes="icon" Content="{Binding Icon, ElementName=Root}" Margin="10 0 10 0" VerticalAlignment="Center" />
+		<Label Content="{Binding Title, ElementName=Root}" FontSize="16" VerticalAlignment="Center" />
+		<Border Background="#990000" CornerRadius="10" MinWidth="20" Height="20" Margin="10 0 0 0" VerticalAlignment="Center" IsVisible="{Binding Count, ElementName=Root, Converter={x:Static ObjectConverters.IsNotNull}}">
+			<TextBlock Text="{Binding Count, ElementName=Root}" Foreground="White" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+		</Border>
+	</StackPanel>
+</UserControl>
