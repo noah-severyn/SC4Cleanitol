@@ -80,11 +80,12 @@ namespace SC4CleanitolEngine {
         /// </summary>
         public record Finding {
             public FindingSeverity Severity { get; internal set; }
-            public string Script { get; internal set; }
-            public string Item { get; internal set; }
-            public string Message { get; internal set; }
-            public Exception Error { get; internal set; }
-            public Link Link { get; internal set; }
+            public ScriptRule.Type? RuleType { get; internal set; }
+            public string Script { get; internal set; } = string.Empty;
+            public string Item { get; internal set; } = string.Empty;
+            public string Message { get; internal set; } = string.Empty;
+            public Exception? Error { get; internal set; }
+            public Link? Link { get; internal set; }
         }
 
         public enum FindingSeverity {
@@ -107,8 +108,8 @@ namespace SC4CleanitolEngine {
         }
 
         public record Link {
-            public string Path { get; internal set; }
-            public string Name { get; internal set; }
+            public string Path { get; internal set; } = string.Empty;
+            public string Name { get; internal set; } = string.Empty;
         }
 
 
@@ -279,6 +280,7 @@ namespace SC4CleanitolEngine {
                 case ScriptRule.Type.Invalid:
                     findings.Add(new Finding() {
                         Severity = FindingSeverity.Error,
+                        RuleType = type,
                         Script = scriptName,
                         Item = rule,
                         Message = "is an invalid rule. Check syntax."
@@ -299,6 +301,7 @@ namespace SC4CleanitolEngine {
                 case ScriptRule.Type.Comment:
                     findings.Add(new Finding() {
                         Severity = FindingSeverity.Output,
+                        RuleType = type,
                         Script = scriptName,
                         Item = rule,
                         Message = rule.Substring(1)
@@ -308,6 +311,7 @@ namespace SC4CleanitolEngine {
                 case ScriptRule.Type.Heading:
                     findings.Add(new Finding() {
                         Severity = FindingSeverity.Output,
+                        RuleType = type,
                         Script = scriptName,
                         Item = rule,
                         Message = rule.TrimStart('#')
@@ -344,6 +348,7 @@ namespace SC4CleanitolEngine {
                     filesToRemove.Add(file);
                     findings.Add(new Finding() {
                         Severity = FindingSeverity.Warning,
+                        RuleType = ScriptRule.Type.Removal,
                         Script = scriptName,
                         Item = rule,
                         Message = $"was found in {Path.GetDirectoryName(file)}."
@@ -352,6 +357,7 @@ namespace SC4CleanitolEngine {
             } else {
                 findings.Add(new Finding() {
                     Severity = FindingSeverity.Info,
+                    RuleType = ScriptRule.Type.Removal,
                     Script = scriptName,
                     Item = rule,
                     Message = "is not present."
@@ -368,6 +374,7 @@ namespace SC4CleanitolEngine {
             if (dr.IsUnchecked) {
                 return new Finding() {
                     Severity = FindingSeverity.Error,
+                    RuleType = ScriptRule.Type.Dependency,
                     Script = scriptName,
                     Item = rule,
                     Message = " is an unchecked dependency (no outputPath provided). Validate manually. Download at: #url#",
@@ -400,6 +407,7 @@ namespace SC4CleanitolEngine {
                     //_dependenciesFound++;
                     return new Finding() {
                         Severity = FindingSeverity.Info,
+                        RuleType = ScriptRule.Type.Dependency,
                         Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " was found.",
@@ -408,6 +416,7 @@ namespace SC4CleanitolEngine {
                     //_dependenciesMissing++;
                     return new Finding() {
                         Severity = FindingSeverity.Error,
+                        RuleType = ScriptRule.Type.Dependency,
                         Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " is missing. Download at: #url#",
@@ -419,6 +428,7 @@ namespace SC4CleanitolEngine {
                     //_dependenciesFound++;
                     return new Finding() {
                         Severity = FindingSeverity.Info,
+                        RuleType = ScriptRule.Type.ConditionalDependency,
                         Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " was found.",
@@ -427,6 +437,7 @@ namespace SC4CleanitolEngine {
                     //_dependenciesMissing++;
                     return new Finding() {
                         Severity = FindingSeverity.Error,
+                        RuleType = ScriptRule.Type.ConditionalDependency,
                         Script = scriptName,
                         Item = dr.SearchItem,
                         Message = " is missing. Download at: #url#",
@@ -436,6 +447,7 @@ namespace SC4CleanitolEngine {
                     //_dependenciesSkipped++;
                     return new Finding() {
                         Severity = FindingSeverity.Info,
+                        RuleType = ScriptRule.Type.ConditionalDependency,
                         Script = scriptName,
                         Item = dr.SearchItem,
                         Message = $" was skipped as {dr.ConditionalItem} was not found in {dr.LinkName ?? dr.LinkUrl}",
@@ -443,6 +455,7 @@ namespace SC4CleanitolEngine {
                 } else {
                     return new Finding() {
                         Severity = FindingSeverity.Error,
+                        RuleType = ScriptRule.Type.ConditionalDependency,
                         Script = scriptName,
                         Item = dr.SearchItem,
                         Message = "Unexpected conditional dependency evaluation.",

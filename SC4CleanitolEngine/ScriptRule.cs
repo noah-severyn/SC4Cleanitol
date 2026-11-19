@@ -5,7 +5,7 @@ namespace SC4CleanitolEngine {
     /// <summary>
     /// Classes, enums, and functions related to parsing script rules. A rule is a single line read from the script.
     /// </summary>
-    internal static class ScriptRule {
+    public static class ScriptRule {
         /// <summary>
         /// Defines an action that should be taken when the rule is processed.
         /// </summary>
