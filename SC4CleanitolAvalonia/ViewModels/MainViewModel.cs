@@ -117,7 +117,11 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     }
 
     [ObservableProperty]
-    private ObservableCollection<ScriptResult> _results = [];
+    public partial ObservableCollection<ScriptResult> Results { get; set; } = [];
+
+    public int FilesToRemoveCount => Results.Sum(r => r.FilesToRemoveCount);
+
+    public string DuplicatesMessageLabel => $"These are files that are duplicated with a package you have already installed in sc4pac. Files are removed to {OutputPath}, preserving the folder structure.";
 
     public string ScanProgress {
         get {
@@ -235,6 +239,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
     /// </summary>
     async private Task CheckForSc4pacDuplicates(List<string> foldersToScan) {
         Results.Clear();
+        OnPropertyChanged(nameof(FilesToRemoveCount));
 
         //We first want to know what sc4pac packages are already installed to find any duplicates. Treat each package folder as a cleanitol script with its contents as the rules.
         var pkgFolders = new HashSet<string>();
@@ -253,6 +258,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             var pkg = ExtractPackageIdFromFolder(folder);
             var result = await cleanitolService.RunAsync(pkg, filesToFind);
             Results.Add(new ScriptResult(pkg, result.Findings.ToList()));
+            OnPropertyChanged(nameof(FilesToRemoveCount));
         }
     }
 
@@ -273,6 +279,10 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
 
     public partial class ScriptResult(string scriptName, List<Finding> findings) {
+        //sc4pac regexes: https://github.com/memo33/sc4pac-actions/blob/main/src/lint.py#L256C38-L256C62
+        [GeneratedRegex(@"^[a-z0-9]+(?:-[a-z0-9]+)*$")]
+        private static partial Regex Sc4pacPackageRegex();
+
         /// <summary>
         /// Name of script run - either the Cleanitol file name or a sc4pac package.
         /// </summary>
@@ -280,27 +290,29 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
         /// <summary>
         /// Number of findings at warning level or higher.
         /// </summary>
-        public int ItemCount { get; } = findings.Count(i => i.Severity >= FindingSeverity.Warning);
-        public string ItemCountLabel => $"({ItemCount} files)";
+        public int FindingCount { get; } = findings.Count(i => i.Severity >= FindingSeverity.Warning);
+        public string FindingCountLabel => $"({FindingCount} files)";
         /// <summary>
         /// Items that don't have any results are not shown in the window.
         /// </summary>
-        public bool HasItems => ItemCount > 0;
+        public bool HasFindings => FindingCount > 0;
+
+        public int FilesToRemoveCount => findings.Count(f => f.Severity >= FindingSeverity.Warning && f.RuleType == ScriptRule.Type.Removal);
         /// <summary>
         /// Gets a value indicating whether the script name is in sc4pac package format of <c>group:name</c>.
         /// </summary>
         public bool IsSc4pacPackage {
             get {
-                return Regex.IsMatch(ScriptName, @"^[a-z\-]*:[a-z\-]*$");
+                return Sc4pacPackageRegex().IsMatch(ScriptName);
             }
         }
-        public List<LogItemDisplay> DisplayLog {
+        public List<FindingDisplayItem> FindingDisplayItems {
             get {
-                List<LogItemDisplay> log = [];
+                var items = new List<FindingDisplayItem>();
                 foreach (var item in findings) {
-                    log.Add(new LogItemDisplay(item));
+                    items.Add(new FindingDisplayItem(item));
                 }
-                return log;
+                return items;
             }
         }
 
@@ -326,13 +338,13 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
         /// <summary>
         /// A wrapper for a <see cref="Finding"/> containing all the properties needed for display.
-        /// /// </summary>
-        /// <param name="item"></param>
-        public partial class LogItemDisplay(Finding item) {
-            public FindingSeverity Level { get; private set; } = item.Severity;
+        /// </summary>
+        /// <param name="finding"></param>
+        public partial class FindingDisplayItem(Finding finding) {
+            public FindingSeverity Level { get; private set; } = finding.Severity;
             public string Icon {
                 get {
-                    return item.Severity switch {
+                    return finding.Severity switch {
                         FindingSeverity.Output => "\ue06c",
                         FindingSeverity.Info => "\ue2ce",
                         FindingSeverity.Warning => "\uee44",
@@ -343,7 +355,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             }
             public IImmutableSolidColorBrush IconColor {
                 get {
-                    return item.Severity switch {
+                    return finding.Severity switch {
                         FindingSeverity.Output => Brushes.Green,
                         FindingSeverity.Info => Brushes.SteelBlue,
                         FindingSeverity.Warning => Brushes.Orange,
@@ -352,10 +364,10 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
                     };
                 }
             }
-            public string Item { get; private set; } = Path.GetFileName(item.Item);
-            public string Message { get; private set; } = item.Message;
+            public string Item { get; private set; } = Path.GetFileName(finding.Item);
+            public string Message { get; private set; } = finding.Message;
             //public Exception Error { get; private set; } = item.Error;
-            public Link Link { get; private set; } = item.Link;
+            public Link Link { get; private set; } = finding.Link;
         }
     }
 
