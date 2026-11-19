@@ -9,35 +9,51 @@ namespace SC4CleanitolAvalonia.Services;
 /// <summary>
 /// Provides methods to load and save user configuration settings.
 /// </summary>
-/// <remarks>Configuration is saved in <c>%AppData%\SC4Cleanitol\config.json</c>. Loading returns a new <see cref="UserConfig"/> when the file is missing or deserialization yields null.</remarks>
+/// <remarks>Configuration is saved in <c>%AppData%\SC4Cleanitol\config.json</c>. Loading applies default user plugin and output folders when values are missing.</remarks>
 public class ConfigService : IConfigService {
-    private static readonly string ConfigPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SC4Cleanitol", "config.json");
+    private static readonly string configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SC4Cleanitol", "config.json");
+    private static readonly string userPlugins = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4", "Plugins");
+    private static readonly string pluginsBackup = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SimCity 4", "Plugins_Backup");
 
     public UserConfig Load() {
-        if (File.Exists(ConfigPath)) {
-            var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<UserConfig>(json) ?? new UserConfig();
+        if (File.Exists(configPath)) {
+            var json = File.ReadAllText(configPath);
+            return ApplyDefaults(JsonSerializer.Deserialize<UserConfig>(json) ?? new UserConfig());
         }
-        return new UserConfig();
+
+        return ApplyDefaults(new UserConfig());
     }
 
     public async Task<UserConfig> LoadAsync() {
-        if (File.Exists(ConfigPath)) {
-            using var stream = File.OpenRead(ConfigPath);
-            return await JsonSerializer.DeserializeAsync<UserConfig>(stream) ?? new UserConfig();
+        if (File.Exists(configPath)) {
+            using var stream = File.OpenRead(configPath);
+            return ApplyDefaults(await JsonSerializer.DeserializeAsync<UserConfig>(stream) ?? new UserConfig());
         }
-        return new UserConfig();
+
+        return ApplyDefaults(new UserConfig());
     }
 
     public void Save(UserConfig config) {
-        Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
         var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(ConfigPath, json);
+        File.WriteAllText(configPath, json);
     }
 
     public async Task SaveAsync(UserConfig config) {
-        Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
-        using var stream = File.Create(ConfigPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+        using var stream = File.Create(configPath);
         await JsonSerializer.SerializeAsync(stream, config, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static UserConfig ApplyDefaults(UserConfig config) {
+        if (string.IsNullOrWhiteSpace(config.UserPluginsPath)) {
+            config.UserPluginsPath = userPlugins;
+        }
+
+        if (string.IsNullOrWhiteSpace(config.OutputPath)) {
+            config.OutputPath = pluginsBackup;
+        }
+
+        return config;
     }
 }
