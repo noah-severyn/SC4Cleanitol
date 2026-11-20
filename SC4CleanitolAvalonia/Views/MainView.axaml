@@ -137,7 +137,18 @@
 				Margin="-10"
 				VerticalScrollBarVisibility="Auto">
 				<StackPanel Orientation="Vertical" Spacing="4">
-					<Label Content="{Binding DuplicatesMessageLabel}" />
+					<TextBlock TextWrapping="Wrap">
+						<Run Text="These are files that are duplicated with a package you have already installed in sc4pac. Files are moved to " />
+						<InlineUIContainer>
+							<Button
+								Classes="link"
+								Command="{Binding OpenOutputFolderCommand}"
+								ToolTip.Tip="Open folder">
+								<TextBlock Text="{Binding OutputPath}" />
+							</Button>
+						</InlineUIContainer>
+						<Run Text=", preserving the folder structure." />
+					</TextBlock>
 					<ItemsControl ItemsSource="{Binding Results}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
@@ -206,19 +217,6 @@
 														VerticalAlignment="Center"
 														Text="{Binding Message}"
 														TextWrapping="Wrap" />
-
-													<!--  Optional link button  -->
-													<Button
-														Grid.Column="3"
-														Padding="2"
-														IsVisible="{Binding Link.Path, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-														Tag="{Binding Link.Path}"
-														ToolTip.Tip="{Binding Link.Name}">
-														<Label
-															Padding="0"
-															Classes="icon"
-															Content="&#xe1da;" />
-													</Button>
 
 												</Grid>
 											</DataTemplate>

@@ -2,12 +2,26 @@
 	<Design.PreviewWith>
 		<Border Padding="20">
 			<!--  Add Controls for Previewer Here  -->
-			<Button HorizontalAlignment="Stretch">
-				<StackPanel Orientation="Horizontal">
-					<Label Classes="icon" Content="&#xe2c2;" />
-					<!--<Label Content="Home" />-->
-				</StackPanel>
-			</Button>
+			<StackPanel>
+				<Button HorizontalAlignment="Stretch">
+					<StackPanel Orientation="Horizontal">
+						<Label Classes="icon" Content="&#xe2c2;" />
+						<!--<Label Content="Home" />-->
+					</StackPanel>
+				</Button>
+				<TextBlock TextWrapping="Wrap">
+					<Run Text="Text run " />
+					<InlineUIContainer>
+						<Button
+							Classes="link"
+							ToolTip.Tip="Open folder">
+							<TextBlock Text="asdf" />
+						</Button>
+					</InlineUIContainer>
+					<Run Text=", ending text." />
+				</TextBlock>
+
+			</StackPanel>
 		</Border>
 	</Design.PreviewWith>
 
@@ -22,5 +36,20 @@
 		<Setter Property="Padding" Value="1" />
 		<Setter Property="Margin" Value="0" />
 		<!--<Setter Property="Margin" Value="0 2 0 0" />-->
+	</Style>
+
+	<Style Selector="Button.link">
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Margin" Value="-4" />
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+		<Style Selector="^ /template/ ContentPresenter">
+			<Setter Property="TextBlock.TextDecorations" Value="Underline" />
+		</Style>
+		<Style Selector="^:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="TextBlock.Foreground" Value="{DynamicResource SystemAccentColorLight1}" />
+		</Style>
 	</Style>
 </Styles>
