@@ -1,0 +1,255 @@
+<UserControl
+	x:Class="SC4CleanitolAvalonia.Views.MainView"
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:engine="clr-namespace:SC4CleanitolEngine;assembly=SC4CleanitolEngine"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:SC4CleanitolAvalonia.ViewModels"
+	xmlns:components="clr-namespace:SC4CleanitolAvalonia.Views.Components"
+	d:DesignHeight="800"
+	d:DesignWidth="1200"
+	x:DataType="vm:MainViewModel"
+	mc:Ignorable="d">
+	<Design.DataContext>
+		<!--
+			This only sets the DataContext for the previewer in an IDE,
+			to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+		-->
+		<vm:MainViewModel />
+	</Design.DataContext>
+
+	<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+		<!--  Row 0 : Configuration  -->
+		<Expander
+			Grid.Row="0"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xe270;" Title="Configuration" />
+			</Expander.Header>
+			<StackPanel Orientation="Vertical" Spacing="4">
+
+				<Label Content="User plugins folder. This is the folder in your My Documents (or equivalent)." />
+				<Grid
+					Margin="0,0,0,10"
+					ColumnDefinitions="*,Auto"
+					ColumnSpacing="10">
+					<TextBox x:Name="UserPluginsPath"
+						Grid.Column="0"
+						FontFamily="Consolas, Courier New, monospace"
+						Text="{Binding UserPluginsPath}" />
+					<Button x:Name="ChooseUserPluginsPath"
+						Grid.Column="1"
+						Command="{Binding ChooseUserPluginsFolderCommand}"
+						ToolTip.Tip="Choose folder">
+						<StackPanel Orientation="Horizontal">
+							<Label Classes="icon" Content="&#xe258;" />
+						</StackPanel>
+					</Button>
+				</Grid>
+
+				<Label Content="System plugins folder. This is the folder your game install location." />
+				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+					<TextBox x:Name="SystemPluginsPath"
+						Grid.Column="0"
+						FontFamily="Consolas, Courier New, monospace"
+						Text="{Binding SystemPluginsPath}" />
+					<Button x:Name="ChooseSystemPluginsPath"
+						Grid.Column="1"
+						Command="{Binding ChooseSystemPluginsFolderCommand}"
+						ToolTip.Tip="Choose folder">
+						<StackPanel Orientation="Horizontal">
+							<Label Classes="icon" Content="&#xe258;" />
+						</StackPanel>
+					</Button>
+				</Grid>
+
+				<CheckBox x:Name="IncludeSystemPlugins"
+					Margin="0,0,0,10"
+					Content="Include System Plugins in the scan."
+					IsChecked="{Binding IncludeSystemPlugins}" />
+
+				<Label Content="Cleanitol output path. Location where files are moved to." />
+				<Grid
+					Margin="0,0,0,10"
+					ColumnDefinitions="*,Auto"
+					ColumnSpacing="10">
+					<TextBox x:Name="OutputPath"
+						Grid.Column="0"
+						FontFamily="Consolas, Courier New, monospace"
+						Text="{Binding OutputPath}" />
+					<Button x:Name="ChooseOutputPath"
+						Grid.Column="1"
+						Command="{Binding ChooseOutputFolderCommand}"
+						ToolTip.Tip="Choose folder">
+						<StackPanel Orientation="Horizontal">
+							<Label Classes="icon" Content="&#xe258;" />
+						</StackPanel>
+					</Button>
+				</Grid>
+
+				<Label Content="Add additional folders to scan. Include one folder path per line." />
+				<TextBox
+					MinHeight="60"
+					Margin="0,0,0,10"
+					AcceptsReturn="True"
+					FontFamily="Consolas, Courier New, monospace"
+					Text="{Binding AdditionalFoldersText}"
+					TextWrapping="NoWrap" />
+
+				<CheckBox x:Name="CheckSc4pacDuplicates"
+					Content="Check for duplicates with packages installed from sc4pac."
+					IsChecked="{Binding CheckSc4pacDuplicates}" />
+			</StackPanel>
+		</Expander>
+
+		<!--  Row 1 : scan status  -->
+		<StackPanel
+			Grid.Row="1"
+			Margin="10"
+			Orientation="Horizontal"
+			Spacing="10">
+			<Button x:Name="ScanPlugins"
+				Command="{Binding ScanPluginsCommand}"
+				Content="Scan Plugins" />
+			<StackPanel>
+				<TextBlock x:Name="ScanState" Text="{Binding ScanProgress}" />
+				<ProgressBar x:Name="ScanProgress"
+					Maximum="{Binding FilesTotal}"
+					Value="{Binding FilesProcessed}" />
+			</StackPanel>
+
+			<TextBlock x:Name="ScanTime"
+				VerticalAlignment="Center"
+				Text="{Binding LastScanned}" />
+		</StackPanel>
+
+		<!--  Row 2 : duplicates with sc4pac  -->
+		<Expander
+			Grid.Row="2"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xe2d2;" Title="1:  Duplicates with installed sc4pac packages" Count="{Binding FilesToRemoveCount}" />
+			</Expander.Header>
+			<ScrollViewer
+				Margin="-10"
+				VerticalScrollBarVisibility="Auto">
+				<StackPanel Orientation="Vertical" Spacing="4">
+					<TextBlock TextWrapping="Wrap">
+						<Run Text="These are files that are duplicated with a package you have already installed in sc4pac. Files are moved to " />
+						<InlineUIContainer>
+							<Button
+								Classes="link"
+								Command="{Binding OpenOutputFolderCommand}"
+								ToolTip.Tip="Open folder">
+								<TextBlock Text="{Binding OutputPath}" />
+							</Button>
+						</InlineUIContainer>
+						<Run Text=", preserving the folder structure." />
+					</TextBlock>
+					<ItemsControl ItemsSource="{Binding Results}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top" IsVisible="{Binding HasFindings}">
+									<Expander.Header>
+										<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
+											<SelectableTextBlock
+												Grid.Column="0"
+												VerticalAlignment="Center"
+												Text="{Binding ScriptName}" />
+											<SelectableTextBlock
+												Grid.Column="1"
+												Margin="10,0"
+												HorizontalAlignment="Stretch"
+												VerticalAlignment="Center"
+												Text="{Binding FindingCountLabel}" />
+											<Button
+												Grid.Column="2"
+												Padding="2"
+												Command="{Binding OpenPackageInSc4pac}"
+												ToolTip.Tip="Open in sc4pac">
+												<StackPanel Orientation="Horizontal">
+													<Label Classes="icon" Content="&#xe1da;" />
+												</StackPanel>
+											</Button>
+											<Button
+												Grid.Column="4"
+												Padding="2"
+												Command="{Binding CleanUpFiles}"
+												ToolTip.Tip="Clean up files">
+												<StackPanel Orientation="Horizontal">
+													<Label Classes="icon" Content="&#xec54;" />
+												</StackPanel>
+											</Button>
+										</Grid>
+									</Expander.Header>
+									<!--  Inner list of LogItems  -->
+									<ItemsControl ItemsSource="{Binding FindingDisplayItems}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+
+												<Grid
+													Margin="20,1,0,1"
+													ColumnDefinitions="Auto,Auto,*,Auto"
+													ColumnSpacing="6">
+
+													<!--  Level icon  -->
+													<Label
+														Grid.Column="0"
+														Padding="0"
+														VerticalAlignment="Center"
+														Classes="icon"
+														Content="{Binding Icon}"
+														Foreground="{Binding IconColor}" />
+
+													<!--  Item (filename / rule)  -->
+													<SelectableTextBlock
+														Grid.Column="1"
+														VerticalAlignment="Center"
+														FontFamily="Consolas, Courier New, monospace"
+														Text="{Binding Item}" />
+
+													<!--  Message  -->
+													<SelectableTextBlock
+														Grid.Column="2"
+														VerticalAlignment="Center"
+														Text="{Binding Message}"
+														TextWrapping="Wrap" />
+
+												</Grid>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</Expander>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+				
+			</ScrollViewer>
+		
+		</Expander>
+
+		<!--- Row 3: items that can be migrated to sc4pac -->
+		<Expander
+			Grid.Row="3"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xe882;" Title="2:  Packages that can be migrated to sc4pac" />
+			</Expander.Header>
+		</Expander>
+
+		<!--- Row 4: final cleanup -->
+		<Expander
+			Grid.Row="4"
+			Margin="10"
+			HorizontalAlignment="Stretch">
+			<Expander.Header>
+				<components:ExpanderHeader Icon="&#xec54;" Title="3:  Cleanup of non-sc4pac items" />
+			</Expander.Header>
+		</Expander>
+	</Grid>
+</UserControl>
