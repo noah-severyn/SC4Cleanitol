@@ -82,7 +82,14 @@ namespace SC4CleanitolEngine {
             public FindingSeverity Severity { get; internal set; }
             public ScriptRule.Type? RuleType { get; internal set; }
             public string Script { get; internal set; } = string.Empty;
+            /// <summary>
+            /// Rule or search item that generated this finding.
+            /// </summary>
             public string Item { get; internal set; } = string.Empty;
+            /// <summary>
+            /// Full path of the matching file, if found.
+            /// </summary>
+            public string? MatchingFile { get; internal set; }
             public string Message { get; internal set; } = string.Empty;
             public Exception? Error { get; internal set; }
             public Link? Link { get; internal set; }
@@ -165,7 +172,8 @@ namespace SC4CleanitolEngine {
                         findings.Add(new Finding() {
                             Severity = FindingSeverity.Error,
                             Script = "N/A",
-                            Item = filepath,
+                            Item = Path.GetFileName(filepath),
+                            MatchingFile = filepath,
                             Message = "Could not open file.",
                             Error = ex
                         });
@@ -261,6 +269,7 @@ namespace SC4CleanitolEngine {
                     Severity = FindingSeverity.Error,
                     Script = Path.GetFileName(githubFilePath),
                     Item = githubFilePath,
+                    MatchingFile = githubFilePath,
                     Message = string.Empty,
                     Error = ex
                 });
@@ -351,6 +360,7 @@ namespace SC4CleanitolEngine {
                         RuleType = ScriptRule.Type.Removal,
                         Script = scriptName,
                         Item = rule,
+                        MatchingFile = file,
                         Message = $"was found in {Path.GetDirectoryName(file)}."
                     });
                 }

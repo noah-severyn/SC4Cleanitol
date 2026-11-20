@@ -121,7 +121,12 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
 
     public int FilesToRemoveCount => Results.Sum(r => r.FilesToRemoveCount);
 
-    public string DuplicatesMessageLabel => $"These are files that are duplicated with a package you have already installed in sc4pac. Files are removed to {OutputPath}, preserving the folder structure.";
+    [RelayCommand]
+    private void OpenOutputFolder() {
+        if (Directory.Exists(OutputPath)) {
+            OpenUrl(OutputPath);
+        }
+    }
 
     public string ScanProgress {
         get {
@@ -251,14 +256,20 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             }
         }
         foreach (var folder in pkgFolders) {
-            var filesToFind = ScanResults.ScannedFiles.Where(k => k.Key.StartsWith(folder)).Select(k => k.Value);
-            if (!filesToFind.Any()) {
+            var filesToFind = ScanResults?.ScannedFiles.Where(k => k.Key.StartsWith(folder)).Select(k => k.Value);
+            if (filesToFind == null || !filesToFind.Any()) {
                 continue;
             }
             var pkg = ExtractPackageIdFromFolder(folder);
             var result = await cleanitolService.RunAsync(pkg, filesToFind);
-            Results.Add(new ScriptResult(pkg, result.Findings.ToList()));
-            OnPropertyChanged(nameof(FilesToRemoveCount));
+            var findings = result.Findings.ToList();
+
+            //Exclude all packages that have a finding with a file size of 0 bytes; these are symlinked DLLs installed by sc4pac, and are the only items installed by sc4pac outside of the standard folders
+            bool hasSymlinkedDll = findings.Any(f => f.MatchingFile is not null && new FileInfo(f.MatchingFile).Length == 0);
+            if (!hasSymlinkedDll) {
+                Results.Add(new ScriptResult(pkg, findings));
+                OnPropertyChanged(nameof(FilesToRemoveCount));
+            }
         }
     }
 
@@ -358,7 +369,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
                     return finding.Severity switch {
                         FindingSeverity.Output => Brushes.Green,
                         FindingSeverity.Info => Brushes.SteelBlue,
-                        FindingSeverity.Warning => Brushes.Orange,
+                        FindingSeverity.Warning => Brushes.Tomato,
                         FindingSeverity.Error => Brushes.Crimson,
                         _ => Brushes.Black,
                     };
@@ -367,7 +378,7 @@ internal partial class MainViewModel(ICleanitolService cleanitolService, IFolder
             public string Item { get; private set; } = Path.GetFileName(finding.Item);
             public string Message { get; private set; } = finding.Message;
             //public Exception Error { get; private set; } = item.Error;
-            public Link Link { get; private set; } = finding.Link;
+            public Link? Link { get; private set; } = finding.Link;
         }
     }
 
