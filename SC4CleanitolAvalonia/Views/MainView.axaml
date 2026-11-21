@@ -134,7 +134,7 @@
 				<components:ExpanderHeader Icon="&#xe2d2;" Title="1:  Duplicates with installed sc4pac packages" Count="{Binding FilesToRemoveCount}" />
 			</Expander.Header>
 			<ScrollViewer
-				Margin="-10"
+				Margin="-5"
 				VerticalScrollBarVisibility="Auto">
 				<StackPanel Orientation="Vertical" Spacing="4">
 					<TextBlock TextWrapping="Wrap">
@@ -147,82 +147,12 @@
 								<TextBlock Text="{Binding OutputPath}" />
 							</Button>
 						</InlineUIContainer>
-						<Run Text=", preserving the folder structure." />
+						<Run Text=", preserving the folder structure. To undo these changes, copy these files back into Plugins." />
 					</TextBlock>
 					<ItemsControl ItemsSource="{Binding Results}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
-								<Expander HorizontalAlignment="Stretch" VerticalAlignment="Top" IsVisible="{Binding HasFindings}">
-									<Expander.Header>
-										<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
-											<SelectableTextBlock
-												Grid.Column="0"
-												VerticalAlignment="Center"
-												Text="{Binding ScriptName}" />
-											<SelectableTextBlock
-												Grid.Column="1"
-												Margin="10,0"
-												HorizontalAlignment="Stretch"
-												VerticalAlignment="Center"
-												Text="{Binding FindingCountLabel}" />
-											<Button
-												Grid.Column="2"
-												Padding="2"
-												Command="{Binding OpenPackageInSc4pac}"
-												ToolTip.Tip="Open in sc4pac">
-												<StackPanel Orientation="Horizontal">
-													<Label Classes="icon" Content="&#xe1da;" />
-												</StackPanel>
-											</Button>
-											<Button
-												Grid.Column="4"
-												Padding="2"
-												Command="{Binding CleanUpFiles}"
-												ToolTip.Tip="Clean up files">
-												<StackPanel Orientation="Horizontal">
-													<Label Classes="icon" Content="&#xec54;" />
-												</StackPanel>
-											</Button>
-										</Grid>
-									</Expander.Header>
-									<!--  Inner list of LogItems  -->
-									<ItemsControl ItemsSource="{Binding FindingDisplayItems}">
-										<ItemsControl.ItemTemplate>
-											<DataTemplate>
-
-												<Grid
-													Margin="20,1,0,1"
-													ColumnDefinitions="Auto,Auto,*,Auto"
-													ColumnSpacing="6">
-
-													<!--  Level icon  -->
-													<Label
-														Grid.Column="0"
-														Padding="0"
-														VerticalAlignment="Center"
-														Classes="icon"
-														Content="{Binding Icon}"
-														Foreground="{Binding IconColor}" />
-
-													<!--  Item (filename / rule)  -->
-													<SelectableTextBlock
-														Grid.Column="1"
-														VerticalAlignment="Center"
-														FontFamily="Consolas, Courier New, monospace"
-														Text="{Binding Item}" />
-
-													<!--  Message  -->
-													<SelectableTextBlock
-														Grid.Column="2"
-														VerticalAlignment="Center"
-														Text="{Binding Message}"
-														TextWrapping="Wrap" />
-
-												</Grid>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
-									</ItemsControl>
-								</Expander>
+								<components:ScriptResultView />
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>

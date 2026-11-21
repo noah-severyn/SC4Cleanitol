@@ -7,7 +7,7 @@
 			 x:Name="Root"
 			 d:DesignWidth="400" d:DesignHeight="40">
 	<StackPanel Orientation="Horizontal">
-		<Label Classes="icon" Content="{Binding Icon, ElementName=Root}" Margin="10 0 10 0" VerticalAlignment="Center" />
+		<Label Classes="icon" Content="{Binding Icon, ElementName=Root}" Margin="5 0 5 0" VerticalAlignment="Center" />
 		<Label Content="{Binding Title, ElementName=Root}" FontSize="16" VerticalAlignment="Center" />
 		<Border Background="#990000" CornerRadius="10" MinWidth="20" Height="20" Margin="10 0 0 0" VerticalAlignment="Center" IsVisible="{Binding Count, ElementName=Root, Converter={x:Static ObjectConverters.IsNotNull}}">
 			<TextBlock Text="{Binding Count, ElementName=Root}" Foreground="White" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
