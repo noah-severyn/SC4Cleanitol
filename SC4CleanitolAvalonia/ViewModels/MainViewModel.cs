@@ -21,22 +21,14 @@ namespace SC4CleanitolAvalonia.ViewModels;
 internal partial class MainViewModel(ICleanitolService cleanitolService, IFolderPickerService folderPickerService, IDialogService dialogService, IConfigService configService, UserConfig config, IChecksumService checksumService) : ObservableObject {
 
     /// <summary>
-    /// Parameterless constructor used only by the XAML previewer (<c>Design.DataContext</c>). Services are null, so commands must not be executed.
+    /// Parameterless constructor used only by the XAML previewer (<c>Design.DataContext</c>). Not used at runtime.
     /// </summary>
     public MainViewModel() : this(null!, null!, null!, null!, new UserConfig(), null!) {
         LastScanned = "Last scan: " + DateTime.Now.ToString();
 
-        Results.Add(new ScriptResult("nam-team:network-addon-mod", [
-            new Finding { Severity = FindingSeverity.Warning, Script = "nam-team:network-addon-mod", Item = "NetworkAddonMod_Locale_pt.dat", Message = "was found in C:\\Plugins\\075-my-plugins\\NAM\\@4^1 Core\\locale" },
-            new Finding { Severity = FindingSeverity.Warning, Script = "nam-team:network-addon-mod", Item = "NetworkAddonMod_Locale_de.dat", Message = "was found in C:\\Plugins\\075-my-plugins\\NAM\\@4^1 Core\\locale" },
-            new Finding { Severity = FindingSeverity.Info, Script = "nam-team:network-addon-mod", Item = "NetworkAddonMod_Controller.dat", Message = "is not present." },
-        ]));
-        Results.Add(new ScriptResult("b62:safeway-60s-retro-grocery", [
-            new Finding { Severity = FindingSeverity.Warning, Script = "b62:safeway-60s-retro-grocery", Item = "B62-CS$$_Safeway Retro 1960s v 2.0-0x6534284a-0xd3a3e650-0x5639d97a.SC4Desc", Message = "was found in C:\\Plugins\\B62-Safeway 60's Retro" },
-            new Finding { Severity = FindingSeverity.Warning, Script = "b62:safeway-60s-retro-grocery", Item = "CS$$2_6x6_B62-CS$$_Safeway Retro 1960s v 2.0_8639d990.SC4Lot", Message = "was found in C:\\Plugins\\B62-Safeway 60's Retro" },
-            new Finding { Severity = FindingSeverity.Warning, Script = "b62:safeway-60s-retro-grocery", Item = "b62 1960s Safeway Retro v 2.0-0x5ad0e817_0xb2a42fa9_0x30000.SC4Model", Message = "was found in C:\\Plugins\\B62-Safeway 60's Retro\\B62-Safeway 60's Retro" },
-            //new LogItem { Level = LogLevel.Error, Script = "b62:safeway-60s-retro-grocery", Item = "Missing dependency", Message = "is missing. Download at: #url#", Link = new Link { Name = "SC4Evermore", Path = "https://www.sc4evermore.com" } },
-        ]));
+        foreach (var result in DesignData.ScriptResults) {
+            Results.Add(result);
+        }
     }
 
     [ObservableProperty]
